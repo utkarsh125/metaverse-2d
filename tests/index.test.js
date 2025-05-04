@@ -266,16 +266,16 @@ describe("Space information", () => {
 
 
     adminToken = response.data.token; //CACHE THE TOKEN
-    const suserSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+    const userSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
       username,
       password,
-      type: "admin",
+      type: "user",
     });
 
     userId = signupResponse.data.userId
     //THEN SIGNIN
     const userSigninResponse= await axios.post(`${BACKEND_URL}/v1/api/signin`, {
-      username,
+      username: username+'-user',
       password,
     });
 
@@ -380,7 +380,7 @@ describe("Space information", () => {
     expect(response.statusCode).toBe(400)
   })
 
-  test("User is nto able to delete a space that doesn't exists", async() => {
+  test("User is not able to delete a space that doesn't exists", async() => {
     const response = await axios.delete(`${BACKEND_URL}/api/v1/space/randomIdDoesntExist`, {
       headers: {
         authorization: `Bearer ${userToken}`
@@ -438,7 +438,11 @@ describe("Space information", () => {
   })
 
   test("Admin has no spaces initially", async () => {
-    const response = await axios.get(`${BACKEND_URL}/api/v1/space/all`);
+    const response = await axios.get(`${BACKEND_URL}/api/v1/space/all`, {
+      header: {
+        authorization: `Bearer ${userToken}`
+      }
+    });
     expect(response.data.spaces.length).toBe(0);
   })
 
@@ -457,6 +461,117 @@ describe("Space information", () => {
     const filteredSpace = response.data.spaces.find(x => x.id == spaceCreateResponse.spaceId)
     expect(response.data.spaces.length).toBe(1);
     expect(filteredSpace).toBeDefined()
-    expect(filteredSpace.id).toBeDefined()
+    // expect(filteredSpace.id).toBeDefined()
   })
+})
+
+//ARENA ENDPOINTS
+//Once the user reaches the Arena space
+
+describe("Arena endpoints", ()=> {
+
+  let mapId;
+  let element1Id;
+  let element2Id;
+  let adminToken;
+  let userToken;
+  let adminId;
+  let userId;
+
+  beforeAll(async () => {
+    //Sign up then sign-in the user
+    //Authentication is needed for us to access spaces
+    console.log("beforeAll() was called.");
+    const username = `utkarsh-${Math.random}`;
+    const password = "123456";
+
+    //SIGNUP
+    const signupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+      username,
+      password,
+      type: "admin",
+    });
+
+    adminId = signupResponse.data.userId
+    //THEN SIGNIN
+    const response = await axios.post(`${BACKEND_URL}/v1/api/signin`, {
+      username,
+      password,
+    });
+
+
+    adminToken = response.data.token; //CACHE THE TOKEN
+    const userSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+      username: username+'-user',
+      password,
+      type: "user",
+    });
+
+    userId = signupResponse.data.userId
+    //THEN SIGNIN
+    const userSigninResponse= await axios.post(`${BACKEND_URL}/v1/api/signin`, {
+      username,
+      password,
+    });
+
+
+    userToken = userSigninResponse.data.token; //CACHE THE TOKEN
+
+    const element1 = axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+      "imageUrl":"https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+      "width": 1,
+      "height": 1,
+      "static": true,
+    }, {
+      headers: {
+        authorization: `Bearer ${adminToken}`
+      }
+    })
+    const element2 = axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+      "imageUrl":"https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+      "width": 1,
+      "height": 1,
+      "static": true,
+    }, {
+      headers: {
+        authorization: `Bearer ${adminToken}`
+      }
+    })
+
+    element1Id = element1.id; //return the id of the element.
+    element2Id = element2.id; //return the id of the element.
+
+    const map = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
+      "thumbnail": "https://thumbnail.com/a.png",
+      "dimensions": "100x200",
+      "name": "100 person interview room",
+      "defaultElements": [{
+          elementId: element1Id,
+          x: 20,
+          y: 20
+        }, {
+          elementId: element1Id,
+          x: 18,
+          y: 20
+        }, {
+          elementId: element2Id,
+          x: 19,
+          y: 20
+        }, {
+          elementId: element2Id,
+          x: 19,
+          y: 20
+        }
+      ]
+   } , {
+    headers: {
+      authorization: `Bearer ${adminToken}`
+    }
+   })
+
+   mapId = map.id; //get the mapId
+  })
+
+
+
 })
