@@ -1,7 +1,5 @@
 const { default: axios } = require("axios");
 
-
-
 const BACKEND_URL = "https://localhost:3000"; //Hard-coded backend URL. Write this later in express or something
 //or create a new application from scratch
 
@@ -117,15 +115,19 @@ describe("User information endpoints", () => {
     //since we are logged in admin
     //we can add avatars
 
-    const avatarResponse = await axios.post(`${BACKEND_URL}/api/v1/avatar`, {
-      imageUrl:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
-      name: "Timmy",
-    }, {
-      headers: {
-        authorization: `Bearer ${token}`
+    const avatarResponse = await axios.post(
+      `${BACKEND_URL}/api/v1/avatar`,
+      {
+        imageUrl:
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+        name: "Timmy",
+      },
+      {
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
       }
-    });
+    );
     avatarId = avatarResponse.data.avatarId;
   });
 
@@ -282,7 +284,7 @@ describe("Space information", () => {
 
     userToken = userSigninResponse.data.token; //CACHE THE TOKEN
 
-    const element1 = axios.post(
+    const element1Response = axios.post(
       `${BACKEND_URL}/api/v1/admin/element`,
       {
         imageUrl:
@@ -297,7 +299,7 @@ describe("Space information", () => {
         },
       }
     );
-    const element2 = axios.post(
+    const element2Response = axios.post(
       `${BACKEND_URL}/api/v1/admin/element`,
       {
         imageUrl:
@@ -313,10 +315,10 @@ describe("Space information", () => {
       }
     );
 
-    element1Id = element1.id; //return the id of the element.
-    element2Id = element2.id; //return the id of the element.
+    element1Id = element1Response.data.id; //return the id of the element.
+    element2Id = element2Response.data.id; //return the id of the element.
 
-    const map = await axios.post(
+    const mapResponse = await axios.post(
       `${BACKEND_URL}/api/v1/admin/map`,
       {
         thumbnail: "https://thumbnail.com/a.png",
@@ -352,7 +354,7 @@ describe("Space information", () => {
       }
     );
 
-    mapId = map.id; //get the mapId
+    mapId = mapResponse.id; //get the mapId
   });
 
   test("User is able to create a space", async () => {
@@ -370,7 +372,7 @@ describe("Space information", () => {
       }
     );
 
-    expect(response.spaceId).toBeDefined();
+    expect(response.data.spaceId).toBeDefined();
   });
   test("User is able to create a space without mapId (empty space)", async () => {
     const response = await axios.post(
@@ -572,7 +574,7 @@ describe("Arena Endpoints", () => {
 
     userToken = userSigninResponse.data.token; //CACHE THE TOKEN
 
-    const element1 = axios.post(
+    const element1Response = axios.post(
       `${BACKEND_URL}/api/v1/admin/element`,
       {
         imageUrl:
@@ -587,7 +589,7 @@ describe("Arena Endpoints", () => {
         },
       }
     );
-    const element2 = axios.post(
+    const element2Response = axios.post(
       `${BACKEND_URL}/api/v1/admin/element`,
       {
         imageUrl:
@@ -603,10 +605,10 @@ describe("Arena Endpoints", () => {
       }
     );
 
-    element1Id = element1.id; //return the id of the element.
-    element2Id = element2.id; //return the id of the element.
+    element1Id = element1Response.data.id; //return the id of the element.
+    element2Id = element2Response.data.id; //return the id of the element.
 
-    const map = await axios.post(
+    const mapResponse = await axios.post(
       `${BACKEND_URL}/api/v1/admin/map`,
       {
         thumbnail: "https://thumbnail.com/a.png",
@@ -642,9 +644,9 @@ describe("Arena Endpoints", () => {
       }
     );
 
-    mapId = map.id;
+    mapId = mapResponse.id;
 
-    const space = await axios.post(
+    const spaceResponse = await axios.post(
       `${BACKEND_URL}/api/v1/`,
       {
         name: "Test",
@@ -658,7 +660,7 @@ describe("Arena Endpoints", () => {
       }
     );
 
-    spaceId = space.spaceId;
+    spaceId = spaceResponse.data.spaceId;
 
     mapId = map.id; //get the mapId
   });
@@ -872,10 +874,11 @@ describe("Admin Endpoints", () => {
         imageUrl:
           "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
         name: "Timmy",
-      }, {
+      },
+      {
         headers: {
-          "authorization":`Bearer ${userToken}`
-        }
+          authorization: `Bearer ${userToken}`,
+        },
       }
     );
 
@@ -884,12 +887,13 @@ describe("Admin Endpoints", () => {
       {
         imageUrl:
           "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
-      }, {
+      },
+      {
         headers: {
-          "authorization":`Bearer ${userToken}`
-        }
+          authorization: `Bearer ${userToken}`,
+        },
       }
-    ); 
+    );
 
     expect(elementResponse.statusCode).toBe(403);
     expect(mapResponse.statusCode).toBe(403);
@@ -897,7 +901,119 @@ describe("Admin Endpoints", () => {
     expect(avatarResponse.statusCode).toBe(403);
   });
 
-  test("User is not able to hit admin endpoints", () => {
-    //TODO:/2:13:43
-  })
+  test("Admin is able to hit admin endpoints", async () => {
+    const elementResponse = axios.post(
+      `${BACKEND_URL}/api/v1/admin/element`,
+      {
+        imageUrl:
+          "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+        width: 1,
+        height: 1,
+        static: true,
+      },
+      {
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      }
+    );
+
+    //Map Creation
+    const mapResponse = await axios.post(
+      `${BACKEND_URL}/api/v1/admin/map`,
+      {
+        thumbnail: "https://thumbnail.com/a.png",
+        dimensions: "100x200",
+        defaultElements: [],
+      },
+      {
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      }
+    );
+
+    const createAvatarResponse = await axios.post(
+      `${BACKEND_URL}/api/v1/avatar`,
+      {
+        thumbnail: "https://thumbnail.com/a.png",
+        dimensions: "100x200",
+        defaultElements: [],
+      },
+      {
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      }
+    );
+
+    const avatarResponse = await axios.post(
+      `${BACKEND_URL}/api/v1/admin/avatar`,
+      {
+        imageUrl:
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+        name: "Timmy",
+      },
+      {
+        headers: {
+          authorization: `Bearer ${ad200Token}`,
+        },
+      }
+    );
+
+    const updateElementResponse = await axios.put(
+      `${BACKEND_URL}/api/v1/admin/element/123`,
+      {
+        imageUrl:
+          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+      },
+      {
+        headers: {
+          authorization: `Bearer ${userToken}`,
+        },
+      }
+    );
+
+    expect(elementResponse.statusCode).toBe(200);
+    expect(mapResponse.statusCode).toBe(200);
+    expect(avatarResponse.statusCode).toBe(200);
+    // expect(avatarResponse.statusCode).toBe(403); //Need to create a space, only then I can update the space
+  });
+
+  test("Admin is able to update the imageUrl for a element", async () => {
+
+    const elementResponse = axios.post(
+      `${BACKEND_URL}/api/v1/admin/element`,
+      {
+        imageUrl:
+          "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+        width: 1,
+        height: 1,
+        static: true,
+      },
+      {
+        headers: {
+          authorization: `Bearer ${adminToken}`,
+        },
+      }
+    );
+    const updateElementResponse = await axios.put(
+      `${BACKEND_URL}/api/v1/admin/element/${elementResponse.data.id}`,
+      {
+        imageUrl:
+          "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
+      }, {
+        headers: {
+          authorization: `Bearer ${adminToken}`
+        }
+      }
+    );
+
+    expect(updateElementResponse.statusCode).toBe(200);
+    
+  });
 });
+
+describe("Websocket tests", () => {
+  
+})
