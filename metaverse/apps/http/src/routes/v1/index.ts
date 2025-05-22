@@ -1,6 +1,9 @@
 // this is going to export our root router
 
 import { Router } from "express";
+import { adminRouter } from "./admin";
+import { spaceRouter } from "./space";
+import { userRouter } from "./user";
 
 //any time a request comes to "/api/v1" it will be handled by this router
 
