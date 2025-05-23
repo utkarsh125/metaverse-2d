@@ -16,6 +16,7 @@
   "dependencies": {
     "@types/express": "^5.0.2",
     "express": "^5.1.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "@metaverse/db":"workspace:*"
   }
 }

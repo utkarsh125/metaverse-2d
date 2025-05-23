@@ -1,3 +1,4 @@
+import client from "@metaverse/db/client"
 import express from "express"
 import { router } from "./routes/v1"
 
