@@ -6,6 +6,7 @@ const app = express();
 
 app.use("/api/v1", router)
 
+app.use(express.json()) //-> need to do this for (req.body) parse
 
 app.listen(process.env.PORT || 3000, ()=> {
     console.log("Listening on PORT 3000")

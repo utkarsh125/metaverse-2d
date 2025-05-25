@@ -1,7 +1,14 @@
 // this is going to export our root router
 
+import { SigninSchema, SignupSchema } from "../../types";
+import {compare, hash} from "../../scrypt"
+
+import { JWT_PASSWORD } from "../../config";
 import { Router } from "express";
 import { adminRouter } from "./admin";
+import client from "@metaverse/db/client"
+// import client from "@metaverse/db";
+import jwt from "jsonwebtoken";
 import { spaceRouter } from "./space";
 import { userRouter } from "./user";
 
@@ -9,16 +16,88 @@ import { userRouter } from "./user";
 
 export const router = Router();
 
-router.post("/signup", (req, res) => {
-    res.json({
-        message: "Signup"
-    })
+router.post("/signup", async(req, res) => {
+    //check the user
+    const parseData = SignupSchema.safeParse(req.body)
+
+    if (!parseData.success) {
+        res.status(400).json({
+            message: "Validation failed"
+        })
+        return
+    }
+
+    const hashedPassword = await hash(parseData.data.password);
+    try {
+        const user = await client.user.create({
+            data: {
+                username: parseData.data.username,
+                password: hashedPassword,
+                role: parseData.data.type === "admin" ? "admin" : "user"
+            }
+        })
+
+        res.json({
+            userId: user.id
+        })
+    } catch (error) {
+        res.status(400).json({
+            message: "User already exists"
+        })
+    }
+
+
 })
 
-router.post("/signin", (req, res) => {
-    res.json({
-        message: "Signin"
-    })
+router.post("/signin", async(req, res) => {
+
+    const parseData = SigninSchema.safeParse(req.body);
+
+    if(!parseData.success){
+        res.status(403).json({
+            message: "Validation failed"
+        })
+        return
+    }
+
+    try {
+        const user = await client.user.findUnique({
+            where:{
+                username: parseData.data.username
+            }
+        })
+        //check if user is valid
+        if(!user){
+            res.status(403).json({
+                message: "User not found"
+            })
+            return
+        }
+
+        //but if it is valid User -> check password (compare it with hashedPassword)
+        const isValid = await compare(parseData.data.password, user.password)
+        if(!isValid){
+            res.status(403).json({
+                message: "Invalid Password"
+            })
+            return
+        }
+
+        const token = jwt.sign({
+            userId: user.id,
+            role: user.role
+        }, JWT_PASSWORD)
+
+        res.json({
+            token 
+        })
+    } catch (error) {
+        res.status(400).json({
+            message: "Internal Server Error"
+        })
+    }
+    
+    
 })
 
 
@@ -27,7 +106,7 @@ router.get("/elements", (req, res) => {
 })
 
 router.get("/avatars", (req, res) => {
-    
+
 })
 
 // any request that starts with /user will be handled by userRouter
