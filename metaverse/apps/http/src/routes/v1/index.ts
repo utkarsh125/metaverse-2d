@@ -27,13 +27,18 @@ router.post("/signup", async(req, res) => {
         return
     }
 
+    // accept type for tests
+    const isAdmin = req.body.type === "admin";
+    const role = isAdmin ? "Admin" : "User";
+    
     const hashedPassword = await hash(parseData.data.password);
     try {
+
         const user = await client.user.create({
             data: {
                 username: parseData.data.username,
                 password: hashedPassword,
-                role: parseData.data.type === "admin" ? "admin" : "user"
+                role
             }
         })
 
