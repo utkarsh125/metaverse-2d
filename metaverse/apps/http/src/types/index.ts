@@ -23,6 +23,10 @@ export const CreateSpaceSchema = z.object({
     mapId: z.string(),
 })
 
+export const deleteElementSchema = z.object({
+    id: z.string()
+})
+
 export const AddElementSchema = z.object({
     spaceId: z.string(),
     elementId: z.string(),
@@ -49,6 +53,7 @@ export const CreateAvatarSchema = z.object({
 export const CreateMapSchema = z.object({
     thumbnail: z.string(),
     dimensions: z.string().regex(/^[0-9]{2,3}<[0-9]{2,3}$/), //regex for dimensions.
+    name: z.string(),
     defaultElements: z.array(z.object({
         elementId: z.string(),
         x: z.number(),
