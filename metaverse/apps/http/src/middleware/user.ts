@@ -8,11 +8,20 @@ import { JWT_PASSWORD } from "../config";
 import jwt from "jsonwebtoken";
 
 export const userMiddleware = (req: Request, res: Response, next: NextFunction) => {
-    const header = req.headers.authorization // Bearer token
+
+
+    
+    const header = req.headers.authorization // Bearer <token>
     const token = header?.split(" ")[1];//fetch the token
 
+    // if(!header){
+    //     return res.status(403).json({
+    //         message: "Forbidden: auth header required."
+    //     })
+    // }
+
     if(!token){
-        res.status(401).json({
+        res.status(403).json({
             message: "Unauthorized"
         })
         return
@@ -31,9 +40,11 @@ export const userMiddleware = (req: Request, res: Response, next: NextFunction) 
 
         
     } catch (error) {
-        res.status(401).json({
+        res.status(403).json({
             message: "Unauthorized"
         })
+
+        return;
     }
 
 }

@@ -108,77 +108,80 @@ describe("Authentication", () => {
     })
 })
 
-// describe("User metadata endpoint", () => {
-//     let token = "";
-//     let avatarId = ""
+describe("User metadata endpoint", () => {
+    let token = "";
+    let avatarId = ""
 
-//     beforeAll(async () => {
-//        const username = `kirat-${Math.random()}`
-//        const password = "123456"
+    beforeAll(async () => {
+       const username = `utkarsh-${Math.random()}`
+       const password = "123456"
 
-//        await axios.post(`${BACKEND_URL}/api/v1/signup`, {
-//         username,
-//         password,
-//         type: "admin"
-//        });
+       await axios.post(`${BACKEND_URL}/api/v1/signup`, {
+        username,
+        password,
+        type: "admin"
+       });
 
-//        const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
-//         username,
-//         password
-//        })
+       const response = await axios.post(`${BACKEND_URL}/api/v1/signin`, {
+        username,
+        password
+       })
 
-//        token = response.data.token
+       token = response.data.token
 
-//        const avatarResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/avatar`, {
-//             "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
-//             "name": "Timmy"
-//         }, {
-//             headers: {
-//                 authorization: `Bearer ${token}`
-//             }
-//         })
-//         console.log("avatarresponse is " + avatarResponse.data.avatarId)
+       const avatarResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/avatar`, {
+            "imageUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm3RFDZM21teuCMFYx_AROjt-AzUwDBROFww&s",
+            "name": "Timmy"
+        }, {
+            headers: {
+                authorization: `Bearer ${token}`
+            }
+        })
+        console.log("avatarresponse is " + avatarResponse.data.avatarId)
 
-//         avatarId = avatarResponse.data.avatarId;
+        avatarId = avatarResponse.data.avatarId;
 
-//     })
+    })
 
-//     test("User cant update their metadata with a wrong avatar id", async () => {
-//         const response = await axios.post(`${BACKEND_URL}/api/v1/user/metadata`, {
-//             avatarId: "123123123"
-//         }, {
-//             headers: {
-//                 "authorization": `Bearer ${token}`
-//             }
-//         })
+    //pass
+    test("User cant update their metadata with a wrong avatar id", async () => {
+        const response = await axios.post(`${BACKEND_URL}/api/v1/user/metadata`, {
+            avatarId: "123123123"
+        }, {
+            headers: {
+                "authorization": `Bearer ${token}`
+            }
+        })
 
-//         expect(response.status).toBe(400)
-//     })
+        expect(response.status).toBe(400)
+    })
 
-//     test("User can update their metadata with the right avatar id", async () => {
-//         const response = await axios.post(`${BACKEND_URL}/api/v1/user/metadata`, {
-//             avatarId
-//         }, {
-//             headers: {
-//                 "authorization": `Bearer ${token}`
-//             }
-//         })
+    //pass
+    test("User can update their metadata with the right avatar id", async () => {
+        const response = await axios.post(`${BACKEND_URL}/api/v1/user/metadata`, {
+            avatarId
+        }, {
+            headers: {
+                "authorization": `Bearer ${token}`
+            }
+        })
 
-//         expect(response.status).toBe(200)
-//     })
+        expect(response.status).toBe(200)
+    })
 
-//     test("User is not able to update their metadata if the auth header is not present", async () => {
-//         const response = await axios.post(`${BACKEND_URL}/api/v1/user/metadata`, {
-//             avatarId
-//         })
+    //TODO: Pass this.
+    test("User is not able to update their metadata if the auth header is not present", async () => {
+        const response = await axios.post(`${BACKEND_URL}/api/v1/user/metadata`, {
+            avatarId
+        })
 
-//         expect(response.status).toBe(403)
-//     })
+        expect(response.status).toBe(403)
+    })
 
-//     test("test 3", () => {
+    test("test 3", () => {
         
-//     })
-// });
+    })
+});
 
 // describe("User avatar information", () => {
 //     let avatarId;

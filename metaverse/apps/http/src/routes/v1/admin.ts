@@ -61,27 +61,24 @@ adminRouter.put("/element/:elementId", adminMiddleware, async(req, res) => {
     })
 })
 
-adminRouter.post("/avatar", async(req, res) => {
 
+//The metadata issue was here but is now working.
+adminRouter.post("/avatar", async (req, res) => {
     const parsedData = CreateAvatarSchema.safeParse(req.body)
-
-    if(!parsedData.success){
+    if (!parsedData.success) {
         res.status(400).json({message: "Validation failed"})
+        return
     }
-
     const avatar = await client.avatar.create({
         data: {
-            name: parsedData.data?.name,
-            imageUrl: parsedData.data?.imageUrl
+            name: parsedData.data.name,
+            imageUrl: parsedData.data.imageUrl
         }
     })
-
-    res.json({
-        id: avatar.id
-    })
-
-
+    res.json({avatarId: avatar.id})
 })
+
+
 
 adminRouter.post("/map", async(req, res) => {
 
