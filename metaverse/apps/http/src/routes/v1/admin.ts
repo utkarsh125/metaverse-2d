@@ -10,7 +10,7 @@ export const adminRouter = Router();
 // /api/v1/space
 
 
-adminRouter.get("/element", adminMiddleware, async (req, res) => {
+adminRouter.post("/element", adminMiddleware, async (req, res) => {
 
     const parsedData = CreateElementSchema.safeParse(req.body)
     if(!parsedData.success){
@@ -84,7 +84,10 @@ adminRouter.post("/map", async(req, res) => {
 
     const parsedData = CreateMapSchema.safeParse(req.body)
 
+    console.log("True/False:", parsedData.success)
+
     if(!parsedData.success){
+        console.log("Admin Endpoint /map: ", parsedData)
         res.status(400).json({
             message: "Validation failed"
         })

@@ -31,7 +31,7 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
             }
         });
         res.json({spaceId: space.id})
-        // return;
+        return;
     }
 
     const map = await client.map.findFirst({
@@ -67,7 +67,6 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
             }
         })
 
-        //TODO: 4:37:00
 
         await client.spaceElements.createMany({
             data: map.mapElements.map(e => ({
@@ -132,7 +131,7 @@ spaceRouter.get("/all", userMiddleware, async (req, res) => {
         }
     });
     res.json({
-        space: (spaces).map(s => ({
+        spaces: (spaces).map(s => ({
             id: s.id,
             name: s.name,
             thumbnail: s.thumbnail,

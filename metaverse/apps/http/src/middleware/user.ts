@@ -14,6 +14,7 @@ export const userMiddleware = (req: Request, res: Response, next: NextFunction) 
     const header = req.headers.authorization // Bearer <token>
     const token = header?.split(" ")[1];//fetch the token
 
+
     // if(!header){
     //     return res.status(403).json({
     //         message: "Forbidden: auth header required."
