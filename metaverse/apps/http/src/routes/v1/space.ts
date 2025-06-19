@@ -10,6 +10,8 @@ export const spaceRouter = Router();
 // and /space is handled by routes/v1
 spaceRouter.post("/", userMiddleware, async(req, res) => {
 
+    // console.log("CONTROL REACHED '/' endpoint space.ts")
+
     const parsedData = CreateSpaceSchema.safeParse(req.body)
 
     if (!parsedData.success) {
@@ -45,7 +47,7 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
         }
     })
 
-    console.log("after")
+    // console.log("after")
 
     if(!map){
         //if map doesn't exist then
@@ -85,6 +87,48 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
     })
 
     
+
+})
+
+spaceRouter.delete("/element", userMiddleware, async(req, res) => {
+    
+    const parsedData = deleteElementSchema.safeParse(req.body)
+
+    if(!parsedData.success){
+        res.status(400).json({
+            message: "Validation failed"
+        })
+        return
+    }
+
+    const spaceElement = await client.spaceElements.findFirst({
+        where:{
+            id: parsedData.data.id
+        }, include: {
+            space: true
+        }
+    })
+
+    if(!spaceElement?.space.creatorId || spaceElement.space.creatorId !== req.userId){
+
+        res.status(403).json({
+            message: "Unauthorized"
+        })
+        return
+    }
+
+
+    await client.spaceElements.delete({
+        where: {
+            id: parsedData.data.id
+            
+        }
+
+    })
+
+    res.json({
+        message: "Element deleted"
+    })
 
 })
 
@@ -242,6 +286,7 @@ spaceRouter.get("/:spaceId", async(req, res) => {
         res.status(400).json({
             message: "Space not found"
         })
+        return;
     }
 
     res.json({
