@@ -3,6 +3,9 @@ const axios2 = require("axios");
 const BACKEND_URL = "http://localhost:3000"
 const WS_URL = "ws://localhost:3001"
 
+
+axios2.defaults.validateStatus = () => true;
+
 const axios = {
     post: async (...args) => {
         try {
@@ -648,14 +651,14 @@ describe("Arena endpoints", () => {
 
 })
 
-describe.skip("Admin Endpoints", () => {
+describe("Admin Endpoints", () => {
     let adminToken;
     let adminId;
     let userToken;
     let userId;
 
     beforeAll(async () => {
-        const username = `kirat-${Math.random()}`
+        const username = `utkarsh-${Math.random()}`
         const password = "123456"
  
         const signupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
@@ -663,6 +666,8 @@ describe.skip("Admin Endpoints", () => {
          password,
          type: "admin"
         });
+
+        console.log("SignupRes: ", signupResponse)
 
         adminId = signupResponse.data.userId
  
@@ -672,6 +677,8 @@ describe.skip("Admin Endpoints", () => {
         })
  
         adminToken = response.data.token
+
+        console.log(adminToken);
 
         const userSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
             username: username + "-user",
@@ -687,10 +694,11 @@ describe.skip("Admin Endpoints", () => {
         })
     
         userToken = userSigninResponse.data.token
+        console.log("Usertoken: ", userToken)
     });
 
     test("User is not able to hit admin Endpoints", async () => {
-        const elementReponse = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+        const elementResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
             "imageUrl": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
             "width": 1,
             "height": 1,
@@ -729,14 +737,14 @@ describe.skip("Admin Endpoints", () => {
             }
         })
 
-        expect(elementReponse.status).toBe(403)
+        expect(elementResponse.status).toBe(403)
         expect(mapResponse.status).toBe(403)
         expect(avatarResponse.status).toBe(403)
         expect(updateElementResponse.status).toBe(403)
     })
 
     test("Admin is able to hit admin Endpoints", async () => {
-        const elementReponse = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
+        const elementResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
             "imageUrl": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
             "width": 1,
             "height": 1,
@@ -766,7 +774,7 @@ describe.skip("Admin Endpoints", () => {
                 "authorization": `Bearer ${adminToken}`
             }
         })
-        expect(elementReponse.status).toBe(200)
+        expect(elementResponse.status).toBe(200)
         expect(mapResponse.status).toBe(200)
         expect(avatarResponse.status).toBe(200)
     })
@@ -795,6 +803,7 @@ describe.skip("Admin Endpoints", () => {
 
     })
 });
+
 
 describe.skip("Websocket tests", () => {
     let adminToken;
