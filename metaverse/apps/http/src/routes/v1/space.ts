@@ -206,6 +206,16 @@ spaceRouter.post("/element", userMiddleware, async (req, res) => {
         }
     })
 
+    //TODO: Write a condition that check the given point is inside the boundary box or not
+    if(req.body.x < 0 || req.body.y < 0 || req.body.x > space?.width! || req.body.y > space?.height!){
+        res.status(400).json({
+            message: "Point is outside of the boundary"
+        })
+        return
+    }
+
+
+
     if(!space){
         res.status(400).json({ message: "Space not found"})
         return
