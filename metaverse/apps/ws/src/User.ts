@@ -129,6 +129,18 @@ export class User {
         })
     }
 
+
+    destroy() {
+
+        RoomManager.getInstance().broadcast({
+            type: "user-left",
+            payload: {
+                userId: this.userId
+            }
+        }, this, this.spaceId!)
+        RoomManager.getInstance().removeUser(this, this.spaceId!)
+    }
+
     send(payload: OutgoingMessage){
         this.ws.send(JSON.stringify(payload));
     }
