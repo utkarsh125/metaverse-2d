@@ -1,5 +1,8 @@
 const axios2 = require("axios");
 
+// const WebSocket = require('ws');
+
+
 const BACKEND_URL = "http://localhost:3000"
 const WS_URL = "ws://localhost:3001"
 
@@ -191,7 +194,7 @@ describe.skip("User avatar information", () => {
     let userId;
 
     beforeAll(async () => {
-        const username = `kirat-${Math.random()}`
+        const username = `utkarsh-${Math.random()}`
         const password = "123456"
  
         const signupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
@@ -840,7 +843,7 @@ describe("Websocket tests", () => {
     }
 
     async function setupHTTP() {
-        const username = `kirat-${Math.random()}`
+        const username = `utkarsh-${Math.random()}`
         const password = "123456"
         const adminSignupResponse = await axios.post(`${BACKEND_URL}/api/v1/signup`, {
             username,
@@ -869,7 +872,7 @@ describe("Websocket tests", () => {
         })
         userId = userSignupResponse.data.userId
         userToken = userSigninResponse.data.token
-        console.log("useroktne", userToken)
+        console.log("usertoken: ", userToken)
         const element1Response = await axios.post(`${BACKEND_URL}/api/v1/admin/element`, {
             "imageUrl": "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcRCRca3wAR4zjPPTzeIY9rSwbbqB6bB2hVkoTXN4eerXOIkJTG1GpZ9ZqSGYafQPToWy_JTcmV5RHXsAsWQC3tKnMlH_CsibsSZ5oJtbakq&usqp=CAE",
             "width": 1,
@@ -897,7 +900,7 @@ describe("Websocket tests", () => {
         const mapResponse = await axios.post(`${BACKEND_URL}/api/v1/admin/map`, {
             "thumbnail": "https://thumbnail.com/a.png",
             "dimensions": "100x200",
-            "name": "Defaul space",
+            "name": "Default space",
             "defaultElements": [{
                     elementId: element1Id,
                     x: 20,
@@ -961,7 +964,7 @@ describe("Websocket tests", () => {
     })
 
     test("Get back ack for joining the space", async () => {
-        console.log("insixce first test")
+        console.log("inside first test")
         ws1.send(JSON.stringify({
             "type": "join",
             "payload": {
@@ -969,9 +972,9 @@ describe("Websocket tests", () => {
                 "token": adminToken
             }
         }))
-        console.log("insixce first test1")
+        console.log("inside first test1")
         const message1 = await waitForAndPopLatestMessage(ws1Messages);
-        console.log("insixce first test2")
+        console.log("inside first test2")
         ws2.send(JSON.stringify({
             "type": "join",
             "payload": {
@@ -979,7 +982,7 @@ describe("Websocket tests", () => {
                 "token": userToken
             }
         }))
-        console.log("insixce first test3")
+        console.log("inside first test3")
 
         const message2 = await waitForAndPopLatestMessage(ws2Messages);
         const message3 = await waitForAndPopLatestMessage(ws1Messages);

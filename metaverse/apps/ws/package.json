@@ -16,6 +16,7 @@
     "@metaverse/db": "workspace:*",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/ws": "^8.18.1",
+    "dotenv": "^16.5.0",
     "esbuild": "^0.24.0",
     "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.2"
