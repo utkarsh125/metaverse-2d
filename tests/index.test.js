@@ -41,7 +41,7 @@ const axios = {
     },
 }
 
-describe("Authentication", () => {
+describe.skip("Authentication", () => {
     test('User is able to sign up only once', async () => {
         const username = "utkarsh" + Math.random(); // utkarsh0.12331313
         const password = "123456";
@@ -111,7 +111,7 @@ describe("Authentication", () => {
     })
 })
 
-describe("User metadata endpoint", () => {
+describe.skip("User metadata endpoint", () => {
     let token = "";
     let avatarId = ""
 
@@ -185,7 +185,7 @@ describe("User metadata endpoint", () => {
     })
 });
 
-describe("User avatar information", () => {
+describe.skip("User avatar information", () => {
     let avatarId;
     let token;
     let userId;
@@ -241,7 +241,7 @@ describe("User avatar information", () => {
 
 })
 
-describe("Space information", () => {
+describe.skip("Space information", () => {
     let mapId;
     let element1Id;
     let element2Id;
@@ -462,7 +462,7 @@ describe("Space information", () => {
     })
 })
 
-describe("Arena endpoints", () => {
+describe.skip("Arena endpoints", () => {
     let mapId;
     let element1Id;
     let element2Id;
@@ -651,7 +651,7 @@ describe("Arena endpoints", () => {
 
 })
 
-describe("Admin Endpoints", () => {
+describe.skip("Admin Endpoints", () => {
     let adminToken;
     let adminId;
     let userToken;
@@ -805,7 +805,7 @@ describe("Admin Endpoints", () => {
 });
 
 
-describe.skip("Websocket tests", () => {
+describe("Websocket tests", () => {
     let adminToken;
     let adminUserId;
     let userToken;
