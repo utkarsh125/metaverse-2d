@@ -114,6 +114,9 @@ describe("Authentication", () => {
     })
 })
 
+
+//TODO: ON POSTMAN, avatarId is required but on registering a new user
+//TODO: we do not get a avatarId as default therefore it is null (and hence the update will keep failing)
 describe("User metadata endpoint", () => {
     let token = "";
     let avatarId = ""
