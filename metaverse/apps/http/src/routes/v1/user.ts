@@ -5,6 +5,13 @@ import { userMiddleware } from "../../middleware/user";
 
 export const userRouter = Router();
 
+userRouter.get("/metadata", userMiddleware, async (req, res) => {
+  const u = await client.user.findUnique({
+    where: { id: req.userId! },
+    select: { avatarId: true },
+  });
+  res.json({ avatarId: u?.avatarId ?? null });
+});
 
 userRouter.post("/metadata", userMiddleware, async (req, res) => {
 

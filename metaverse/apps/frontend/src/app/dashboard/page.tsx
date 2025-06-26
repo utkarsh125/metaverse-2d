@@ -1,93 +1,130 @@
-'use client'
+// frontend/src/app/dashboard/page.tsx
+'use client';
 
-import { Avatar, Space } from "@/lib/types"
-import { useEffect, useState } from 'react';
+import type { Avatar, MapTheme, Space } from '@/lib/types';
+import React, { useEffect, useState } from 'react';
 
-import { API } from "@/lib/api";
+import { API } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
-export default function Dashboard(){
+export default function DashboardPage() {
+  const router = useRouter();
 
-    const router = useRouter();
+  // fetched data
+  const [avatars, setAvatars] = useState<Avatar[]>([]);
+  const [maps, setMaps]       = useState<MapTheme[]>([]);
+  const [spaces, setSpaces]   = useState<Space[]>([]);
 
+  // onboarding step (1 = avatar, 2 = map + name)
+  const [step, setStep] = useState<1 | 2>(1);
 
-    //data
-    const [avatars, setAvatars] = useState<Avatar[]>([]);
-    const [spaces, setSpaces] = useState<Space[]>([]);
+  // user selections
+  const [selectedAvatar, setSelectedAvatar] = useState<string>('');
+  const [selectedMap, setSelectedMap]       = useState<string>('');
+  const [spaceName, setSpaceName]           = useState<string>('');
 
+  // derived flags
+  const [hasAvatar, setHasAvatar] = useState(false);
+  const [hasSpaces, setHasSpaces] = useState(false);
 
-    // onboarding state
-    const [step, setStep] = useState<1 | 2>(1);
-    const [selectedAvatar, setSelectedAvatar] = useState<string>('');
-    const [selectedSpace, setSelectedSpace] = useState<string>('');
-    const [onboarded, setOnboarded] = useState(false);
+  // control
+  const [onboarded, setOnboarded] = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState<string | null>(null);
 
-    // UI
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    //mount and fetch
-    useEffect(() => {
-
-        const token = localStorage.getItem('token')
-        if(!token){
-            //redirect to /signin if no token
-            router.push('/signin')
-            return;
-        }
-        API.defaults.headers.common['Authorization'] = `Bearer ${token}`
-
-
-        //allow user to select avatar on step 1
-        API
-            .get<{ avatars: Avatar[] }>('/api/v1/avatars')
-            .then(r => setAvatars(r.data.avatars))
-            .catch(console.error);
-
-        //on step 2, show them the current spaces, then show them the dashboard
-        API
-            .get<{ spaces: Space[] }>('/api/v1/space/all')
-            .then(r => setSpaces(r.data.spaces))
-            .catch(console.error);
-    }, []);
-
-    //save avatar
-    const saveAvatar = async() => {
-        if(!selectedAvatar) return;
-
-        setLoading(true);
-        setError(null);
-
-
-        try {
-            await API.post('api/v1/user/metadata', {avatarId: selectedAvatar});
-            setStep(2);
-        } catch (e: any) {
-            setError(e.response?.status === 400 ? 'Invalid Avatar' : 'Network Error');
-        }finally{
-            setLoading(false);
-        };
-    };
-
-    //finish onboarding
-    const finishOnboarding = () => {
-        if(!selectedSpace) return;
-        setOnboarded(true)
+  // fetch spaces helper
+  const fetchSpaces = async () => {
+    try {
+      const res = await API.get<{ spaces: Space[] }>('/api/v1/space/all');
+      setSpaces(res.data.spaces);
+      setHasSpaces(res.data.spaces.length > 0);
+    } catch (err) {
+      console.error('Could not load spaces', err);
     }
+  };
 
-    return (
+  // initial data & profile fetch
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+    API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+    API.get<{ avatarId: string | null }>('/api/v1/user/metadata')
+       .then(res => setHasAvatar(!!res.data.avatarId))
+       .catch(console.error);
+
+    API.get<{ avatars: Avatar[] }>('/api/v1/avatars')
+       .then(res => setAvatars(res.data.avatars))
+       .catch(console.error);
+
+    API.get<{ maps: MapTheme[] }>('/api/v1/maps')
+       .then(res => setMaps(res.data.maps))
+       .catch(console.error);
+
+    fetchSpaces();
+  }, [router]);
+
+  // determine onboarding state
+  useEffect(() => {
+    if (hasAvatar && hasSpaces) {
+      setOnboarded(true);
+    } else if (hasAvatar) {
+      setStep(2);
+    } else {
+      setStep(1);
+    }
+  }, [hasAvatar, hasSpaces]);
+
+  // save selected avatar
+  const saveAvatar = async () => {
+    if (!selectedAvatar || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await API.post('/api/v1/user/metadata', { avatarId: selectedAvatar });
+      setHasAvatar(true);
+    } catch (e: any) {
+      setError(e.response?.status === 400 ? 'Invalid avatar' : 'Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // create a new space (guard against double-click, reload spaces & close modal)
+  const createSpace = async () => {
+    if (!selectedMap || !spaceName.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const mapObj = maps.find(m => m.id === selectedMap)!;
+      await API.post('/api/v1/space', {
+        name:       spaceName.trim(),
+        mapId:      selectedMap,
+        dimensions: mapObj.dimensions,
+      });
+      await fetchSpaces();
+      setOnboarded(true);
+    } catch (e: any) {
+      console.error('CreateSpace error:', e.response?.data);
+      setError(e.response?.data?.message || 'Failed to create space');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-8">
-
-      {/* ONBOARDING MODAL */}
+      {/* Onboarding Modal */}
       {!onboarded && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-60 flex items-center justify-center">
-          <div className="bg-gray-800 rounded p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">
-              {step === 1 ? 'Select Your Avatar' : 'Select Your Space'}
-            </h2>
+          <div className="bg-gray-800 rounded p-6 w-full max-w-lg">
 
-            {step === 1 ? (
+            {step === 1 && (
               <>
+                <h2 className="text-2xl font-bold mb-4">Select Your Avatar</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
                   {avatars.map(a => (
                     <div
@@ -108,7 +145,7 @@ export default function Dashboard(){
                     </div>
                   ))}
                 </div>
-                {error && <p className="text-red-500 mb-2">{error}</p>}
+                {error && <p className="mb-2 text-red-500">{error}</p>}
                 <button
                   onClick={saveAvatar}
                   disabled={!selectedAvatar || loading}
@@ -117,52 +154,80 @@ export default function Dashboard(){
                   {loading ? 'Saving…' : 'Save Avatar'}
                 </button>
               </>
-            ) : (
+            )}
+
+            {step === 2 && (
               <>
+                <h2 className="text-2xl font-bold mb-4">Create a Space</h2>
+                <label className="block mb-4">
+                  <span className="block mb-1">Space Name</span>
+                  <input
+                    type="text"
+                    value={spaceName}
+                    onChange={e => setSpaceName(e.target.value)}
+                    className="w-full px-3 py-2 rounded bg-gray-700 border border-gray-600"
+                    placeholder="Enter space name"
+                  />
+                </label>
+                <h3 className="text-xl font-semibold mb-2">Choose a Map</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  {spaces.map(s => (
+                  {maps.map(m => (
                     <div
-                      key={s.id}
-                      onClick={() => setSelectedSpace(s.id)}
-                      className={`cursor-pointer p-4 border-2 rounded bg-gray-700 ${
-                        selectedSpace === s.id
+                      key={m.id}
+                      onClick={() => setSelectedMap(m.id)}
+                      className={`cursor-pointer p-2 border-2 rounded ${
+                        selectedMap === m.id
                           ? 'border-blue-400'
                           : 'border-transparent hover:border-gray-600'
-                      }`}
+                      } bg-gray-700`}
                     >
-                      {s.thumbnail ? (
+                      {m.thumbnail ? (
                         <img
-                          src={s.thumbnail}
-                          alt={s.name}
+                          src={m.thumbnail}
+                          alt={m.name}
                           className="w-full h-32 object-cover rounded mb-2"
                         />
                       ) : (
                         <div className="w-full h-32 bg-gray-600 rounded mb-2 flex items-center justify-center">
-                          No Thumbnail
+                          No Preview
                         </div>
                       )}
-                      <h3 className="text-lg">{s.name}</h3>
-                      <p className="text-sm text-gray-400">{s.dimensions}</p>
+                      <p className="text-center">{m.name}</p>
+                      <p className="text-sm text-gray-400">{m.dimensions}</p>
                     </div>
                   ))}
                 </div>
+                {error && <p className="mb-2 text-red-500">{error}</p>}
                 <button
-                  onClick={finishOnboarding}
-                  disabled={!selectedSpace}
-                  className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+                  onClick={createSpace}
+                  disabled={!spaceName.trim() || !selectedMap || loading}
+                  className="w-full py-2 bg-green-600 hover:bg-green-700 rounded disabled:opacity-50"
                 >
-                  Enter Dashboard
+                  {loading ? 'Creating…' : 'Create Space'}
                 </button>
               </>
             )}
+
           </div>
         </div>
       )}
 
-      {/* DASHBOARD CONTENT */}
+      {/* Dashboard Content */}
       {onboarded && (
         <>
-          <h1 className="text-3xl font-bold mb-6">Your Spaces</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Your Spaces</h1>
+            <button
+              onClick={() => {
+                setOnboarded(false);
+                setStep(2);
+              }}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded"
+            >
+              Create New Space
+            </button>
+          </div>
+
           {spaces.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {spaces.map(s => (
@@ -188,7 +253,7 @@ export default function Dashboard(){
               ))}
             </div>
           ) : (
-            <p>No spaces found. Create one from the Spaces menu.</p>
+            <p>No spaces found. Create one to get started.</p>
           )}
         </>
       )}

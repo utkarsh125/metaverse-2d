@@ -10,6 +10,7 @@ import client from "@metaverse/db/client"
 // import client from "@metaverse/db";
 import jwt from "jsonwebtoken";
 import { spaceRouter } from "./space";
+import { userMiddleware } from "../../middleware/user";
 import { userRouter } from "./user";
 
 //any time a request comes to "/api/v1" it will be handled by this router
@@ -126,6 +127,31 @@ router.get("/avatars", async(req, res) => {
     }))})
 })
 
+
+router.get("/maps",
+    //TODO: userMiddleware, 
+    async(req, res) => {
+    const maps = await client.map.findMany({
+        select:{
+            id: true,
+            name: true,
+            thumbnail: true,
+            width: true,
+            height: true,
+        },
+    });
+
+    //normalize dimensions into string
+    const payload = maps.map(m => ({
+        id: m.id,
+        name: m.name,
+        thumbnail: m.thumbnail,
+        dimensions: `${m.width}x${m.height}`
+    }));
+    res.json({
+        maps: payload
+    })
+})
 // any request that starts with /user will be handled by userRouter
 router.use("/user", userRouter)
 // any request that starts with /space will be handled by spaceRouter

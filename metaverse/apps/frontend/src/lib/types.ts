@@ -10,3 +10,10 @@ export interface Space{
     thumbnail: string | null;
     dimensions: string;
 }
+
+export interface MapTheme {
+  id: string
+  name: string
+  thumbnail: string | null
+  dimensions: string // e.g. "1024x768"
+}
