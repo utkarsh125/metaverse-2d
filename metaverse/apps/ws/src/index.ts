@@ -1,7 +1,7 @@
 import { User } from './User';
 import { WebSocketServer } from 'ws';
 
-const wss = new WebSocketServer({ port: 3001 });
+const wss = new WebSocketServer({ port: 4000 });
 
 wss.on('connection', function connection(ws) {
 

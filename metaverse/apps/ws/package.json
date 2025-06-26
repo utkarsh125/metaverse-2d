@@ -6,7 +6,7 @@
   "scripts": {
     "build": "npx esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --tsconfig=tsconfig.json",
     "start": "node dist/index.js",
-    "dev": "npm run build && npm run start"
+    "dev": "npm run build && npm run start -p 4000"
   },
   "keywords": [],
   "author": "",

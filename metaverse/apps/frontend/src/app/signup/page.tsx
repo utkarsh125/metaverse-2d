@@ -2,7 +2,6 @@
 'use client';
 
 import { API } from '@/lib/api';
-import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
