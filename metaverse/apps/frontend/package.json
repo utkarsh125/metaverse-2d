@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.7",
     "axios": "^1.10.0",
     "gsap": "^3.13.0",
+    "jsonwebtoken": "^9.0.2",
     "next": "15.3.4",
     "pixi.js": "^8.10.2",
     "react": "^19.0.0",

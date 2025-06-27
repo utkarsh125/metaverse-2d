@@ -42,11 +42,23 @@ export class User {
                     console.log("join received")
                     const spaceId = parsedData.payload.spaceId;
                     const token = parsedData.payload.token;
-                    const userId = (jwt.verify(token, JWT_PASSWORD) as JwtPayload).userId
-                    if (!userId) {
-                        this.ws.close()
-                        return
+                    
+                    let userId: string;
+                    
+                    if (token) {
+                        // Normal authentication flow
+                        const decoded = (jwt.verify(token, JWT_PASSWORD) as JwtPayload).userId;
+                        if (!decoded) {
+                            this.ws.close()
+                            return
+                        }
+                        userId = decoded;
+                    } else {
+                        // Test mode - use a test user ID
+                        console.log("No token provided, using test mode");
+                        userId = "test-user-" + this.id;
                     }
+                    
                     console.log("join received 2")
                     this.userId = userId
                     const space = await client.space.findFirst({
@@ -95,6 +107,7 @@ export class User {
                         RoomManager.getInstance().broadcast({
                             type: "movement",
                             payload: {
+                                userId: this.userId,
                                 x: this.x,
                                 y: this.y
                             }
@@ -109,7 +122,25 @@ export class User {
                             y: this.y
                         }
                     });
-                    
+                    break;
+                case "chat":
+                    const message = parsedData.payload.message;
+                    if (message && typeof message === 'string' && message.trim().length > 0) {
+                        // Get user info from database
+                        const user = await client.user.findUnique({
+                            where: { id: this.userId }
+                        });
+                        
+                        RoomManager.getInstance().broadcast({
+                            type: "chat",
+                            payload: {
+                                userId: this.userId,
+                                username: user?.username || 'Anonymous',
+                                message: message.trim()
+                            }
+                        }, this, this.spaceId!);
+                    }
+                    break;
             }
         });
     }
