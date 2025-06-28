@@ -2,28 +2,22 @@
 
 import React, { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
-import gsap from 'gsap';
+import { gsap } from 'gsap';
 
-const TILE_SIZE = 32;
-const MAP_WIDTH = 40;
-const MAP_HEIGHT = 30;
+const TILE_SIZE = 64;
+const MAP_WIDTH = 200;
+const MAP_HEIGHT = 150;
 const CANVAS_WIDTH = TILE_SIZE * MAP_WIDTH;
 const CANVAS_HEIGHT = TILE_SIZE * MAP_HEIGHT;
-const PLAYER_SIZE = 28;
-const OBSTACLE_SIZE = 32;
+const PLAYER_SIZE = 64;
+const OBSTACLE_SIZE = 64;
 const WS_URL = 'ws://localhost:4000';
 
 // 8-bit style colors for obstacles
 const OBSTACLE_COLORS = [0x228B22, 0x8B4513, 0x4682B4, 0xFFD700];
 
-// Placeholder 8-bit player sprites (colored squares for now)
-const PLAYER_SPRITES = [0xFF6B6B, 0x4ECDC4, 0xFFD93D, 0x1A535C, 0xFFB400];
-
 function randomId() {
   return Math.random().toString(36).substring(2, 10);
-}
-function randomColor() {
-  return PLAYER_SPRITES[Math.floor(Math.random() * PLAYER_SPRITES.length)];
 }
 
 // Generate a random map with obstacles
@@ -39,40 +33,119 @@ function generateObstacles() {
   return obstacles;
 }
 
+const TIMMY_PATH = '/sprite/timmy.png';
+const TIMMY_FRAME_WIDTH = 512;
+const TIMMY_FRAME_HEIGHT = 384;
+type Dir = 'up' | 'down' | 'left' | 'right';
+
 export default function VirtualSpaceCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<PIXI.Application | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const userId = useRef(randomId());
-  const userColor = useRef(randomColor());
-  const positions = useRef<{ [id: string]: { x: number; y: number; color: number } }>({});
-  const playerGraphics = useRef<{ [id: string]: PIXI.Graphics }>({});
+  const positions = useRef<{ [id: string]: { x: number; y: number; dir: Dir; moving: boolean } }>({});
+  const playerSprites = useRef<{ [id: string]: PIXI.Sprite }>({});
   const obstacles = useRef(generateObstacles());
   const myPos = useRef({ x: Math.floor(MAP_WIDTH / 2), y: Math.floor(MAP_HEIGHT / 2) });
+  const myDir = useRef<Dir>('down');
+  const myMoving = useRef(false);
+  const lastKeyDir = useRef<Dir | null>(null);
+  const timmyTextures = useRef<{ [D in Dir]: [PIXI.Texture, PIXI.Texture] } | null>(null);
+  const walkTicker = useRef<PIXI.Ticker | null>(null);
+  const walkFrame = useRef(0);
+  const worldContainer = useRef<PIXI.Container | null>(null);
 
-  // Load 8-bit player sprite (placeholder: colored square)
-  function createPlayerSprite(color: number) {
-    const g = new PIXI.Graphics();
-    g.beginFill(color);
-    g.drawRect(-PLAYER_SIZE / 2, -PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
-    g.endFill();
-    // Add a simple face (8-bit style)
-    g.beginFill(0x000000);
-    g.drawRect(-6, -4, 4, 4); // left eye
-    g.drawRect(2, -4, 4, 4); // right eye
-    g.drawRect(-2, 4, 4, 2); // mouth
-    g.endFill();
-    return g;
+  // Helper to get viewport size
+  function getViewportSize() {
+    return { vw: window.innerWidth, vh: window.innerHeight };
   }
 
+  // Camera logic: center player, clamp to map
+  function updateCamera(animated = false) {
+    if (!appRef.current || !worldContainer.current) return;
+    const { vw, vh } = getViewportSize();
+    const centerX = Math.floor(vw / 2);
+    const centerY = Math.floor(vh / 2);
+    const player = positions.current[userId.current];
+    if (!player) return;
+    const targetX = player.x * TILE_SIZE + TILE_SIZE / 2;
+    const targetY = player.y * TILE_SIZE + TILE_SIZE / 2;
+    let offsetX = centerX - targetX;
+    let offsetY = centerY - targetY;
+    // Clamp so we don't show outside the map
+    offsetX = Math.min(0, Math.max(offsetX, vw - CANVAS_WIDTH));
+    offsetY = Math.min(0, Math.max(offsetY, vh - CANVAS_HEIGHT));
+    if (animated) {
+      gsap.to(worldContainer.current.position, { x: offsetX, y: offsetY, duration: 0.3, ease: 'expo.out', overwrite: 'auto' });
+    } else {
+      worldContainer.current.position.set(offsetX, offsetY);
+    }
+  }
+
+  // Load Timmy sprite sheet and slice textures
+  useEffect(() => {
+    const loadTextures = async () => {
+      try {
+        console.log('Loading Timmy sprite from:', TIMMY_PATH);
+        const base = await PIXI.Assets.load(TIMMY_PATH);
+        console.log('Timmy sprite loaded successfully:', base);
+        
+        // For 4 rows (directions), 2 columns (frames)
+        const getFrame = (row: number, col: number) => {
+          return new PIXI.Texture({
+            source: base.source,
+            frame: new PIXI.Rectangle(
+              col * TIMMY_FRAME_WIDTH,
+              row * TIMMY_FRAME_HEIGHT,
+              TIMMY_FRAME_WIDTH,
+              TIMMY_FRAME_HEIGHT
+            )
+          });
+        };
+        
+        timmyTextures.current = {
+          up:    [getFrame(0, 0), getFrame(0, 1)],
+          down:  [getFrame(1, 0), getFrame(1, 1)],
+          left:  [getFrame(2, 0), getFrame(2, 1)],
+          right: [getFrame(3, 0), getFrame(3, 1)],
+        };
+        
+        console.log('Timmy textures created:', timmyTextures.current);
+        
+        // Redraw players after textures load
+        if (appRef.current) {
+          // Update all existing player sprites to use Timmy texture
+          Object.entries(playerSprites.current).forEach(([id, sprite]) => {
+            const pos = positions.current[id];
+            if (pos && timmyTextures.current) {
+              const newTexture = timmyTextures.current[pos.dir][pos.moving ? 1 : 0];
+              if (sprite.texture !== newTexture) {
+                console.log('Updating sprite texture for', id, 'to Timmy texture');
+                sprite.texture = newTexture;
+              }
+            } else {
+              console.log('Timmy textures not set or no pos for', id);
+            }
+          });
+          drawPlayers();
+        }
+      } catch (error) {
+        console.error('Failed to load Timmy sprite:', error);
+        // Fallback to colored square
+        timmyTextures.current = null;
+      }
+    };
+    loadTextures();
+  }, []);
+
   // Draw the map (background, grid, obstacles)
-  function drawMap(stage: PIXI.Container) {
+  function drawMap(container: PIXI.Container) {
     // Background
     const bg = new PIXI.Graphics();
     bg.beginFill(0x222222);
     bg.drawRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     bg.endFill();
-    stage.addChild(bg);
+    container.addChild(bg);
     // Grid
     const grid = new PIXI.Graphics();
     grid.lineStyle(1, 0x333333, 0.5);
@@ -84,7 +157,7 @@ export default function VirtualSpaceCanvas() {
       grid.moveTo(0, y * TILE_SIZE);
       grid.lineTo(CANVAS_WIDTH, y * TILE_SIZE);
     }
-    stage.addChild(grid);
+    container.addChild(grid);
     // Obstacles
     for (const obs of obstacles.current) {
       const o = new PIXI.Graphics();
@@ -94,13 +167,13 @@ export default function VirtualSpaceCanvas() {
       // 8-bit style: add a black border
       o.lineStyle(2, 0x000000);
       o.drawRect(obs.x * TILE_SIZE, obs.y * TILE_SIZE, OBSTACLE_SIZE, OBSTACLE_SIZE);
-      stage.addChild(o);
+      container.addChild(o);
     }
     // Border
     const border = new PIXI.Graphics();
     border.lineStyle(4, 0xFFD700);
     border.drawRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    stage.addChild(border);
+    container.addChild(border);
   }
 
   // Collision detection
@@ -110,45 +183,121 @@ export default function VirtualSpaceCanvas() {
   }
 
   // Draw all players
-  function drawPlayers() {
-    if (!appRef.current) return;
-    const stage = appRef.current.stage;
-    // Remove all player sprites
-    Object.values(playerGraphics.current).forEach((sprite) => stage.removeChild(sprite));
-    playerGraphics.current = {};
+  function drawPlayers(animatedMoveId: string | null = null) {
+    if (!appRef.current || !worldContainer.current) return;
+    const container = worldContainer.current;
+    // Track which sprites are still in use
+    const usedSprites: { [id: string]: boolean } = {};
     // Draw each player
-    Object.entries(positions.current).forEach(([id, { x, y, color }]) => {
-      const sprite = createPlayerSprite(color);
-      sprite.x = x * TILE_SIZE + TILE_SIZE / 2;
-      sprite.y = y * TILE_SIZE + TILE_SIZE / 2;
-      stage.addChild(sprite);
-      playerGraphics.current[id] = sprite;
-      // Label
-      const label = new PIXI.Text(id === userId.current ? 'You' : id, { fontSize: 12, fill: 0xffffff });
-      label.anchor.set(0.5, 0);
-      label.y = PLAYER_SIZE / 2 + 2;
-      sprite.addChild(label);
+    Object.entries(positions.current).forEach(([id, { x, y, dir, moving }]) => {
+      let sprite = playerSprites.current[id];
+      const targetX = x * TILE_SIZE + TILE_SIZE / 2;
+      const targetY = y * TILE_SIZE + TILE_SIZE / 2;
+      // Create sprite if it doesn't exist
+      if (!sprite) {
+        if (timmyTextures.current) {
+          sprite = new PIXI.Sprite(timmyTextures.current[dir][moving ? 1 : 0]);
+          sprite.width = PLAYER_SIZE;
+          sprite.height = PLAYER_SIZE;
+        } else {
+          sprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+          sprite.tint = 0x00ff00;
+          sprite.width = PLAYER_SIZE;
+          sprite.height = PLAYER_SIZE;
+        }
+        sprite.anchor.set(0.5);
+        // Add label
+        const label = new PIXI.Text(id === userId.current ? 'You' : id, { fontSize: 12, fill: 0xffffff });
+        label.anchor.set(0.5, 0);
+        label.y = PLAYER_SIZE / 2 + 2;
+        sprite.addChild(label);
+        container.addChild(sprite);
+        playerSprites.current[id] = sprite;
+        // Set initial position
+        sprite.x = targetX;
+        sprite.y = targetY;
+        console.log('Created sprite for', id, 'at', targetX, targetY);
+      } else {
+        // Remove duplicate labels if any
+        while (sprite.children.length > 0) sprite.removeChild(sprite.children[0]);
+        // Add label again
+        const label = new PIXI.Text(id === userId.current ? 'You' : id, { fontSize: 12, fill: 0xffffff });
+        label.anchor.set(0.5, 0);
+        label.y = PLAYER_SIZE / 2 + 2;
+        sprite.addChild(label);
+        // Update texture if needed
+        if (timmyTextures.current) {
+          const newTexture = timmyTextures.current[dir][moving ? 1 : 0];
+          if (sprite.texture !== newTexture) {
+            sprite.texture = newTexture;
+          }
+        }
+        // Animate movement if local player and moving
+        if (id === userId.current && animatedMoveId === id) {
+          gsap.to(sprite, {
+            x: targetX,
+            y: targetY,
+            duration: 0.3,
+            ease: 'expo.out',
+            overwrite: 'auto',
+          });
+        } else {
+          sprite.x = targetX;
+          sprite.y = targetY;
+        }
+        // Ensure sprite is in container
+        if (!container.children.includes(sprite)) {
+          container.addChild(sprite);
+        }
+        playerSprites.current[id] = sprite;
+      }
+      usedSprites[id] = true;
     });
+    // Remove sprites for players no longer present
+    Object.keys(playerSprites.current).forEach((id) => {
+      if (!usedSprites[id]) {
+        container.removeChild(playerSprites.current[id]);
+        delete playerSprites.current[id];
+      }
+    });
+    // After drawing, update camera
+    updateCamera(animatedMoveId === userId.current);
   }
 
-  // Animate player movement with GSAP
-  function animatePlayerMove(id: string, toX: number, toY: number) {
-    const sprite = playerGraphics.current[id];
-    if (!sprite) return;
-    gsap.to(sprite, {
-      x: toX * TILE_SIZE + TILE_SIZE / 2,
-      y: toY * TILE_SIZE + TILE_SIZE / 2,
-      duration: 0.18,
-      ease: 'power2.out',
-    });
+  // Animate local player walk
+  function animateLocalPlayerWalk() {
+    if (!timmyTextures.current) return;
+    if (!playerSprites.current[userId.current]) return;
+    if (!walkTicker.current) {
+      walkTicker.current = new PIXI.Ticker();
+      walkTicker.current.add(() => {
+        walkFrame.current = (walkFrame.current + 0.15) % 2;
+        const sprite = playerSprites.current[userId.current];
+        if (sprite && timmyTextures.current) sprite.texture = timmyTextures.current[myDir.current][Math.floor(walkFrame.current)];
+      });
+      walkTicker.current.start();
+    }
+  }
+  function stopLocalPlayerWalk() {
+    if (walkTicker.current) {
+      walkTicker.current.stop();
+      walkTicker.current.destroy();
+      walkTicker.current = null;
+      walkFrame.current = 0;
+    }
+    if (timmyTextures.current && playerSprites.current[userId.current]) {
+      playerSprites.current[userId.current].texture = timmyTextures.current[myDir.current][0];
+    }
   }
 
   // Setup PixiJS
   useEffect(() => {
+    let handleResize: (() => void) | null = null;
     const setup = async () => {
+      const { vw, vh } = getViewportSize();
       const app = new PIXI.Application({
-        width: CANVAS_WIDTH,
-        height: CANVAS_HEIGHT,
+        width: vw,
+        height: vh,
         backgroundColor: 0x222222,
         antialias: false,
         resolution: window.devicePixelRatio || 1,
@@ -158,14 +307,40 @@ export default function VirtualSpaceCanvas() {
       if (canvasRef.current) {
         canvasRef.current.innerHTML = '';
         canvasRef.current.appendChild(app.view);
+        // Make canvas responsive
+        app.view.style.width = '100vw';
+        app.view.style.height = '100vh';
+        app.view.style.display = 'block';
+        app.view.style.margin = 'auto';
       }
-      // Draw map
-      drawMap(app.stage);
+      // Create world container and add to stage
+      worldContainer.current = new PIXI.Container();
+      app.stage.addChild(worldContainer.current);
+      // Initialize local player position
+      positions.current[userId.current] = {
+        x: myPos.current.x,
+        y: myPos.current.y,
+        dir: myDir.current,
+        moving: false
+      };
+      // Draw map and players in worldContainer
+      drawMap(worldContainer.current);
       drawPlayers();
+      // Listen for resize to update app size and camera
+      handleResize = () => {
+        if (appRef.current) {
+          const { vw, vh } = getViewportSize();
+          appRef.current.renderer.resize(vw, vh);
+          updateCamera();
+        }
+      };
+      window.addEventListener('resize', handleResize);
     };
     setup();
     return () => {
       appRef.current?.destroy(true);
+      stopLocalPlayerWalk();
+      if (handleResize) window.removeEventListener('resize', handleResize);
     };
     // eslint-disable-next-line
   }, []);
@@ -177,24 +352,37 @@ export default function VirtualSpaceCanvas() {
     ws.onopen = () => {
       ws.send(JSON.stringify({
         type: 'join',
-        payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, color: userColor.current }
+        payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: false }
       }));
     };
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
+      console.log('WebSocket message:', msg);
       if (msg.type === 'state') {
+        // Ensure all players have dir and moving
+        Object.entries(msg.payload).forEach(([, pos]) => {
+          const p = pos as { x: number; y: number; dir?: Dir; moving?: boolean };
+          if (!('dir' in p)) p.dir = 'down';
+          if (!('moving' in p)) p.moving = false;
+        });
         positions.current = msg.payload;
         drawPlayers();
       } else if (msg.type === 'move') {
-        const { userId: uid, x, y } = msg.payload;
+        const { userId: uid, x, y, dir, moving } = msg.payload;
         if (!positions.current[uid]) return;
-        // Animate movement
-        animatePlayerMove(uid, x, y);
         positions.current[uid].x = x;
         positions.current[uid].y = y;
+        positions.current[uid].dir = dir || 'down';
+        positions.current[uid].moving = moving ?? false;
+        drawPlayers();
       } else if (msg.type === 'join') {
-        const { userId: uid, x, y, color } = msg.payload;
-        positions.current[uid] = { x, y, color };
+        const { userId: uid, x, y, dir, moving } = msg.payload;
+        positions.current[uid] = {
+          x,
+          y,
+          dir: dir || 'down',
+          moving: moving ?? false
+        };
         drawPlayers();
       } else if (msg.type === 'leave') {
         const { userId: uid } = msg.payload;
@@ -210,37 +398,80 @@ export default function VirtualSpaceCanvas() {
     // eslint-disable-next-line
   }, []);
 
-  // Handle movement
+  // Handle movement and facing
   useEffect(() => {
-    function move(dx: number, dy: number) {
-      const newX = myPos.current.x + dx;
-      const newY = myPos.current.y + dy;
+    function moveOrFace(dir: Dir) {
+      if (myDir.current !== dir) {
+        myDir.current = dir;
+        myMoving.current = false;
+        lastKeyDir.current = dir;
+        // Only change facing, don't move
+        positions.current[userId.current] = {
+          x: myPos.current.x,
+          y: myPos.current.y,
+          dir: myDir.current,
+          moving: false
+        };
+        stopLocalPlayerWalk();
+        drawPlayers();
+        updateCamera();
+        // Send facing update
+        if (wsRef.current && wsRef.current.readyState === 1) {
+          wsRef.current.send(JSON.stringify({
+            type: 'move',
+            payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: false }
+          }));
+        }
+        return;
+      }
+      // If already facing, move
+      const newX = myPos.current.x + (dir === 'right' ? 1 : dir === 'left' ? -1 : 0);
+      const newY = myPos.current.y + (dir === 'down' ? 1 : dir === 'up' ? -1 : 0);
       if (isBlocked(newX, newY)) return;
       myPos.current.x = newX;
       myPos.current.y = newY;
+      myDir.current = dir;
+      myMoving.current = true;
       positions.current[userId.current] = {
         x: myPos.current.x,
         y: myPos.current.y,
-        color: userColor.current
+        dir: myDir.current,
+        moving: true
       };
-      animatePlayerMove(userId.current, myPos.current.x, myPos.current.y);
+      animateLocalPlayerWalk();
+      drawPlayers(userId.current);
       // Send move to server
       if (wsRef.current && wsRef.current.readyState === 1) {
         wsRef.current.send(JSON.stringify({
           type: 'move',
-          payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y }
+          payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: true }
         }));
       }
+      setTimeout(() => {
+        myMoving.current = false;
+        positions.current[userId.current].moving = false;
+        stopLocalPlayerWalk();
+        drawPlayers();
+        updateCamera();
+        if (wsRef.current && wsRef.current.readyState === 1) {
+          wsRef.current.send(JSON.stringify({
+            type: 'move',
+            payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: false }
+          }));
+        }
+      }, 180);
     }
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement && (document.activeElement as HTMLElement).tagName === 'INPUT') return;
+      let dir: Dir | null = null;
       switch (e.key.toLowerCase()) {
-        case 'w': case 'arrowup': move(0, -1); break;
-        case 's': case 'arrowdown': move(0, 1); break;
-        case 'a': case 'arrowleft': move(-1, 0); break;
-        case 'd': case 'arrowright': move(1, 0); break;
+        case 'w': case 'arrowup': dir = 'up'; break;
+        case 's': case 'arrowdown': dir = 'down'; break;
+        case 'a': case 'arrowleft': dir = 'left'; break;
+        case 'd': case 'arrowright': dir = 'right'; break;
         default: break;
       }
+      if (dir) moveOrFace(dir);
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -252,15 +483,17 @@ export default function VirtualSpaceCanvas() {
       <div
         ref={canvasRef}
         style={{
-          width: '100%',
-          maxWidth: CANVAS_WIDTH,
-          height: '100%',
-          maxHeight: CANVAS_HEIGHT,
+          width: '100vw',
+          height: '100vh',
+          maxWidth: '100vw',
+          maxHeight: '100vh',
           aspectRatio: `${CANVAS_WIDTH} / ${CANVAS_HEIGHT}`,
           margin: 'auto',
           boxShadow: '0 0 32px #0008',
           borderRadius: 16,
           background: '#111',
+          imageRendering: 'pixelated',
+          overflow: 'hidden',
         }}
       />
     </div>

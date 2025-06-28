@@ -49,9 +49,9 @@ export class User {
                         // Normal authentication flow
                         const decoded = (jwt.verify(token, JWT_PASSWORD) as JwtPayload).userId;
                         if (!decoded) {
-                            this.ws.close()
-                            return
-                        }
+                        this.ws.close()
+                        return
+                    }
                         userId = decoded;
                     } else {
                         // Test mode - use a test user ID
