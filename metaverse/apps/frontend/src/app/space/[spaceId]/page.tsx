@@ -1,123 +1,83 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import VirtualSpaceCanvas from '../../../../components/virtual-space-canvas';
-import { Space } from '../../../lib/types';
+import MetaverseSpace from '../../../components/MetaverseSpace';
+import { Space, User } from '../../../lib/types';
 
 export default function SpacePage() {
   const params = useParams();
   const spaceId = params.spaceId as string;
-  const [token, setToken] = useState<string | null>(null);
+  
   const [space, setSpace] = useState<Space | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const initializeSpace = async () => {
+    const fetchData = async () => {
       try {
-        // Get token from localStorage
-        const storedToken = localStorage.getItem('token');
-        
-        if (storedToken) {
-          console.log('Token found:', storedToken.substring(0, 20) + '...');
-          setToken(storedToken);
-        } else {
-          console.log('No token found, proceeding in test mode');
-          setToken('test-token');
+        // Fetch current user
+        const userResponse = await fetch('/api/v1/user/me');
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch user data');
         }
+        const userData = await userResponse.json();
+        setCurrentUser(userData);
 
-        // Fetch space details
-        const headers: Record<string, string> = {};
-        if (storedToken) {
-          headers['Authorization'] = `Bearer ${storedToken}`;
+        // Fetch space data
+        const spaceResponse = await fetch(`/api/v1/space/${spaceId}`);
+        if (!spaceResponse.ok) {
+          throw new Error('Failed to fetch space data');
         }
-        
-        const response = await fetch(`/api/v1/space/${spaceId}`, { headers });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('API Error:', errorData);
-          throw new Error(errorData.error || 'Failed to load space');
-        }
-
-        const spaceData = await response.json();
+        const spaceData = await spaceResponse.json();
         setSpace(spaceData);
+
+        setLoading(false);
       } catch (err) {
-        console.error('Space initialization error:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load space');
-      } finally {
-        setIsLoading(false);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setLoading(false);
       }
     };
 
     if (spaceId) {
-      initializeSpace();
+      fetchData();
     }
   }, [spaceId]);
 
-  const handleError = (errorMessage: string) => {
-    setError(errorMessage);
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-lg">Loading space...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="flex items-center justify-center h-screen bg-gray-100">
         <div className="text-center">
-          <div className="text-red-500 text-lg mb-4">{error}</div>
-          <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Go Back
-          </button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading space...</p>
         </div>
       </div>
     );
   }
 
-  if (!token || !space) {
+  if (error || !space || !currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <div className="text-white text-lg">Invalid space or authentication</div>
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-600">{error || 'Space or user data not found'}</p>
+          <a 
+            href="/dashboard" 
+            className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Back to Dashboard
+          </a>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
-      {/* Header */}
-      <div className="bg-gray-800 text-white p-4 border-b border-gray-700">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold">{space.name}</h1>
-            <p className="text-gray-400 text-sm">Space ID: {spaceId}</p>
-          </div>
-          <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-          >
-            Exit Space
-          </button>
-        </div>
-      </div>
-
-      {/* Virtual Space Canvas */}
-      <div className="flex-1 h-[calc(100vh-80px)]">
-        <VirtualSpaceCanvas
-          spaceId={spaceId}
-          token={token}
-          onError={handleError}
-        />
-      </div>
-    </div>
+    <MetaverseSpace
+      space={space}
+      userId={currentUser.id}
+      username={currentUser.username}
+    />
   );
 }

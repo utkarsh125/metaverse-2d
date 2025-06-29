@@ -23,6 +23,9 @@ model User {
   role     Role
   Space    Space[]
   avatar   Avatar?  @relation(fields: [avatarId], references: [id])
+  // Team invites
+  sentInvites     SpaceInvite[] @relation("Inviter")
+  receivedInvites SpaceInvite[] @relation("Invitee")
 }
 
 model Space {
@@ -34,6 +37,25 @@ model Space {
   creatorId String
   creator   User            @relation(fields: [creatorId], references: [id])
   elements  spaceElements[]
+  invites   SpaceInvite[]
+  // Map reference
+  mapId     String?
+  map       Map?            @relation(fields: [mapId], references: [id])
+}
+
+// Team invites for spaces
+model SpaceInvite {
+  id        String   @id @unique @default(cuid())
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  inviterId String
+  inviter   User     @relation("Inviter", fields: [inviterId], references: [id])
+  inviteeId String
+  invitee   User     @relation("Invitee", fields: [inviteeId], references: [id])
+  status    InviteStatus @default(PENDING)
+  createdAt DateTime @default(now())
+  
+  @@unique([spaceId, inviteeId])
 }
 
 model spaceElements {
@@ -52,6 +74,8 @@ model Element {
   height      Int
   static      Boolean
   imageUrl    String
+  collisionZone String @default("full") // none, full, top, bottom, left, right, center, corners, custom
+  collisionMask String? // Base64 encoded collision mask for custom patterns
   spaces      spaceElements[]
   mapElements MapElements[]
 }
@@ -61,8 +85,12 @@ model Map {
   width       Int
   height      Int
   name        String
-  thumbnail   String
+  thumbnail   String?
+  description String?
+  isPublic    Boolean       @default(false)
+  creatorId   String?
   mapElements MapElements[]
+  spaces      Space[]
 }
 
 model MapElements {
@@ -85,4 +113,10 @@ model Avatar {
 enum Role {
   Admin
   User
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }

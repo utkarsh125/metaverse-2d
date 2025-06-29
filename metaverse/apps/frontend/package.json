@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixi/tilemap": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.7",
     "axios": "^1.10.0",
     "gsap": "^3.13.0",

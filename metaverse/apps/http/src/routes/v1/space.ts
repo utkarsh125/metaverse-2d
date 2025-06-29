@@ -3,6 +3,8 @@ import { AddElementSchema, CreateElementSchema, CreateSpaceSchema, deleteElement
 import { Router } from "express";
 import client from "@metaverse/db/client"
 import { userMiddleware } from "../../middleware/user";
+import { prisma } from "../../config";
+import { z } from "zod";
 
 export const spaceRouter = Router();
 
@@ -318,3 +320,151 @@ spaceRouter.get("/:spaceId", async(req, res) => {
         }))
     })
 })
+
+// Team invite routes
+const InviteUserSchema = z.object({
+  spaceId: z.string(),
+  inviteeUsername: z.string(),
+});
+
+// Invite a user to a space
+spaceRouter.post("/invite", async (req, res) => {
+  try {
+    const parsedData = InviteUserSchema.safeParse(req.body);
+    if (!parsedData.success) {
+      return res.status(400).json({ error: "Invalid data", details: parsedData.error });
+    }
+
+    const { spaceId, inviteeUsername } = parsedData.data;
+    const inviterId = req.userId;
+
+    if (!inviterId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    // Check if user owns the space
+    const space = await client.space.findUnique({
+      where: { id: spaceId },
+    });
+
+    if (!space || space.creatorId !== inviterId) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    // Find the invitee by username
+    const invitee = await client.user.findUnique({
+      where: { username: inviteeUsername },
+    });
+
+    if (!invitee) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (invitee.id === inviterId) {
+      return res.status(400).json({ error: "Cannot invite yourself" });
+    }
+
+    // Check if invite already exists
+    const existingInvite = await client.spaceInvite.findUnique({
+      where: {
+        spaceId_inviteeId: {
+          spaceId,
+          inviteeId: invitee.id,
+        },
+      },
+    });
+
+    if (existingInvite) {
+      return res.status(400).json({ error: "Invite already exists" });
+    }
+
+    // Create the invite
+    const invite = await client.spaceInvite.create({
+      data: {
+        spaceId,
+        inviterId,
+        inviteeId: invitee.id,
+      },
+      include: {
+        space: true,
+        inviter: true,
+        invitee: true,
+      },
+    });
+
+    res.json(invite);
+  } catch (error) {
+    console.error("Error inviting user:", error);
+    res.status(500).json({ error: "Failed to invite user" });
+  }
+});
+
+// Accept/decline an invite
+spaceRouter.put("/invite/:inviteId", async (req, res) => {
+  try {
+    const { inviteId } = req.params;
+    const { status } = req.body; // 'ACCEPTED' or 'DECLINED'
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    if (!['ACCEPTED', 'DECLINED'].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const invite = await client.spaceInvite.findUnique({
+      where: { id: inviteId },
+    });
+
+    if (!invite || invite.inviteeId !== userId) {
+      return res.status(404).json({ error: "Invite not found" });
+    }
+
+    const updatedInvite = await client.spaceInvite.update({
+      where: { id: inviteId },
+      data: { status },
+      include: {
+        space: true,
+        inviter: true,
+        invitee: true,
+      },
+    });
+
+    res.json(updatedInvite);
+  } catch (error) {
+    console.error("Error updating invite:", error);
+    res.status(500).json({ error: "Failed to update invite" });
+  }
+});
+
+// Get user's invites
+spaceRouter.get("/invites/me", async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: "User not authenticated" });
+    }
+
+    const invites = await client.spaceInvite.findMany({
+      where: {
+        inviteeId: userId,
+        status: 'PENDING',
+      },
+      include: {
+        space: true,
+        inviter: true,
+        invitee: true,
+      },
+    });
+
+    res.json(invites);
+  } catch (error) {
+    console.error("Error fetching invites:", error);
+    res.status(500).json({ error: "Failed to fetch invites" });
+  }
+});
+
+export default spaceRouter;

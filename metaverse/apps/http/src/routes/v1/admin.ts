@@ -113,7 +113,7 @@ adminRouter.post("/map", async (req, res) => {
   try {
     const parsedData = CreateMapSchema.safeParse(req.body);
 
-    console.log("True/False:", parsedData.success);
+    // console.log("True/False:", parsedData.success);
 
     if (!parsedData.success) {
       console.log("Admin Endpoint /map: ", parsedData);

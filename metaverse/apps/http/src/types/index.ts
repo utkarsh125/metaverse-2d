@@ -39,6 +39,7 @@ export const CreateElementSchema = z.object({
     width: z.number(),
     height: z.number(),
     static: z.boolean(),
+    collisionZone: z.enum(['none', 'full', 'top', 'bottom', 'left', 'right', 'center', 'corners', 'custom']).optional().default('full'),
 })
 
 export const UpdateElementSchema = z.object({

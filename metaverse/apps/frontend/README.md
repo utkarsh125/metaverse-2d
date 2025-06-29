@@ -4,7 +4,7 @@ This is the frontend application for the Metaverse 2D project, built with Next.j
 
 ## Features
 
-- **Virtual Space Canvas**: A multiplayer 2D virtual space using PixiJS
+- **Virtual Space Canvas**: A multiplayer 2D virtual space using ~~PixiJS~~ or Phaser (TBD)
 - **Real-time Communication**: WebSocket-based chat and movement synchronization
 - **User Authentication**: JWT-based authentication system
 - **Responsive Design**: Modern UI with Tailwind CSS

@@ -1,11 +1,12 @@
 "use client"
 
-import type { Avatar, MapTheme, Space } from "@/lib/types"
+import type { Avatar, MapTheme, Space, SpaceInvite, User } from "@/lib/types"
 import { useEffect, useRef, useState } from "react"
 
 import { API } from "@/lib/api"
 import { gsap } from "gsap"
 import { useRouter } from "next/navigation"
+import TeamInviteModal from '../../components/TeamInviteModal'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -17,6 +18,8 @@ export default function DashboardPage() {
   const [avatars, setAvatars] = useState<Avatar[]>([])
   const [maps, setMaps] = useState<MapTheme[]>([])
   const [spaces, setSpaces] = useState<Space[]>([])
+  const [invites, setInvites] = useState<SpaceInvite[]>([])
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
 
   // onboarding step (1 = avatar, 2 = map + name)
   const [step, setStep] = useState<1 | 2>(1)
@@ -32,8 +35,10 @@ export default function DashboardPage() {
 
   // control
   const [onboarded, setOnboarded] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [selectedSpaceId, setSelectedSpaceId] = useState<string>('')
 
   // GSAP animations
   useEffect(() => {
@@ -167,6 +172,84 @@ export default function DashboardPage() {
     setOnboarded(false)
     setStep(2)
     setError(null)
+  }
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch current user
+        const userResponse = await fetch('/api/v1/user/me')
+        if (userResponse.ok) {
+          const userData = await userResponse.json()
+          setCurrentUser(userData)
+        }
+
+        // Fetch spaces
+        const spacesResponse = await fetch('/api/v1/space/all')
+        if (spacesResponse.ok) {
+          const spacesData = await spacesResponse.json()
+          setSpaces(spacesData.spaces || [])
+        }
+
+        // Fetch invites
+        const invitesResponse = await fetch('/api/v1/space/invites/me')
+        if (invitesResponse.ok) {
+          const invitesData = await invitesResponse.json()
+          setInvites(invitesData)
+        }
+
+        setLoading(false)
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error)
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const handleInviteResponse = async (inviteId: string, status: 'ACCEPTED' | 'DECLINED') => {
+    try {
+      const response = await fetch(`/api/v1/space/invite/${inviteId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      })
+
+      if (response.ok) {
+        // Remove the invite from the list
+        setInvites(prev => prev.filter(invite => invite.id !== inviteId))
+        
+        // If accepted, refresh spaces list
+        if (status === 'ACCEPTED') {
+          const spacesResponse = await fetch('/api/v1/space/all')
+          if (spacesResponse.ok) {
+            const spacesData = await spacesResponse.json()
+            setSpaces(spacesData.spaces || [])
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error responding to invite:', error)
+    }
+  }
+
+  const handleInviteSent = (invite: SpaceInvite) => {
+    // You could show a success message here
+    console.log('Invite sent:', invite)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -480,6 +563,13 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      <TeamInviteModal
+        spaceId={selectedSpaceId}
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onInviteSent={handleInviteSent}
+      />
     </div>
   )
 }
