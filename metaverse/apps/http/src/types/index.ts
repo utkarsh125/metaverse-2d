@@ -55,6 +55,7 @@ export const CreateMapSchema = z.object({
     thumbnail: z.string(),
     dimensions: z.string().regex(/^[0-9]{1,4}x[0-9]{1,4}$/), //regex for dimensions.
     name: z.string(),
+    tiledMapFile: z.string(),
     defaultElements: z.array(z.object({
         elementId: z.string(),
         x: z.number(),

@@ -76,17 +76,6 @@ export default function DashboardPage() {
     }
   }, [spaces])
 
-  // fetch spaces helper
-  const fetchSpaces = async (): Promise<void> => {
-    try {
-      const res = await API.get<{ spaces: Space[] }>("/api/v1/space/all")
-      setSpaces(res.data.spaces)
-      setHasSpaces(res.data.spaces.length > 0)
-    } catch (err) {
-      console.error("Could not load spaces", err)
-    }
-  }
-
   // initial data & profile fetch
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -96,6 +85,7 @@ export default function DashboardPage() {
     }
     API.defaults.headers.common["Authorization"] = `Bearer ${token}`
 
+    // Fetch all required data using API instance only
     API.get<{ avatarId: string | null }>("/api/v1/user/metadata")
       .then((res) => setHasAvatar(!!res.data.avatarId))
       .catch(console.error)
@@ -108,7 +98,22 @@ export default function DashboardPage() {
       .then((res) => setMaps(res.data.maps))
       .catch(console.error)
 
-    fetchSpaces()
+    API.get<{ spaces: Space[] }>("/api/v1/space/all")
+      .then((res) => {
+        setSpaces(res.data.spaces)
+        setHasSpaces(res.data.spaces.length > 0)
+      })
+      .catch(console.error)
+
+    API.get<User>("/api/v1/user/me")
+      .then((res) => setCurrentUser(res.data))
+      .catch(console.error)
+
+    API.get<SpaceInvite[]>("/api/v1/space/invites/me")
+      .then((res) => setInvites(res.data))
+      .catch(console.error)
+
+    setLoading(false)
   }, [router])
 
   // determine onboarding state
@@ -152,7 +157,11 @@ export default function DashboardPage() {
         mapId: selectedMap,
         dimensions: mapObj.dimensions,
       })
-      await fetchSpaces()
+      await API.get<{ spaces: Space[] }>("/api/v1/space/all")
+        .then((res) => {
+          setSpaces(res.data.spaces)
+          setHasSpaces(res.data.spaces.length > 0)
+        })
       setOnboarded(true)
       setSpaceName("")
       setSelectedMap("")
@@ -174,61 +183,21 @@ export default function DashboardPage() {
     setError(null)
   }
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch current user
-        const userResponse = await fetch('/api/v1/user/me')
-        if (userResponse.ok) {
-          const userData = await userResponse.json()
-          setCurrentUser(userData)
-        }
-
-        // Fetch spaces
-        const spacesResponse = await fetch('/api/v1/space/all')
-        if (spacesResponse.ok) {
-          const spacesData = await spacesResponse.json()
-          setSpaces(spacesData.spaces || [])
-        }
-
-        // Fetch invites
-        const invitesResponse = await fetch('/api/v1/space/invites/me')
-        if (invitesResponse.ok) {
-          const invitesData = await invitesResponse.json()
-          setInvites(invitesData)
-        }
-
-        setLoading(false)
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error)
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
-
   const handleInviteResponse = async (inviteId: string, status: 'ACCEPTED' | 'DECLINED') => {
     try {
-      const response = await fetch(`/api/v1/space/invite/${inviteId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      })
-
-      if (response.ok) {
+      const response = await API.put("/api/v1/space/invite/" + inviteId, { status })
+  
+      if (response.status === 200) {
         // Remove the invite from the list
         setInvites(prev => prev.filter(invite => invite.id !== inviteId))
         
         // If accepted, refresh spaces list
         if (status === 'ACCEPTED') {
-          const spacesResponse = await fetch('/api/v1/space/all')
-          if (spacesResponse.ok) {
-            const spacesData = await spacesResponse.json()
-            setSpaces(spacesData.spaces || [])
-          }
+          await API.get<{ spaces: Space[] }>("/api/v1/space/all")
+            .then((res) => {
+              setSpaces(res.data.spaces)
+              setHasSpaces(res.data.spaces.length > 0)
+            })
         }
       }
     } catch (error) {
@@ -251,6 +220,9 @@ export default function DashboardPage() {
       </div>
     )
   }
+
+  // Add this debug log before the return statement
+  console.log('[DEBUG] Spaces to render:', spaces);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-gray-100">

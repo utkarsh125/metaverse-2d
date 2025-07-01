@@ -12,16 +12,20 @@ export const spaceRouter = Router();
 // and /space is handled by routes/v1
 spaceRouter.post("/", userMiddleware, async(req, res) => {
 
-    // console.log("CONTROL REACHED '/' endpoint space.ts")
+    console.log("[DEBUG] userId:", req.userId);
+    console.log("[DEBUG] req.body:", req.body);
 
     const parsedData = CreateSpaceSchema.safeParse(req.body)
 
     if (!parsedData.success) {
+        console.log("[DEBUG] Validation failed:", parsedData.error);
         res.status(400).json({
             message: "Validation Failed"
         })
         return
     }
+
+    console.log("[DEBUG] parsedData:", parsedData.data);
 
     //if parsedData.data.mapId doesn't exists (no space so create one)
     //if the user wants a specific map -> if not then make an empty space for space it
@@ -35,6 +39,7 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
                 thumbnail: null,
             }
         });
+        console.log("[DEBUG] Created space (no map):", space);
         res.json({spaceId: space.id})
         return;
     }
@@ -51,17 +56,15 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
         }
     })
 
-    // console.log("after")
-
     if(!map){
-        //if map doesn't exist then
+        console.log("[DEBUG] Map not found for mapId:", parsedData.data.mapId);
         res.status(400).json({
             message:"Map not found"
         })
         return;
     }
 
-    console.log("map.mapElements.length: ", map.mapElements.length)
+    console.log("[DEBUG] map.mapElements.length:", map.mapElements.length)
 
     let space = await client.$transaction(async() => {
         const space = await client.space.create({
@@ -74,7 +77,6 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
             }
         })
 
-
         await client.spaceElements.createMany({
             data: map.mapElements.map(e => ({
                 spaceId: space.id,
@@ -86,6 +88,8 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
 
         return space;
     });
+
+    console.log("[DEBUG] Created space (with map):", space);
 
     res.json({
         spaceId: space.id
@@ -440,7 +444,8 @@ spaceRouter.put("/invite/:inviteId", async (req, res) => {
 });
 
 // Get user's invites
-spaceRouter.get("/invites/me", async (req, res) => {
+spaceRouter.get("/invites/me", userMiddleware, async (req, res) => {
+    console.log("Control Reached /invites/me")
   try {
     const userId = req.userId;
 

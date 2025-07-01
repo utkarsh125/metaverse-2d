@@ -5,6 +5,20 @@ import { userMiddleware } from "../../middleware/user";
 
 export const userRouter = Router();
 
+userRouter.get("/me", userMiddleware, async (req, res) => {
+    const user = await client.user.findUnique({
+        where: {
+            id: req.userId!
+        }
+    })
+
+    if(!user){
+        return res.status(404).json({message: "User not found"});
+    }
+
+    res.json(user);
+});
+
 userRouter.get("/metadata", userMiddleware, async (req, res) => {
   const u = await client.user.findUnique({
     where: { id: req.userId! },

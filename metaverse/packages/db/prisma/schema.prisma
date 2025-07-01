@@ -91,6 +91,7 @@ model Map {
   creatorId   String?
   mapElements MapElements[]
   spaces      Space[]
+  tiledMapFile  String?
 }
 
 model MapElements {
