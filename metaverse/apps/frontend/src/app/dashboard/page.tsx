@@ -157,6 +157,8 @@ export default function DashboardPage() {
         mapId: selectedMap,
         dimensions: mapObj.dimensions,
       })
+
+      console.log(`created space with mapId: ${selectedMap}`)
       await API.get<{ spaces: Space[] }>("/api/v1/space/all")
         .then((res) => {
           setSpaces(res.data.spaces)

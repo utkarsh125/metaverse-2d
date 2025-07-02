@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,6 +7,7 @@ import MetaverseSpace from '../../../components/MetaverseSpace';
 import { Space, User } from '../../../lib/types';
 
 export default function SpacePage() {
+  console.log("Control Reached SpacePage")
   const params = useParams();
   const spaceId = params.spaceId as string;
   
@@ -18,7 +20,11 @@ export default function SpacePage() {
     const fetchData = async () => {
       try {
         // Fetch current user
-        const userResponse = await fetch('/api/v1/user/me');
+        const userResponse = await fetch('/api/v1/user/me', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (!userResponse.ok) {
           throw new Error('Failed to fetch user data');
         }
@@ -78,6 +84,7 @@ export default function SpacePage() {
       space={space}
       userId={currentUser.id}
       username={currentUser.username}
+      mapFile={space.map?.tiledMapFile || null}
     />
   );
 }

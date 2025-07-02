@@ -18,6 +18,8 @@ export interface TiledLayer {
   properties?: TiledProperty[];
   visible: boolean;
   opacity: number;
+  width?: number;
+  height?: number;
 }
 
 export interface TiledTileset {
@@ -68,39 +70,47 @@ export class TilemapRenderer {
   private tilesets: Map<number, PIXI.Texture> = new Map();
   private collisionData: CollisionData[] = [];
   private tileSize = 32;
+  private mapBaseDir: string = '';
 
   constructor(app: PIXI.Application, container: PIXI.Container) {
     this.app = app;
     this.container = container;
+    
+    // Validate inputs
+    if (!container) {
+      throw new Error('Container is required for TilemapRenderer');
+    }
+    
     // Create tilemap with empty tileset - we'll set it later
     this.tilemap = new Tilemap([]);
+    
+    // Validate tilemap creation
+    if (!this.tilemap) {
+      throw new Error('Failed to create Tilemap instance');
+    }
+    
     this.container.addChild(this.tilemap);
   }
 
   async loadMap(mapUrl: string): Promise<void> {
     try {
       console.log('Loading map from:', mapUrl);
-      
+      // Track the base directory of the map file
+      this.mapBaseDir = mapUrl.substring(0, mapUrl.lastIndexOf('/') + 1);
       // Load the map JSON file
       const response = await fetch(mapUrl);
       if (!response.ok) {
         throw new Error(`Failed to load map: ${response.statusText} (${response.status})`);
       }
-      
       this.mapData = await response.json();
-      console.log('Map data loaded:', this.mapData);
-
+      console.log('Map data loaded', this.mapData);
       // Load all tilesets
       await this.loadTilesets();
-
       // Render the map
-      this.renderMap();
-
+      await this.renderMap();
       // Extract collision data
       this.extractCollisionData();
-
       console.log('Tilemap loaded successfully!');
-
     } catch (error) {
       console.error('Error loading map:', error);
       throw error;
@@ -109,43 +119,34 @@ export class TilemapRenderer {
 
   private async loadTilesets(): Promise<void> {
     if (!this.mapData) return;
-
     console.log(`Loading ${this.mapData.tilesets.length} tilesets...`);
-
     for (const tileset of this.mapData.tilesets) {
       try {
         console.log(`Loading tileset: ${tileset.source}`);
-        
-        // Load the tileset TSX file
-        const tsxUrl = this.getTilesetUrl(tileset.source);
+        // Load the tileset TSX file, resolve relative to map base dir
+        const tsxUrl = this.getTilesetUrl(tileset.source, this.mapBaseDir);
         console.log(`TSX URL: ${tsxUrl}`);
-        
         const tsxResponse = await fetch(tsxUrl);
         if (!tsxResponse.ok) {
           console.warn(`Failed to load tileset ${tileset.source}: ${tsxResponse.statusText} (${tsxResponse.status})`);
           continue;
         }
-
         const tsxText = await tsxResponse.text();
         console.log(`TSX content length: ${tsxText.length}`);
-        
+        // Track the base directory of the TSX file
+        const tsxBaseDir = tsxUrl.substring(0, tsxUrl.lastIndexOf('/') + 1);
         const tilesetData = this.parseTSX(tsxText);
         tileset.tileset = tilesetData;
-
-        // Load the tileset image
-        const imageUrl = this.getImageUrl(tilesetData.image.source);
+        // Load the tileset image, resolve relative to TSX base dir
+        const imageUrl = this.getImageUrl(tilesetData.image.source, tsxBaseDir);
         console.log(`Image URL: ${imageUrl}`);
-        
         const texture = await PIXI.Assets.load(imageUrl);
-        
         this.tilesets.set(tileset.firstgid, texture);
         console.log(`Loaded tileset: ${tileset.source} (firstgid: ${tileset.firstgid})`);
-
       } catch (error) {
         console.error(`Error loading tileset ${tileset.source}:`, error);
       }
     }
-
     console.log(`Successfully loaded ${this.tilesets.size} tilesets`);
   }
 
@@ -219,26 +220,21 @@ export class TilemapRenderer {
     }
   }
 
-  private getTilesetUrl(source: string): string {
-    // Convert relative path to absolute URL
-    if (source.startsWith('./') || source.startsWith('../')) {
-      const cleanSource = source.replace(/^\.\.?\//, '');
-      return `/map/meadow/${encodeURIComponent(cleanSource)}`;
-    }
-    return source;
+  private getTilesetUrl(source: string, baseDir: string): string {
+    // If source is absolute (starts with /), return as is
+    if (source.startsWith('/')) return source;
+    // Otherwise, resolve relative to baseDir
+    return baseDir + source;
   }
 
-  private getImageUrl(source: string): string {
-    // Convert relative path to absolute URL
-    if (source.includes('../../Downloads/')) {
-      // Extract just the filename from the path
-      const filename = source.split('/').pop();
-      return `/map/meadow/Texture/${encodeURIComponent(filename || '')}`;
-    }
-    return source;
+  private getImageUrl(source: string, baseDir: string): string {
+    // If source is absolute (starts with /), return as is
+    if (source.startsWith('/')) return source;
+    // Otherwise, resolve relative to baseDir
+    return baseDir + source;
   }
 
-  private renderMap(): void {
+  private async renderMap(): Promise<void> {
     if (!this.mapData) {
       console.error('No map data loaded');
       return;
@@ -250,11 +246,11 @@ export class TilemapRenderer {
     // Clear existing children
     this.tilemap.removeChildren();
 
-    // Render all layers
+    // Render all layers using the robust renderLayerMulti
     for (const layer of this.mapData.layers) {
       if (layer.type === 'tilelayer' && layer.visible) {
-        console.log(`Rendering layer: ${layer.name} with ${layer.data?.length || 0} tiles`);
-        this.renderLayer(layer);
+        // Await the robust, debugged renderer
+        await this.renderLayerMulti(layer, this.tilesets);
       }
     }
   }
@@ -264,8 +260,8 @@ export class TilemapRenderer {
 
     const tileWidth = this.mapData!.tilewidth;
     const tileHeight = this.mapData!.tileheight;
-    const layerWidth = Math.sqrt(layer.data.length); // Assuming square layer
-    const layerHeight = layerWidth;
+    const layerWidth = layer.width || this.mapData!.width;
+    const layerHeight = layer.height || this.mapData!.height;
 
     console.log(`Layer ${layer.name}: ${layerWidth}x${layerHeight} tiles, ${tileWidth}x${tileHeight} pixels each`);
 
@@ -461,7 +457,7 @@ export class TilemapRenderer {
     this.mapData = null;
   }
 
-  async render(container: PIXI.Container): Promise<void> {
+  async render(): Promise<void> {
     if (!this.mapData) {
       console.error('No map data loaded');
       return;
@@ -472,12 +468,14 @@ export class TilemapRenderer {
 
     // Load all tilesets first
     const tilesetTextures: Map<number, PIXI.Texture> = new Map();
-    
     for (const tileset of this.mapData.tilesets) {
       try {
         const tilesetData = await this.loadTileset(tileset.source);
         if (tilesetData && tilesetData.image) {
-          const texture = await PIXI.Assets.load(tilesetData.image);
+          // Pass the correct baseDir for the image
+          const tsxUrl = this.getTilesetUrl(tileset.source, this.mapBaseDir);
+          const tsxBaseDir = tsxUrl.substring(0, tsxUrl.lastIndexOf('/') + 1);
+          const texture = await PIXI.Assets.load(this.getImageUrl(tilesetData.image.source, tsxBaseDir));
           tilesetTextures.set(tileset.firstgid, texture);
           console.log(`Loaded tileset ${tileset.source} with firstgid ${tileset.firstgid}`);
         }
@@ -485,32 +483,32 @@ export class TilemapRenderer {
         console.error(`Failed to load tileset ${tileset.source}:`, error);
       }
     }
-
     // Render all layers
     for (const layer of this.mapData.layers) {
       if (layer.type === 'tilelayer' && layer.visible) {
         console.log(`Rendering layer: ${layer.name} with ${layer.data?.length || 0} tiles`);
-        await this.renderLayerMulti(layer, tilesetTextures, container);
+        await this.renderLayerMulti(layer, tilesetTextures);
       }
     }
-
     // Extract collision data from object layers
     this.extractCollisionData();
   }
 
   private async renderLayerMulti(
     layer: TiledLayer, 
-    tilesetTextures: Map<number, PIXI.Texture>, 
-    container: PIXI.Container
+    tilesetTextures: Map<number, PIXI.Texture>
   ): Promise<void> {
     if (!layer.data) return;
 
     const tileWidth = this.mapData!.tilewidth;
     const tileHeight = this.mapData!.tileheight;
-    const layerWidth = Math.sqrt(layer.data.length); // Assuming square layer
-    const layerHeight = layerWidth;
+    const layerWidth = layer.width || this.mapData!.width;
+    const layerHeight = layer.height || this.mapData!.height;
 
-    console.log(`Layer ${layer.name}: ${layerWidth}x${layerHeight} tiles, ${tileWidth}x${tileHeight} pixels each`);
+    // Tiled flipping flags
+    const FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
+    const FLIPPED_VERTICALLY_FLAG   = 0x40000000;
+    const FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
     for (let y = 0; y < layerHeight; y++) {
       for (let x = 0; x < layerWidth; x++) {
@@ -519,37 +517,62 @@ export class TilemapRenderer {
 
         if (tileId === 0) continue; // Empty tile
 
+        // Handle Tiled flipping/rotation bits
+        const rawGid = tileId;
+        const flippedHorizontally = (rawGid & FLIPPED_HORIZONTALLY_FLAG) !== 0;
+        const flippedVertically   = (rawGid & FLIPPED_VERTICALLY_FLAG) !== 0;
+        const flippedDiagonally   = (rawGid & FLIPPED_DIAGONALLY_FLAG) !== 0;
+        const gid = rawGid & ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
+
         // Find which tileset this tile belongs to
         let tileset = null;
-        let localTileId = tileId;
-        
-        for (let i = this.mapData!.tilesets.length - 1; i >= 0; i--) {
+        let localTileId = gid;
+        for (let i = 0; i < this.mapData!.tilesets.length; i++) {
           const ts = this.mapData!.tilesets[i];
-          if (tileId >= ts.firstgid) {
+          const nextTs = this.mapData!.tilesets[i + 1];
+          if (gid >= ts.firstgid && (!nextTs || gid < nextTs.firstgid)) {
             tileset = ts;
-            localTileId = tileId - ts.firstgid;
+            localTileId = gid - ts.firstgid;
             break;
           }
         }
 
-        if (!tileset) {
-          console.warn(`No tileset found for tile ID ${tileId}`);
-          continue;
-        }
-
+        if (!tileset) continue;
         const texture = tilesetTextures.get(tileset.firstgid);
-        if (!texture) {
-          console.warn(`No texture found for tileset ${tileset.source}`);
-          continue;
-        }
+        if (!texture) continue;
 
-        // Create sprite for this tile
-        const sprite = new PIXI.Sprite(texture);
+        // Use map's tile size for both frame and placement
+        const tilesPerRow = Math.floor(texture.width / tileWidth);
+        const tileX = (localTileId % tilesPerRow) * tileWidth;
+        const tileY = Math.floor(localTileId / tilesPerRow) * tileHeight;
+
+        // PixiJS v8+ way: create a new texture with the correct frame
+        const frame = new PIXI.Rectangle(tileX, tileY, tileWidth, tileHeight);
+        const tileTexture = new PIXI.Texture({
+          source: texture.source,
+          frame,
+        });
+        const sprite = new PIXI.Sprite(tileTexture);
         sprite.x = x * tileWidth;
         sprite.y = y * tileHeight;
-        
-        // For now, just use the full texture - we'll handle tile frames later
-        // TODO: Implement proper tile frame extraction
+
+        // Apply flipping/rotation
+        if (flippedHorizontally) {
+          sprite.scale.x *= -1;
+          sprite.x += tileWidth;
+        }
+        if (flippedVertically) {
+          sprite.scale.y *= -1;
+          sprite.y += tileHeight;
+        }
+        if (flippedDiagonally) {
+          sprite.rotation = Math.PI / 2;
+          const temp = sprite.x;
+          sprite.x = sprite.y;
+          sprite.y = temp;
+        }
+
+        sprite.tint = 0xFFFFFF;
         this.tilemap.addChild(sprite);
       }
     }
@@ -557,13 +580,12 @@ export class TilemapRenderer {
 
   private async loadTileset(source: string): Promise<TiledTilesetData | null> {
     try {
-      const tsxUrl = this.getTilesetUrl(source);
+      const tsxUrl = this.getTilesetUrl(source, this.mapBaseDir);
       const tsxResponse = await fetch(tsxUrl);
       if (!tsxResponse.ok) {
         console.warn(`Failed to load tileset ${source}: ${tsxResponse.statusText}`);
         return null;
       }
-      
       const tsxText = await tsxResponse.text();
       return this.parseTSX(tsxText);
     } catch (error) {

@@ -3,7 +3,6 @@ import { AddElementSchema, CreateElementSchema, CreateSpaceSchema, deleteElement
 import { Router } from "express";
 import client from "@metaverse/db/client"
 import { userMiddleware } from "../../middleware/user";
-import { prisma } from "../../config";
 import { z } from "zod";
 
 export const spaceRouter = Router();
@@ -66,6 +65,9 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
 
     console.log("[DEBUG] map.mapElements.length:", map.mapElements.length)
 
+    console.log("[DEBUG] mapId to set:", parsedData.data.mapId);
+
+    
     let space = await client.$transaction(async() => {
         const space = await client.space.create({
             data: {
@@ -74,8 +76,11 @@ spaceRouter.post("/", userMiddleware, async(req, res) => {
                 height: map.height,
                 creatorId: req.userId!,
                 thumbnail: map.thumbnail,
+                mapId: parsedData.data.mapId
             }
         })
+
+        console.log("[DEBUG] mapId on created space:", space.mapId);
 
         await client.spaceElements.createMany({
             data: map.mapElements.map(e => ({
@@ -288,6 +293,7 @@ spaceRouter.delete("/element", userMiddleware, async(req, res) => {
 
 spaceRouter.get("/:spaceId", async(req, res) => {
 
+    console.log("[DEBUG] Control Reached /:spaceId")
     const space = await client.space.findUnique({
         where: {
             id: req.params.spaceId
@@ -297,7 +303,8 @@ spaceRouter.get("/:spaceId", async(req, res) => {
                 include:{
                     element: true
                 }
-            }
+            },
+            map: true
         }
     })
     
@@ -321,8 +328,17 @@ spaceRouter.get("/:spaceId", async(req, res) => {
             },
             x: e.x,
             y: e.y
-        }))
-    })
+        })),
+        map: space.map ? {
+            id: space.map.id,
+            name: space.map.name,
+            tiledMapFile: space.map.tiledMapFile || null,
+            thumbnail: space.map.thumbnail || null,
+            width: space.map.width,
+            height: space.map.height
+        } : null
+    });
+    return;
 })
 
 // Team invite routes
