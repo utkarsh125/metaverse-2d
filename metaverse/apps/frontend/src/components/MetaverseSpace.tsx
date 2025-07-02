@@ -19,6 +19,9 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Get spaceId from props or fallback to URL
+  const spaceId = space.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '');
+
   useEffect(() => {
     console.log("MetaverseSpace useEffect running");
     async function init() {
@@ -95,33 +98,36 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
   }
 
   return (
-    <div className="relative w-full h-screen">
-      <canvas
-        ref={canvasRef}
-        className="w-full h-full"
-        style={{ display: 'block' }}
-      />
-      
-      {/* Loading overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-white">Loading space...</p>
-          </div>
+    <div className="relative w-full h-screen font-poppins bg-gradient-to-br from-blue-100 via-white to-blue-200">
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 w-full bg-black bg-opacity-80 text-white flex items-center justify-between px-6 py-3 z-50 shadow-lg rounded-b-xl" style={{fontFamily: 'Poppins, sans-serif'}}>
+        <div className="flex items-center gap-6">
+          <span className="font-bold text-lg">User: {username}</span>
+          <span className="font-mono text-sm">Space ID: {spaceId}</span>
         </div>
-      )}
-      
-      {/* Controls overlay */}
-      <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white p-3 rounded-lg">
-        <h3 className="font-bold mb-2">Controls</h3>
-        <p className="text-sm">WASD or Arrow Keys to move</p>
-      </div>
-
-      {/* Space info overlay */}
-      <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white p-3 rounded-lg">
-        <h3 className="font-bold">{space.name}</h3>
-        <p className="text-sm">Created by {space.creator?.username || 'Unknown'}</p>
+        <a href="/dashboard" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold transition shadow">Exit Space</a>
+      </nav>
+      {/* Add top padding so canvas is not covered by navbar */}
+      <div className="pt-20 w-full h-full flex items-center justify-center">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full max-w-full max-h-full rounded-xl shadow-xl border border-gray-200"
+          style={{ display: 'block', fontFamily: 'Poppins, sans-serif' }}
+        />
+        {/* Loading overlay */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl">
+            <div className="text-center bg-white bg-opacity-80 p-8 rounded-xl shadow-lg">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-black font-semibold">Loading space...</p>
+            </div>
+          </div>
+        )}
+        {/* Controls overlay */}
+        <div className="absolute bottom-4 left-4 bg-white bg-opacity-80 text-black p-4 rounded-xl shadow-lg border border-gray-200">
+          <h3 className="font-bold mb-2 text-base">Controls</h3>
+          <p className="text-sm">WASD or Arrow Keys to move</p>
+        </div>
       </div>
     </div>
   );

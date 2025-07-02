@@ -18,6 +18,8 @@ export class TilemapSpaceEngine {
   private initPromise: Promise<void>;
   private playerSprite: PIXI.Sprite | null = null;
   private playerTilePos = { x: 0, y: 0 };
+  private playerTargetPixel = { x: 0, y: 0 };
+  private isMoving = false;
 
   constructor(canvas: HTMLCanvasElement, spaceId: string, userId: string, username: string) {
     // Initialize PIXI Application
@@ -141,30 +143,25 @@ export class TilemapSpaceEngine {
       this.playerSprite.height = tileHeight;
       this.container.addChild(this.playerSprite);
       this.updatePlayerSpritePosition();
-      // Center camera on player
-      this.centerCameraOnPlayer();
     } catch (error) {
       console.error('Failed to load tilemap:', error);
       throw error;
     }
   }
 
-  // Update player sprite position in world
+  // Update player sprite position in world (lerp toward target)
   private updatePlayerSpritePosition() {
     if (!this.playerSprite || !this.tilemapRenderer) return;
     const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
     const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
-    this.playerSprite.x = (this.playerTilePos.x + 0.5) * tileWidth;
-    this.playerSprite.y = (this.playerTilePos.y + 0.5) * tileHeight;
-  }
-
-  // Center camera on player
-  private centerCameraOnPlayer() {
-    if (!this.playerSprite) return;
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    this.container.x = centerX - this.playerSprite.x;
-    this.container.y = centerY - this.playerSprite.y;
+    // Target pixel position for the center of the tile
+    this.playerTargetPixel.x = (this.playerTilePos.x + 0.5) * tileWidth;
+    this.playerTargetPixel.y = (this.playerTilePos.y + 0.5) * tileHeight;
+    // If not moving, snap to target
+    if (!this.isMoving) {
+      this.playerSprite.x = this.playerTargetPixel.x;
+      this.playerSprite.y = this.playerTargetPixel.y;
+    }
   }
 
   // Main game loop: handle player movement and camera
@@ -172,33 +169,55 @@ export class TilemapSpaceEngine {
     if (!this.playerSprite || !this.tilemapRenderer) return;
     let moved = false;
     let dx = 0, dy = 0;
-    if (this.keys.has('w') || this.keys.has('arrowup')) dy = -1;
-    if (this.keys.has('s') || this.keys.has('arrowdown')) dy = 1;
-    if (this.keys.has('a') || this.keys.has('arrowleft')) dx = -1;
-    if (this.keys.has('d') || this.keys.has('arrowright')) dx = 1;
-    if ((dx !== 0 || dy !== 0) && Date.now() - this.lastMoveTime > this.moveThrottle) {
-      const newX = this.playerTilePos.x + dx;
-      const newY = this.playerTilePos.y + dy;
-      // Check bounds
-      const mapWidth = this.tilemapRenderer['mapData']?.width || 0;
-      const mapHeight = this.tilemapRenderer['mapData']?.height || 0;
-      if (newX >= 0 && newY >= 0 && newX < mapWidth && newY < mapHeight) {
-        // Check collision
-        const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
-        const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
-        const px = newX * tileWidth;
-        const py = newY * tileHeight;
-        if (!this.tilemapRenderer.isColliding(px, py, tileWidth, tileHeight)) {
-          this.playerTilePos.x = newX;
-          this.playerTilePos.y = newY;
-          moved = true;
+    // Only allow new move if not currently animating
+    if (!this.isMoving) {
+      if (this.keys.has('w') || this.keys.has('arrowup')) dy = -1;
+      if (this.keys.has('s') || this.keys.has('arrowdown')) dy = 1;
+      if (this.keys.has('a') || this.keys.has('arrowleft')) dx = -1;
+      if (this.keys.has('d') || this.keys.has('arrowright')) dx = 1;
+      if ((dx !== 0 || dy !== 0) && Date.now() - this.lastMoveTime > this.moveThrottle) {
+        const newX = this.playerTilePos.x + dx;
+        const newY = this.playerTilePos.y + dy;
+        console.log('Attempting move:', { dx, dy, newX, newY, isMoving: this.isMoving });
+        // Check bounds
+        const mapWidth = this.tilemapRenderer['mapData']?.width || 0;
+        const mapHeight = this.tilemapRenderer['mapData']?.height || 0;
+        if (newX >= 0 && newY >= 0 && newX < mapWidth && newY < mapHeight) {
+          // Check collision: only allow movement if not collidable
+          const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
+          const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
+          const px = newX * tileWidth;
+          const py = newY * tileHeight;
+          if (!this.tilemapRenderer.isColliding(px, py, tileWidth, tileHeight)) {
+            this.playerTilePos.x = newX;
+            this.playerTilePos.y = newY;
+            moved = true;
+            this.isMoving = true;
+            this.updatePlayerSpritePosition();
+            console.log('isMoving set to true');
+          }
         }
+        this.lastMoveTime = Date.now();
       }
-      this.lastMoveTime = Date.now();
     }
-    if (moved) {
-      this.updatePlayerSpritePosition();
-      this.centerCameraOnPlayer();
+    // Smoothly interpolate player sprite toward target pixel position
+    if (this.isMoving && this.playerSprite) {
+      const speed = 0.18; // Lerp factor (0-1), higher is faster
+      this.playerSprite.x += (this.playerTargetPixel.x - this.playerSprite.x) * speed;
+      this.playerSprite.y += (this.playerTargetPixel.y - this.playerSprite.y) * speed;
+      console.log('Lerping:', {
+        currentX: this.playerSprite.x,
+        currentY: this.playerSprite.y,
+        targetX: this.playerTargetPixel.x,
+        targetY: this.playerTargetPixel.y
+      });
+      // If close enough, snap to target and stop moving
+      if (Math.abs(this.playerSprite.x - this.playerTargetPixel.x) < 1 && Math.abs(this.playerSprite.y - this.playerTargetPixel.y) < 1) {
+        this.playerSprite.x = this.playerTargetPixel.x;
+        this.playerSprite.y = this.playerTargetPixel.y;
+        this.isMoving = false;
+        console.log('isMoving set to false (arrived at target)');
+      }
     }
   }
 
