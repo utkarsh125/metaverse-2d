@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
+
 
 type TiledLayer = {
   name: string;
@@ -32,6 +33,10 @@ export default function BasicTilemapTest() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // Use a ref for player position in tile coordinates
   const playerPosRef = useRef({ x: 2, y: 2 });
+
+  const userSpritesRef = useRef<{ [userId: string]: PIXI.Sprite }>({});
+  const mapRef = useRef<TiledMapData | null>(null);
+  const mapContainerRef = useRef<PIXI.Container | null>(null);
 
   useEffect(() => {
     let app: PIXI.Application;
@@ -69,6 +74,14 @@ export default function BasicTilemapTest() {
       if (!blocked) {
         playerPosRef.current = { x: newX, y: newY };
         updatePlayerSprite();
+        // Send move to server
+        wsRef.current?.send(JSON.stringify({
+          type: 'move',
+          payload: {
+            x: newX,
+            y: newY
+          }
+        }));
       }
     }
 
@@ -81,6 +94,7 @@ export default function BasicTilemapTest() {
         throw new Error(`Failed to load map: ${mapResponse.statusText}`);
       }
       map = await mapResponse.json();
+      mapRef.current = map;
 
       // Parse collidable tiles from tilesets
       for (const tileset of map.tilesets) {
@@ -114,6 +128,7 @@ export default function BasicTilemapTest() {
       mapContainer.x = 0;
       mapContainer.y = 0;
       app.stage.addChild(mapContainer);
+      mapContainerRef.current = mapContainer;
 
       // Load and render the map
       await loadMap(app, mapContainer, map);
@@ -146,7 +161,60 @@ export default function BasicTilemapTest() {
       if (app) app.destroy(true);
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, []); // Only run once!
+  }, []); // Only run once
+
+  const wsRef = useRef<WebSocket | null>(null);
+  const [users, setUsers] = useState<{ [userId: string]: { x: number, y: number, color: number } }>({});
+  const myIdRef = useRef<string>(Math.random().toString(36).slice(2));
+
+  useEffect(() => {
+
+    //connect to ws
+    const ws = new WebSocket('ws://localhost:4000');
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      // send join msg
+      ws.send(JSON.stringify({
+        type: 'join',
+        payload: {
+          userId: myIdRef.current,
+          x: playerPosRef.current.x,
+          y: playerPosRef.current.y,
+          color: Math.floor(Math.random() * 0xffffff)
+        }
+      }));
+    };
+
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+      if(msg.type === 'state'){
+        setUsers(msg.payload);
+      }
+      if(msg.type === 'join' || msg.type === 'move'){
+        setUsers( prev => ({
+          ...prev,
+          [msg.payload.userId]:{
+            ...prev[msg.payload.userId],
+            ...msg.payload,
+          }
+        }));
+      }
+
+      if(msg.type === 'leave'){
+        setUsers( prev => {
+          const copy = { ...prev };
+          delete copy[msg.payload.userId];
+          return copy;
+        });
+      };
+    };
+
+    return () => {
+      ws.close();
+    }
+  }, []);
 
   const loadMap = async (
     app: PIXI.Application,
@@ -195,32 +263,32 @@ export default function BasicTilemapTest() {
           
           const imageSource = imageElement.getAttribute('source');
           if (!imageSource) {
-            console.warn(`No source attribute found in ${tileset.source}`);
+            // console.warn(`No source attribute found in ${tileset.source}`);
             continue;
           }
           
-          console.log(`Image source for ${tileset.source}: ${imageSource}`);
+          // console.log(`Image source for ${tileset.source}: ${imageSource}`);
           
           // Load the image texture
           const imageUrl = `/map/meadow/${imageSource}`;
-          console.log(`Loading image from: ${imageUrl}`);
+          // console.log(`Loading image from: ${imageUrl}`);
           
           const texture = await PIXI.Assets.load(imageUrl);
           tilesetTextures.set(tileset.firstgid, texture);
           
-          console.log(`Successfully loaded tileset ${tileset.source} with firstgid ${tileset.firstgid}`);
+          // console.log(`Successfully loaded tileset ${tileset.source} with firstgid ${tileset.firstgid}`);
           
         } catch (error) {
           console.error(`Error loading tileset ${tileset.source}:`, error);
         }
       }
 
-      console.log(`Loaded ${tilesetTextures.size} tilesets`);
+      // console.log(`Loaded ${tilesetTextures.size} tilesets`);
 
       // Render all layers in order (bottom to top)
       for (const layer of map.layers) {
         if (layer.type === 'tilelayer' && layer.visible && layer.data) {
-          console.log(`Rendering layer: ${layer.name} with ${layer.data.length} tiles`);
+          // console.log(`Rendering layer: ${layer.name} with ${layer.data.length} tiles`);
           const layerContainer = new PIXI.Container();
           layerContainer.alpha = typeof layer.opacity === 'number' ? layer.opacity : 1.0;
           await renderLayer(
@@ -249,7 +317,7 @@ export default function BasicTilemapTest() {
     const layerWidth = layer.width || Math.sqrt(layer.data.length);
     const layerHeight = layer.height || layerWidth;
 
-    console.log(`Layer ${layer.name}: ${layerWidth}x${layerHeight} tiles`);
+    // console.log(`Layer ${layer.name}: ${layerWidth}x${layerHeight} tiles`);
 
     // Handle Tiled flipping/rotation bits
     const FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
@@ -339,6 +407,41 @@ export default function BasicTilemapTest() {
       }
     }
   };
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const mapContainer = mapContainerRef.current;
+    if (!mapContainer || !map) return;
+
+    // Add/update sprites for all users except self
+    Object.entries(users).forEach(([userId, user]) => {
+      if (userId === myIdRef.current) return; // skip self
+
+      let sprite = userSpritesRef.current[userId];
+      if (!sprite) {
+        // Create new sprite (colored square)
+        sprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+        sprite.tint = user.color || 0x00ff00;
+        sprite.width = map.tilewidth;
+        sprite.height = map.tileheight;
+        sprite.anchor.set(0.5, 0.5);
+        mapContainer.addChild(sprite);
+        userSpritesRef.current[userId] = sprite;
+      }
+      // Update position
+      sprite.x = (user.x + 0.5) * map.tilewidth;
+      sprite.y = (user.y + 0.5) * map.tileheight;
+    });
+
+    // Remove sprites for users who left
+    Object.keys(userSpritesRef.current).forEach(userId => {
+      if (!users[userId]) {
+        mapContainer.removeChild(userSpritesRef.current[userId]);
+        userSpritesRef.current[userId].destroy();
+        delete userSpritesRef.current[userId];
+      }
+    });
+  }, [users]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 32 }}>
