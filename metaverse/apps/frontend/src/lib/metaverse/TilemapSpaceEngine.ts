@@ -20,41 +20,53 @@ export class TilemapSpaceEngine {
   private playerTilePos = { x: 0, y: 0 };
   private playerTargetPixel = { x: 0, y: 0 };
   private isMoving = false;
+  private spaceId: string;
+  private userId: string;
+  private username: string;
 
   constructor(canvas: HTMLCanvasElement, spaceId: string, userId: string, username: string) {
-    // Initialize PIXI Application
+    this.spaceId = spaceId;
+    this.userId = userId;
+    this.username = username;
+    
+    // Initialize PIXI Application with the same settings as BasicTilemapTest
     this.app = new PIXI.Application();
+    
+    // Single init call with all settings
     this.initPromise = this.app.init({
       view: canvas,
-      width: window.innerWidth,
-      height: window.innerHeight,
-      backgroundColor: 0x87CEEB, // Sky blue background
-      antialias: true,
+      width: 800,    // Smaller default size
+      height: 600,   // Smaller default size
+      backgroundAlpha: 0,
       resolution: window.devicePixelRatio || 1,
+      autoDensity: true,
     }).then(() => {
+      // Create main container at native scale, top-left
       this.container = new PIXI.Container();
       this.app.stage.addChild(this.container);
-      // Setup resize handling for responsiveness
+      
       this.setupResizeHandling();
-      // Setup input handling for player movement
+      this.setupWebSocket(spaceId);
       this.setupInputHandling();
-      // Start the game loop
       this.app.ticker.add(this.gameLoop.bind(this));
     });
   }
 
   private setupWebSocket(spaceId: string) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/space/${spaceId}`;
+    // Connect to the WebSocket server on port 4000
+    const wsUrl = 'ws://localhost:4000';
     
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       console.log('Connected to space WebSocket');
-      // Send user joined message
+      // Send join message with spaceId
       this.sendMessage({
-        type: 'user_joined',
-        data: this.currentUser!,
+        type: 'join',
+        payload: {
+          spaceId: spaceId,
+          token: null // or get from localStorage if you have authentication
+        }
       });
     };
 
@@ -78,6 +90,39 @@ export class TilemapSpaceEngine {
 
   private handleWebSocketMessage(message: WSMessage) {
     switch (message.type) {
+      case 'space-joined':
+        // Handle initial space state
+        console.log('Joined space:', message.payload);
+        break;
+      case 'user-joined':
+        // Handle new user joining
+        const newUser = message.payload as { userId: string; x: number; y: number };
+        this.addUser({
+          id: newUser.userId,
+          username: newUser.userId, // Backend doesn't send username yet
+          x: newUser.x,
+          y: newUser.y,
+          color: this.getRandomColor()
+        });
+        break;
+      case 'movement':
+        // Handle user movement
+        const moveData = message.payload as { userId: string; x: number; y: number };
+        this.moveUser({
+          userId: moveData.userId,
+          x: moveData.x,
+          y: moveData.y
+        });
+        break;
+      case 'user-left':
+        // Handle user leaving
+        const leftUser = message.payload as { userId: string };
+        this.removeUser(leftUser.userId);
+        break;
+      case 'movement-rejected':
+        // Handle movement rejection (could reset player position)
+        console.log('Movement rejected:', message.payload);
+        break;
       case 'user_joined':
         this.addUser(message.data as PixiUser);
         break;
@@ -100,9 +145,61 @@ export class TilemapSpaceEngine {
 
   private setupResizeHandling() {
     const resize = () => {
-      this.app.renderer.resize(window.innerWidth, window.innerHeight);
+      // Get the parent element dimensions
+      const parent = this.app.view.parentElement;
+      if (!parent) return;
+      
+      const parentWidth = parent.clientWidth;
+      const parentHeight = parent.clientHeight;
+      
+      // Update canvas size
+      this.app.renderer.resize(parentWidth, parentHeight);
+      
+      // If we have map data, use it to calculate proper scale
+      if (this.tilemapRenderer?.['mapData']) {
+        const mapData = this.tilemapRenderer['mapData'];
+        const mapWidth = mapData.width * mapData.tilewidth;
+        const mapHeight = mapData.height * mapData.tileheight;
+        
+        // Calculate scale to fit map while maintaining aspect ratio
+        const scale = Math.min(
+          (parentWidth * 0.8) / mapWidth,    // Use 80% of parent width
+          (parentHeight * 0.8) / mapHeight    // Use 80% of parent height
+        );
+        
+        // Scale the container
+        this.container.scale.set(scale);
+        
+        // Center the container
+        this.container.position.set(
+          (parentWidth - (mapWidth * scale)) / 2,
+          (parentHeight - (mapHeight * scale)) / 2
+        );
+        
+        console.log('Map resize:', {
+          mapSize: { width: mapWidth, height: mapHeight },
+          parentSize: { width: parentWidth, height: parentHeight },
+          scale,
+          containerPos: { x: this.container.position.x, y: this.container.position.y }
+        });
+      } else {
+        // Default scaling if no map data yet
+        const scale = Math.min(
+          parentWidth / 800,
+          parentHeight / 600
+        );
+        
+        this.container.scale.set(scale);
+        this.container.position.set(
+          (parentWidth - (800 * scale)) / 2,
+          (parentHeight - (600 * scale)) / 2
+        );
+      }
     };
+    
     window.addEventListener('resize', resize);
+    // Initial resize
+    resize();
   }
 
   private setupInputHandling() {
@@ -121,12 +218,16 @@ export class TilemapSpaceEngine {
     });
   }
 
-  // Load the tilemap and player sprite
+  // Update loadTilemap to trigger resize after map loads
   public async loadTilemap(mapUrl: string): Promise<void> {
     try {
       await this.initPromise;
       this.tilemapRenderer = new TilemapRenderer(this.app, this.container);
       await this.tilemapRenderer.loadMap(mapUrl);
+      
+      // After map loads, trigger resize to properly scale and position
+      this.setupResizeHandling();
+      
       // Place player at center of map
       const bounds = this.tilemapRenderer.getMapBounds();
       const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
@@ -135,6 +236,7 @@ export class TilemapSpaceEngine {
         x: Math.floor((bounds.width / tileWidth) / 2),
         y: Math.floor((bounds.height / tileHeight) / 2),
       };
+      
       // Load player sprite
       const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
       this.playerSprite = new PIXI.Sprite(heroTexture);
@@ -143,6 +245,13 @@ export class TilemapSpaceEngine {
       this.playerSprite.height = tileHeight;
       this.container.addChild(this.playerSprite);
       this.updatePlayerSpritePosition();
+      
+      console.log('Map loaded with dimensions:', {
+        width: this.tilemapRenderer['mapData']?.width,
+        height: this.tilemapRenderer['mapData']?.height,
+        tileWidth,
+        tileHeight
+      });
     } catch (error) {
       console.error('Failed to load tilemap:', error);
       throw error;
@@ -167,7 +276,6 @@ export class TilemapSpaceEngine {
   // Main game loop: handle player movement and camera
   private gameLoop() {
     if (!this.playerSprite || !this.tilemapRenderer) return;
-    let moved = false;
     let dx = 0, dy = 0;
     // Only allow new move if not currently animating
     if (!this.isMoving) {
@@ -191,7 +299,6 @@ export class TilemapSpaceEngine {
           if (!this.tilemapRenderer.isColliding(px, py, tileWidth, tileHeight)) {
             this.playerTilePos.x = newX;
             this.playerTilePos.y = newY;
-            moved = true;
             this.isMoving = true;
             this.updatePlayerSpritePosition();
             console.log('isMoving set to true');

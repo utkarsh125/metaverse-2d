@@ -100,8 +100,9 @@ export interface PixiElement {
 
 // WebSocket message types
 export interface WSMessage {
-  type: 'user_joined' | 'user_left' | 'user_moved' | 'chat_message' | 'invite_sent' | 'invite_accepted' | 'invite_declined';
-  data: UserMoveData | ChatMessageData | PixiUser | SpaceInvite | Record<string, unknown>;
+  type: 'join' | 'move' | 'space-joined' | 'user-joined' | 'movement' | 'user-left' | 'movement-rejected' | 'chat' | 'user_joined' | 'user_left' | 'user_moved' | 'chat_message' | 'invite_sent' | 'invite_accepted' | 'invite_declined';
+  payload?: Record<string, unknown>;
+  data?: UserMoveData | ChatMessageData | PixiUser | SpaceInvite | Record<string, unknown>;
 }
 
 export interface UserMoveData {

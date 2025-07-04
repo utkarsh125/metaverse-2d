@@ -7,7 +7,6 @@ import MetaverseSpace from '../../../components/MetaverseSpace';
 import { Space, User } from '../../../lib/types';
 
 export default function SpacePage() {
-  console.log("Control Reached SpacePage")
   const params = useParams();
   const spaceId = params.spaceId as string;
   
@@ -32,7 +31,11 @@ export default function SpacePage() {
         setCurrentUser(userData);
 
         // Fetch space data
-        const spaceResponse = await fetch(`/api/v1/space/${spaceId}`);
+        const spaceResponse = await fetch(`/api/v1/space/${spaceId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         if (!spaceResponse.ok) {
           throw new Error('Failed to fetch space data');
         }
@@ -79,12 +82,22 @@ export default function SpacePage() {
     );
   }
 
+  function getTiledMapFile(map: Space['map']): string | null {
+    if (map && typeof map === 'object' && 'tiledMapFile' in map && typeof (map as { tiledMapFile?: string }).tiledMapFile === 'string') {
+      return (map as { tiledMapFile: string }).tiledMapFile;
+    }
+    return null;
+  }
+
+  // Add a debug log for the space and mapFile
+  console.log('Rendering MetaverseSpace with:', { space, map: space.map, mapFile: getTiledMapFile(space.map) });
+
   return (
     <MetaverseSpace
       space={space}
       userId={currentUser.id}
       username={currentUser.username}
-      mapFile={space.map?.tiledMapFile || null}
+      mapFile={getTiledMapFile(space.map) || 'meadow/map1.tmj'}
     />
   );
 }

@@ -174,14 +174,16 @@ export default function BasicTilemapTest() {
     wsRef.current = ws;
 
     ws.onopen = () => {
+      // Extract spaceId from URL or use a default
+      const pathParts = window.location.pathname.split('/');
+      const spaceId = pathParts[pathParts.length - 1] || 'default-space';
+      
       // send join msg
       ws.send(JSON.stringify({
         type: 'join',
         payload: {
-          userId: myIdRef.current,
-          x: playerPosRef.current.x,
-          y: playerPosRef.current.y,
-          color: Math.floor(Math.random() * 0xffffff)
+          spaceId: spaceId,
+          token: null // or get from localStorage if you have authentication
         }
       }));
     };
@@ -189,23 +191,36 @@ export default function BasicTilemapTest() {
 
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      if(msg.type === 'state'){
-        setUsers(msg.payload);
+      if(msg.type === 'space-joined'){
+        console.log('Joined space:', msg.payload);
       }
-      if(msg.type === 'join' || msg.type === 'move'){
+      if(msg.type === 'user-joined'){
+        const { userId, x, y } = msg.payload;
         setUsers( prev => ({
           ...prev,
-          [msg.payload.userId]:{
-            ...prev[msg.payload.userId],
-            ...msg.payload,
+          [userId]:{
+            x,
+            y,
+            color: Math.floor(Math.random() * 0xffffff)
           }
         }));
       }
-
-      if(msg.type === 'leave'){
+      if(msg.type === 'movement'){
+        const { userId, x, y } = msg.payload;
+        setUsers( prev => ({
+          ...prev,
+          [userId]:{
+            ...prev[userId],
+            x,
+            y
+          }
+        }));
+      }
+      if(msg.type === 'user-left'){
+        const { userId } = msg.payload;
         setUsers( prev => {
           const copy = { ...prev };
-          delete copy[msg.payload.userId];
+          delete copy[userId];
           return copy;
         });
       };

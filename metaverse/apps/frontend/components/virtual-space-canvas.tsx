@@ -350,41 +350,42 @@ export default function VirtualSpaceCanvas() {
     const ws = new window.WebSocket(WS_URL);
     wsRef.current = ws;
     ws.onopen = () => {
+      // Extract spaceId from URL or use a default
+      const pathParts = window.location.pathname.split('/');
+      const spaceId = pathParts[pathParts.length - 1] || 'default-space';
+      
       ws.send(JSON.stringify({
         type: 'join',
-        payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: false }
+        payload: {
+          spaceId: spaceId,
+          token: null // or get from localStorage if you have authentication
+        }
       }));
     };
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data);
       console.log('WebSocket message:', msg);
-      if (msg.type === 'state') {
-        // Ensure all players have dir and moving
-        Object.entries(msg.payload).forEach(([, pos]) => {
-          const p = pos as { x: number; y: number; dir?: Dir; moving?: boolean };
-          if (!('dir' in p)) p.dir = 'down';
-          if (!('moving' in p)) p.moving = false;
-        });
-        positions.current = msg.payload;
-        drawPlayers();
-      } else if (msg.type === 'move') {
-        const { userId: uid, x, y, dir, moving } = msg.payload;
-        if (!positions.current[uid]) return;
-        positions.current[uid].x = x;
-        positions.current[uid].y = y;
-        positions.current[uid].dir = dir || 'down';
-        positions.current[uid].moving = moving ?? false;
-        drawPlayers();
-      } else if (msg.type === 'join') {
-        const { userId: uid, x, y, dir, moving } = msg.payload;
+      
+      if (msg.type === 'space-joined') {
+        // Handle initial space state
+        console.log('Joined space:', msg.payload);
+        // You might want to set initial positions here
+      } else if (msg.type === 'user-joined') {
+        const { userId: uid, x, y } = msg.payload;
         positions.current[uid] = {
           x,
           y,
-          dir: dir || 'down',
-          moving: moving ?? false
+          dir: 'down',
+          moving: false
         };
         drawPlayers();
-      } else if (msg.type === 'leave') {
+      } else if (msg.type === 'movement') {
+        const { userId: uid, x, y } = msg.payload;
+        if (!positions.current[uid]) return;
+        positions.current[uid].x = x;
+        positions.current[uid].y = y;
+        drawPlayers();
+      } else if (msg.type === 'user-left') {
         const { userId: uid } = msg.payload;
         delete positions.current[uid];
         drawPlayers();
@@ -419,7 +420,7 @@ export default function VirtualSpaceCanvas() {
         if (wsRef.current && wsRef.current.readyState === 1) {
           wsRef.current.send(JSON.stringify({
             type: 'move',
-            payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: false }
+            payload: { x: myPos.current.x, y: myPos.current.y }
           }));
         }
         return;
@@ -444,7 +445,7 @@ export default function VirtualSpaceCanvas() {
       if (wsRef.current && wsRef.current.readyState === 1) {
         wsRef.current.send(JSON.stringify({
           type: 'move',
-          payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: true }
+          payload: { x: myPos.current.x, y: myPos.current.y }
         }));
       }
       setTimeout(() => {
@@ -456,7 +457,7 @@ export default function VirtualSpaceCanvas() {
         if (wsRef.current && wsRef.current.readyState === 1) {
           wsRef.current.send(JSON.stringify({
             type: 'move',
-            payload: { userId: userId.current, x: myPos.current.x, y: myPos.current.y, dir: myDir.current, moving: false }
+            payload: { x: myPos.current.x, y: myPos.current.y }
           }));
         }
       }, 180);

@@ -24,24 +24,43 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
 
   useEffect(() => {
     console.log("MetaverseSpace useEffect running");
+    let mounted = true;  // Add mounted flag for cleanup
+
     async function init() {
       try {
-        if (!canvasRef.current) {
-          console.log("No canvasRef.current, retrying in 100ms");
-          setTimeout(() => init(), 100);
+        if (!canvasRef.current || !mounted) {
+          console.log("No canvasRef.current or component unmounted");
           return;
         }
+
+        // Set initial canvas size
+        canvasRef.current.width = 1024;
+        canvasRef.current.height = 768;
+
         console.log("Trying to load mapFile", mapFile);
         if (mapFile) {
           // Use TilemapSpaceEngine for Tiled maps
           const { TilemapSpaceEngine } = await import('../lib/metaverse/TilemapSpaceEngine');
-          engineRef.current = new TilemapSpaceEngine(
+          
+          if (!mounted) return;  // Check if still mounted after async import
+
+          const engine = new TilemapSpaceEngine(
             canvasRef.current,
             space.id,
             userId,
             username
           );
-          await engineRef.current.loadTilemap(`/map/${mapFile}`);
+          
+          engineRef.current = engine;  // Set ref after successful initialization
+          
+          console.log("Loading tilemap from", `/map/${mapFile}`);
+          await engine.loadTilemap(`/map/${mapFile}`);
+          
+          if (!mounted) {
+            engine.destroy();
+            return;
+          }
+
           console.log("TilemapSpaceEngine initialized and map loaded");
         } else {
           // Use PixiSpaceEngine for legacy/element-based maps
@@ -69,17 +88,25 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           }
           console.log("PixiSpaceEngine initialized and elements added");
         }
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       } catch (err) {
         console.error("Error in MetaverseSpace init:", err);
-        setError(err instanceof Error ? err.message : 'Failed to initialize space');
-        setIsLoading(false);
+        if (mounted) {
+          setError(err instanceof Error ? err.message : 'Failed to initialize space');
+          setIsLoading(false);
+        }
       }
     }
+
     init();
+
     // Cleanup function
     return () => {
+      mounted = false;  // Set mounted to false
       if (engineRef.current) {
+        console.log("Cleaning up engine");
         engineRef.current.destroy();
         engineRef.current = null;
       }
@@ -108,15 +135,31 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
         <a href="/dashboard" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold transition shadow">Exit Space</a>
       </nav>
       {/* Add top padding so canvas is not covered by navbar */}
-      <div className="pt-20 w-full h-full flex items-center justify-center">
+      <div 
+        className="pt-20 w-full h-full flex items-center justify-center"
+        style={{ 
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: '768px',
+          zIndex: 1  // Ensure container is above background
+        }}
+      >
         <canvas
           ref={canvasRef}
+          width={1024}
+          height={768}
           className="w-full h-full max-w-full max-h-full rounded-xl shadow-xl border border-gray-200"
-          style={{ display: 'block', fontFamily: 'Poppins, sans-serif' }}
+          style={{ 
+            display: 'block', 
+            fontFamily: 'Poppins, sans-serif',
+            position: 'relative',
+            zIndex: 2,  // Ensure canvas is above container
+            backgroundColor: '#f0f0f0'
+          }}
         />
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl">
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl" style={{ zIndex: 3 }}>
             <div className="text-center bg-white bg-opacity-80 p-8 rounded-xl shadow-lg">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <p className="text-black font-semibold">Loading space...</p>
@@ -124,7 +167,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           </div>
         )}
         {/* Controls overlay */}
-        <div className="absolute bottom-4 left-4 bg-white bg-opacity-80 text-black p-4 rounded-xl shadow-lg border border-gray-200">
+        <div className="absolute bottom-4 left-4 bg-white bg-opacity-80 text-black p-4 rounded-xl shadow-lg border border-gray-200" style={{ zIndex: 3 }}>
           <h3 className="font-bold mb-2 text-base">Controls</h3>
           <p className="text-sm">WASD or Arrow Keys to move</p>
         </div>
