@@ -100,14 +100,32 @@ export class TilemapRenderer {
     debugGraphics.zIndex = 1000;  // Always on top for debugging
     this.tilemap.addChild(debugGraphics);
     
+    // Add tilemap to container and ensure it's visible
     this.container.addChild(this.tilemap);
+    this.container.visible = true;
+    this.tilemap.visible = true;
+    
+    // Ensure container is in the stage
+    if (!this.container.parent) {
+      this.app.stage.addChild(this.container);
+    }
+    
+    // Set initial container properties
+    this.container.sortableChildren = true;
+    this.container.zIndex = 0;
     
     console.log('TilemapRenderer initialized:', {
       containerPosition: { x: this.container.position.x, y: this.container.position.y },
       tilemapPosition: { x: this.tilemap.position.x, y: this.tilemap.position.y },
-      tilemapZIndex: this.tilemap.zIndex
+      tilemapZIndex: this.tilemap.zIndex,
+      containerVisible: this.container.visible,
+      tilemapVisible: this.tilemap.visible,
+      containerParent: this.container.parent ? 'exists' : 'none',
+      tilemapParent: this.tilemap.parent ? 'exists' : 'none',
+      containerInStage: this.app.stage.children.includes(this.container),
+      stageChildren: this.app.stage.children.length
     });
-}
+  }
 
   async loadMap(mapUrl: string): Promise<void> {
     try {
@@ -322,6 +340,7 @@ export class TilemapRenderer {
     // Create a container for this layer
     const layerContainer = new PIXI.Container();
     layerContainer.alpha = layer.opacity ?? 1.0;
+    layerContainer.sortableChildren = true;
     this.tilemap.addChild(layerContainer);
 
     const tileWidth = this.mapData!.tilewidth;
@@ -377,31 +396,35 @@ export class TilemapRenderer {
         const tileY = Math.floor(localTileId / tilesPerRow) * tileHeight;
 
         // Create a new texture for this tile using PIXI v8's method
+        const frame = new PIXI.Rectangle(tileX, tileY, tileWidth, tileHeight);
         const tileTexture = new PIXI.Texture({
           source: texture.source,
-          frame: new PIXI.Rectangle(tileX, tileY, tileWidth, tileHeight),
-          orig: new PIXI.Rectangle(0, 0, tileWidth, tileHeight)
+          frame,
+          orig: frame.clone()
         });
 
         // Create sprite and add to layer container
-        const sprite = new PIXI.Sprite(tileTexture);
+        const sprite = PIXI.Sprite.from(tileTexture);
         sprite.x = x * tileWidth;
         sprite.y = y * tileHeight;
+        sprite.width = tileWidth;
+        sprite.height = tileHeight;
 
         // Apply flipping/rotation
         if (flippedHorizontally) {
-          sprite.scale.x *= -1;
+          sprite.scale.x = -1;
           sprite.x += tileWidth;
         }
         if (flippedVertically) {
-          sprite.scale.y *= -1;
+          sprite.scale.y = -1;
           sprite.y += tileHeight;
         }
         if (flippedDiagonally) {
+          const temp = sprite.scale.x;
+          sprite.scale.x = sprite.scale.y;
+          sprite.scale.y = temp;
           sprite.rotation = Math.PI / 2;
-          const temp = sprite.x;
-          sprite.x = sprite.y;
-          sprite.y = temp;
+          sprite.x += tileHeight;
         }
 
         layerContainer.addChild(sprite);
@@ -409,9 +432,16 @@ export class TilemapRenderer {
       }
     }
     
-    console.log(`Layer ${layer.name} rendered ${tilesRendered} tiles`);
+    console.log(`Layer ${layer.name} rendered ${tilesRendered} tiles with container:`, {
+      visible: layerContainer.visible,
+      alpha: layerContainer.alpha,
+      children: layerContainer.children.length,
+      position: { x: layerContainer.position.x, y: layerContainer.position.y },
+      parent: layerContainer.parent ? 'exists' : 'none'
+    });
+    
     return tilesRendered;
-}
+  }
 
   private findTilesetForTile(tileId: number): TiledTileset | undefined {
     if (!this.mapData) return undefined;

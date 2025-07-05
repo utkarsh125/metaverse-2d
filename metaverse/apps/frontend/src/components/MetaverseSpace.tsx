@@ -18,6 +18,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
   const engineRef = useRef<PixiSpaceEngine | TilemapSpaceEngine | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
 
   // Get spaceId from props or fallback to URL
   const spaceId = space.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '');
@@ -28,14 +29,24 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
 
     async function init() {
       try {
-        if (!canvasRef.current || !mounted) {
-          console.log("No canvasRef.current or component unmounted");
+        if (!canvasRef.current || !mounted || !spaceId) {
+          console.log("No canvasRef.current, component unmounted, or invalid spaceId");
           return;
         }
 
-        // Set initial canvas size
-        canvasRef.current.width = 1024;
-        canvasRef.current.height = 768;
+        // Create PIXI Application
+        const { Application } = await import('pixi.js');
+        const app = new Application();
+        
+        // Initialize with canvas
+        await app.init({
+          width: 1024,
+          height: 768,
+          backgroundAlpha: 0,
+          resolution: window.devicePixelRatio || 1,
+          autoDensity: true,
+          view: canvasRef.current
+        });
 
         console.log("Trying to load mapFile", mapFile);
         if (mapFile) {
@@ -45,8 +56,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           if (!mounted) return;  // Check if still mounted after async import
 
           const engine = new TilemapSpaceEngine(
-            canvasRef.current,
-            space.id,
+            app,
             userId,
             username
           );
@@ -56,6 +66,9 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           console.log("Loading tilemap from", `/map/${mapFile}`);
           await engine.loadTilemap(`/map/${mapFile}`);
           
+          // Initialize WebSocket connection after map loads
+          engine.init(spaceId);
+
           if (!mounted) {
             engine.destroy();
             return;
@@ -111,7 +124,30 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
         engineRef.current = null;
       }
     };
-  }, [space, userId, username, mapFile]);
+  }, [space, userId, username, mapFile, spaceId]);
+
+  // Update connected users list
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (engineRef.current) {
+        const users = engineRef.current.getUsers();
+        setConnectedUsers(users);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!spaceId) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Invalid Space</h2>
+          <p className="text-gray-600">No space ID provided</p>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -131,6 +167,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
         <div className="flex items-center gap-6">
           <span className="font-bold text-lg">User: {username}</span>
           <span className="font-mono text-sm">Space ID: {spaceId}</span>
+          <span className="font-mono text-sm">Connected Users: {connectedUsers.length}</span>
         </div>
         <a href="/dashboard" className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold transition shadow">Exit Space</a>
       </nav>
@@ -146,8 +183,6 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
       >
         <canvas
           ref={canvasRef}
-          width={1024}
-          height={768}
           className="w-full h-full max-w-full max-h-full rounded-xl shadow-xl border border-gray-200"
           style={{ 
             display: 'block', 

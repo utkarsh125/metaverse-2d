@@ -1,149 +1,352 @@
 import * as PIXI from 'pixi.js';
-import { PixiUser, PixiElement, WSMessage, UserMoveData } from '../types';
 import { TilemapRenderer } from './TilemapRenderer';
+
+interface WSMessage {
+  type: string;
+  payload: {
+    users?: User[];
+    userId?: string;
+    username?: string;
+    x?: number;
+    y?: number;
+    spaceId?: string;
+  };
+}
+
+interface User {
+  userId: string;
+  username: string;
+  x: number;
+  y: number;
+}
+
+interface WebSocketError extends Error {
+  code?: number;
+  reason?: string;
+}
 
 export class TilemapSpaceEngine {
   private app: PIXI.Application;
-  private container!: PIXI.Container;
-  private users: Map<string, PIXI.Container> = new Map();
-  private elements: Map<string, PIXI.Container> = new Map();
-  private currentUser: PixiUser | null = null;
+  private container: PIXI.Container;
+  private playerSprite: PIXI.Sprite | null = null;
+  private otherPlayers: Map<string, PIXI.Container> = new Map();
   private ws: WebSocket | null = null;
   private keys: Set<string> = new Set();
-  private moveSpeed = 1; // Move one tile at a time
+  private moveSpeed = 1;
   private lastMoveTime = 0;
-  private moveThrottle = 120; // ms between move updates
+  private moveThrottle = 120;
   private tilemapRenderer: TilemapRenderer | null = null;
-  private playerSize = 32; // Size of the player for collision detection
+  private playerSize = 32;
   private initPromise: Promise<void>;
-  private playerSprite: PIXI.Sprite | null = null;
   private playerTilePos = { x: 0, y: 0 };
   private playerTargetPixel = { x: 0, y: 0 };
   private isMoving = false;
-  private spaceId: string;
   private userId: string;
   private username: string;
 
-  constructor(canvas: HTMLCanvasElement, spaceId: string, userId: string, username: string) {
-    this.spaceId = spaceId;
+  constructor(app: PIXI.Application, userId: string, username: string) {
+    this.app = app;
     this.userId = userId;
     this.username = username;
     
-    // Initialize PIXI Application with the same settings as BasicTilemapTest
-    this.app = new PIXI.Application();
+    // Create main container
+    this.container = new PIXI.Container();
+    this.container.sortableChildren = true;
     
-    // Single init call with all settings
-    this.initPromise = this.app.init({
-      view: canvas,
-      width: 800,    // Smaller default size
-      height: 600,   // Smaller default size
-      backgroundAlpha: 0,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-    }).then(() => {
-      // Create main container at native scale, top-left
-      this.container = new PIXI.Container();
-      this.app.stage.addChild(this.container);
-      
-      this.setupResizeHandling();
-      this.setupWebSocket(spaceId);
-      this.setupInputHandling();
-      this.app.ticker.add(this.gameLoop.bind(this));
+    // Add container to stage
+    this.app.stage.addChild(this.container);
+    
+    // Initialize promise for async operations
+    this.initPromise = Promise.resolve();
+    
+    // Log initial state
+    console.log('TilemapSpaceEngine constructor:', {
+      appStage: this.app.stage ? 'exists' : 'none',
+      containerAdded: this.container.parent ? 'yes' : 'no',
+      containerVisible: this.container.visible
     });
   }
 
-  private setupWebSocket(spaceId: string) {
-    // Connect to the WebSocket server on port 4000
+  public init(spaceId: string): void {
+    this.setupWebSocket(spaceId);
+    this.setupInputHandling();
+    this.app.ticker.add(this.gameLoop);
+  }
+
+  private setupWebSocket(spaceId: string): void {
     const wsUrl = 'ws://localhost:4000';
-    
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('Connected to space WebSocket');
-      // Send join message with spaceId
+      console.log('Connected to WebSocket server');
       this.sendMessage({
         type: 'join',
         payload: {
-          spaceId: spaceId,
-          token: null // or get from localStorage if you have authentication
+          spaceId,
+          userId: this.userId,
+          username: this.username,
+          x: this.playerTilePos.x,
+          y: this.playerTilePos.y
         }
       });
     };
 
-    this.ws.onmessage = (event) => {
+    this.ws.onmessage = (event: MessageEvent) => {
       try {
-        const message: WSMessage = JSON.parse(event.data);
-        this.handleWebSocketMessage(message);
+        const message = JSON.parse(event.data) as WSMessage;
+        void this.handleWebSocketMessage(message).catch((error: Error) => {
+          console.error('Error handling WebSocket message:', error);
+        });
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        const wsError = error as WebSocketError;
+        console.error('Error parsing WebSocket message:', wsError.message);
       }
     };
 
-    this.ws.onclose = () => {
-      console.log('Disconnected from space WebSocket');
+    this.ws.onclose = (event: CloseEvent) => {
+      console.log('Disconnected from WebSocket server:', event.code, event.reason);
     };
 
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+    this.ws.onerror = (event: Event) => {
+      const wsError = event as ErrorEvent;
+      console.error('WebSocket error:', wsError.message);
     };
   }
 
-  private handleWebSocketMessage(message: WSMessage) {
-    switch (message.type) {
-      case 'space-joined':
-        // Handle initial space state
-        console.log('Joined space:', message.payload);
-        break;
-      case 'user-joined':
-        // Handle new user joining
-        const newUser = message.payload as { userId: string; x: number; y: number };
-        this.addUser({
-          id: newUser.userId,
-          username: newUser.userId, // Backend doesn't send username yet
-          x: newUser.x,
-          y: newUser.y,
-          color: this.getRandomColor()
-        });
-        break;
-      case 'movement':
-        // Handle user movement
-        const moveData = message.payload as { userId: string; x: number; y: number };
-        this.moveUser({
-          userId: moveData.userId,
-          x: moveData.x,
-          y: moveData.y
-        });
-        break;
-      case 'user-left':
-        // Handle user leaving
-        const leftUser = message.payload as { userId: string };
-        this.removeUser(leftUser.userId);
-        break;
-      case 'movement-rejected':
-        // Handle movement rejection (could reset player position)
-        console.log('Movement rejected:', message.payload);
-        break;
-      case 'user_joined':
-        this.addUser(message.data as PixiUser);
-        break;
-      case 'user_left':
-        this.removeUser((message.data as PixiUser).id);
-        break;
-      case 'user_moved':
-        this.moveUser(message.data as UserMoveData);
-        break;
-      default:
-        console.log('Unhandled message type:', message.type);
-    }
-  }
-
-  private sendMessage(message: WSMessage) {
+  private sendMessage(message: WSMessage): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     }
   }
 
-  private setupResizeHandling() {
+  private setupInputHandling(): void {
+    window.addEventListener('keydown', this.handleKeyDown);
+    window.addEventListener('keyup', this.handleKeyUp);
+  }
+
+  private handleKeyDown = (event: KeyboardEvent): void => {
+    this.keys.add(event.key.toLowerCase());
+  };
+
+  private handleKeyUp = (event: KeyboardEvent): void => {
+    this.keys.delete(event.key.toLowerCase());
+  };
+
+  private updatePlayerSpritePosition(): void {
+    if (!this.playerSprite || !this.tilemapRenderer) return;
+    const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
+    const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
+    
+    // Target pixel position for the center of the tile
+    this.playerTargetPixel.x = (this.playerTilePos.x + 0.5) * tileWidth;
+    this.playerTargetPixel.y = (this.playerTilePos.y + 0.5) * tileHeight;
+    
+    // If not moving, snap to target
+    if (!this.isMoving) {
+      this.playerSprite.x = this.playerTargetPixel.x;
+      this.playerSprite.y = this.playerTargetPixel.y;
+    }
+  }
+
+  private gameLoop = (): void => {
+    if (!this.playerSprite || !this.tilemapRenderer) return;
+
+    let dx = 0, dy = 0;
+    if (!this.isMoving) {
+      if (this.keys.has('w') || this.keys.has('arrowup')) dy = -1;
+      if (this.keys.has('s') || this.keys.has('arrowdown')) dy = 1;
+      if (this.keys.has('a') || this.keys.has('arrowleft')) dx = -1;
+      if (this.keys.has('d') || this.keys.has('arrowright')) dx = 1;
+
+      if ((dx !== 0 || dy !== 0) && Date.now() - this.lastMoveTime > this.moveThrottle) {
+        const newX = this.playerTilePos.x + dx;
+        const newY = this.playerTilePos.y + dy;
+
+        const mapWidth = this.tilemapRenderer['mapData']?.width || 0;
+        const mapHeight = this.tilemapRenderer['mapData']?.height || 0;
+
+        if (newX >= 0 && newY >= 0 && newX < mapWidth && newY < mapHeight) {
+          const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
+          const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
+          const px = newX * tileWidth;
+          const py = newY * tileHeight;
+
+          if (!this.tilemapRenderer.isColliding(px, py, tileWidth, tileHeight)) {
+            this.playerTilePos.x = newX;
+            this.playerTilePos.y = newY;
+            this.isMoving = true;
+            this.updatePlayerSpritePosition();
+
+            // Send movement to server
+            this.sendMessage({
+              type: 'movement',
+              payload: {
+                x: newX,
+                y: newY
+              }
+            });
+          }
+        }
+        this.lastMoveTime = Date.now();
+      }
+    }
+
+    // Update player sprite position
+    if (this.isMoving && this.playerSprite) {
+      const speed = 0.2;
+      const dx = this.playerTargetPixel.x - this.playerSprite.x;
+      const dy = this.playerTargetPixel.y - this.playerSprite.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 1) {
+        this.playerSprite.x += dx * speed;
+        this.playerSprite.y += dy * speed;
+      } else {
+        this.playerSprite.x = this.playerTargetPixel.x;
+        this.playerSprite.y = this.playerTargetPixel.y;
+        this.isMoving = false;
+      }
+    }
+  };
+
+  private async createPlayerSprite(userId: string, username: string, x: number, y: number): Promise<PIXI.Container> {
+    const playerContainer = new PIXI.Container();
+    
+    // Load and create player sprite
+    const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
+    const sprite = new PIXI.Sprite(heroTexture);
+    sprite.anchor.set(0.5, 0.5);
+    sprite.width = this.playerSize;
+    sprite.height = this.playerSize;
+    
+    // Create username text
+    const usernameText = new PIXI.Text(username, {
+      fontSize: 12,
+      fill: 0xFFFFFF,
+      align: 'center',
+      stroke: 0x000000
+    });
+    usernameText.anchor.set(0.5, 1);
+    usernameText.y = -sprite.height / 2 - 5;
+    
+    // Add sprite and text to container
+    playerContainer.addChild(sprite);
+    playerContainer.addChild(usernameText);
+    
+    // Position container
+    playerContainer.position.set(
+      (x + 0.5) * this.playerSize,
+      (y + 0.5) * this.playerSize
+    );
+    
+    return playerContainer;
+  }
+
+  private async handleWebSocketMessage(message: WSMessage): Promise<void> {
+    try {
+      switch (message.type) {
+        case 'space-joined':
+          console.log('Successfully joined space:', message.payload);
+          // Handle initial state of other players if provided
+          const users = message.payload.users;
+          if (users) {
+            for (const user of users) {
+              if (user.userId !== this.userId) {
+                const playerContainer = await this.createPlayerSprite(
+                  user.userId,
+                  user.username,
+                  user.x,
+                  user.y
+                );
+                this.otherPlayers.set(user.userId, playerContainer);
+                this.container.addChild(playerContainer);
+              }
+            }
+          }
+          break;
+
+        case 'user-joined':
+          if (message.payload.userId && message.payload.username && 
+              typeof message.payload.x === 'number' && typeof message.payload.y === 'number') {
+            const joinedUser: User = {
+              userId: message.payload.userId,
+              username: message.payload.username,
+              x: message.payload.x,
+              y: message.payload.y
+            };
+            
+            if (joinedUser.userId !== this.userId) {
+              console.log('New user joined:', joinedUser);
+              const playerContainer = await this.createPlayerSprite(
+                joinedUser.userId,
+                joinedUser.username,
+                joinedUser.x,
+                joinedUser.y
+              );
+              this.otherPlayers.set(joinedUser.userId, playerContainer);
+              this.container.addChild(playerContainer);
+            }
+          }
+          break;
+
+        case 'user-left':
+          const leftUserId = message.payload.userId;
+          if (leftUserId) {
+            const leftPlayer = this.otherPlayers.get(leftUserId);
+            if (leftPlayer) {
+              console.log('User left:', leftUserId);
+              this.container.removeChild(leftPlayer);
+              leftPlayer.destroy();
+              this.otherPlayers.delete(leftUserId);
+            }
+          }
+          break;
+
+        case 'movement':
+          if (message.payload.userId && typeof message.payload.x === 'number' && 
+              typeof message.payload.y === 'number') {
+            const moveData: Pick<User, 'userId' | 'x' | 'y'> = {
+              userId: message.payload.userId,
+              x: message.payload.x,
+              y: message.payload.y
+            };
+            
+            if (moveData.userId !== this.userId) {
+              const playerContainer = this.otherPlayers.get(moveData.userId);
+              if (playerContainer) {
+                // Smoothly move to new position
+                const targetX = (moveData.x + 0.5) * this.playerSize;
+                const targetY = (moveData.y + 0.5) * this.playerSize;
+                
+                // Use ticker to animate movement
+                const animate = () => {
+                  const dx = targetX - playerContainer.x;
+                  const dy = targetY - playerContainer.y;
+                  const distance = Math.sqrt(dx * dx + dy * dy);
+                  
+                  if (distance > 1) {
+                    playerContainer.x += dx * 0.2;
+                    playerContainer.y += dy * 0.2;
+                    requestAnimationFrame(animate);
+                  } else {
+                    playerContainer.x = targetX;
+                    playerContainer.y = targetY;
+                  }
+                };
+                animate();
+              }
+            }
+          }
+          break;
+      }
+    } catch (error) {
+      const wsError = error as Error;
+      console.error('Error handling WebSocket message:', wsError.message);
+      throw error; // Re-throw to be caught by the caller
+    }
+  }
+
+  private setupResizeHandling(): void {
     const resize = () => {
       // Get the parent element dimensions
       const parent = this.app.view.parentElement;
@@ -152,7 +355,7 @@ export class TilemapSpaceEngine {
       const parentWidth = parent.clientWidth;
       const parentHeight = parent.clientHeight;
       
-      // Update canvas size
+      // Update renderer size
       this.app.renderer.resize(parentWidth, parentHeight);
       
       // If we have map data, use it to calculate proper scale
@@ -163,37 +366,35 @@ export class TilemapSpaceEngine {
         
         // Calculate scale to fit map while maintaining aspect ratio
         const scale = Math.min(
-          (parentWidth * 0.8) / mapWidth,    // Use 80% of parent width
-          (parentHeight * 0.8) / mapHeight    // Use 80% of parent height
-        );
+          parentWidth / mapWidth,
+          parentHeight / mapHeight
+        ) * 0.8; // Use 80% of available space
         
-        // Scale the container
+        // Scale and center the container
         this.container.scale.set(scale);
-        
-        // Center the container
         this.container.position.set(
           (parentWidth - (mapWidth * scale)) / 2,
           (parentHeight - (mapHeight * scale)) / 2
         );
-        
-        console.log('Map resize:', {
-          mapSize: { width: mapWidth, height: mapHeight },
-          parentSize: { width: parentWidth, height: parentHeight },
+
+        // Log positions for debugging
+        console.log('Resize:', {
+          parentWidth,
+          parentHeight,
+          mapWidth,
+          mapHeight,
           scale,
-          containerPos: { x: this.container.position.x, y: this.container.position.y }
+          containerPos: {
+            x: this.container.position.x,
+            y: this.container.position.y
+          },
+          containerScale: {
+            x: this.container.scale.x,
+            y: this.container.scale.y
+          },
+          containerVisible: this.container.visible,
+          containerParent: this.container.parent ? 'exists' : 'none'
         });
-      } else {
-        // Default scaling if no map data yet
-        const scale = Math.min(
-          parentWidth / 800,
-          parentHeight / 600
-        );
-        
-        this.container.scale.set(scale);
-        this.container.position.set(
-          (parentWidth - (800 * scale)) / 2,
-          (parentHeight - (600 * scale)) / 2
-        );
       }
     };
     
@@ -202,247 +403,72 @@ export class TilemapSpaceEngine {
     resize();
   }
 
-  private setupInputHandling() {
-    window.addEventListener('keydown', (event) => {
-      this.keys.add(event.key.toLowerCase());
-    });
-    window.addEventListener('keyup', (event) => {
-      this.keys.delete(event.key.toLowerCase());
-    });
-    // Prevent default behavior for arrow keys and WASD
-    window.addEventListener('keydown', (event) => {
-      const key = event.key.toLowerCase();
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
-        event.preventDefault();
-      }
-    });
-  }
-
-  // Update loadTilemap to trigger resize after map loads
   public async loadTilemap(mapUrl: string): Promise<void> {
     try {
       await this.initPromise;
+      
+      // Create and initialize TilemapRenderer
       this.tilemapRenderer = new TilemapRenderer(this.app, this.container);
       await this.tilemapRenderer.loadMap(mapUrl);
       
-      // After map loads, trigger resize to properly scale and position
+      // Set up resize handling after map is loaded
       this.setupResizeHandling();
       
       // Place player at center of map
-      const bounds = this.tilemapRenderer.getMapBounds();
-      const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
-      const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
-      this.playerTilePos = {
-        x: Math.floor((bounds.width / tileWidth) / 2),
-        y: Math.floor((bounds.height / tileHeight) / 2),
-      };
-      
-      // Load player sprite
-      const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
-      this.playerSprite = new PIXI.Sprite(heroTexture);
-      this.playerSprite.anchor.set(0.5, 0.5);
-      this.playerSprite.width = tileWidth;
-      this.playerSprite.height = tileHeight;
-      this.container.addChild(this.playerSprite);
-      this.updatePlayerSpritePosition();
-      
-      console.log('Map loaded with dimensions:', {
-        width: this.tilemapRenderer['mapData']?.width,
-        height: this.tilemapRenderer['mapData']?.height,
-        tileWidth,
-        tileHeight
-      });
+      const mapData = this.tilemapRenderer['mapData'];
+      if (mapData) {
+        const tileWidth = mapData.tilewidth || 32;
+        const tileHeight = mapData.tileheight || 32;
+        this.playerTilePos = {
+          x: Math.floor((mapData.width) / 2),
+          y: Math.floor((mapData.height) / 2),
+        };
+        
+        // Load player sprite
+        const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
+        this.playerSprite = new PIXI.Sprite(heroTexture);
+        this.playerSprite.anchor.set(0.5, 0.5);
+        this.playerSprite.width = tileWidth;
+        this.playerSprite.height = tileHeight;
+        this.container.addChild(this.playerSprite);
+        this.updatePlayerSpritePosition();
+        
+        // Log state after loading
+        console.log('Map loaded:', {
+          mapDimensions: {
+            width: mapData.width * tileWidth,
+            height: mapData.height * tileHeight
+          },
+          containerVisible: this.container.visible,
+          containerChildren: this.container.children.length,
+          containerPosition: {
+            x: this.container.position.x,
+            y: this.container.position.y
+          },
+          containerScale: {
+            x: this.container.scale.x,
+            y: this.container.scale.y
+          },
+          containerParent: this.container.parent ? 'exists' : 'none',
+          stageChildren: this.app.stage.children.length
+        });
+      }
     } catch (error) {
       console.error('Failed to load tilemap:', error);
       throw error;
     }
   }
 
-  // Update player sprite position in world (lerp toward target)
-  private updatePlayerSpritePosition() {
-    if (!this.playerSprite || !this.tilemapRenderer) return;
-    const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
-    const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
-    // Target pixel position for the center of the tile
-    this.playerTargetPixel.x = (this.playerTilePos.x + 0.5) * tileWidth;
-    this.playerTargetPixel.y = (this.playerTilePos.y + 0.5) * tileHeight;
-    // If not moving, snap to target
-    if (!this.isMoving) {
-      this.playerSprite.x = this.playerTargetPixel.x;
-      this.playerSprite.y = this.playerTargetPixel.y;
-    }
+  public getUsers(): string[] {
+    return Array.from(this.otherPlayers.keys());
   }
 
-  // Main game loop: handle player movement and camera
-  private gameLoop() {
-    if (!this.playerSprite || !this.tilemapRenderer) return;
-    let dx = 0, dy = 0;
-    // Only allow new move if not currently animating
-    if (!this.isMoving) {
-      if (this.keys.has('w') || this.keys.has('arrowup')) dy = -1;
-      if (this.keys.has('s') || this.keys.has('arrowdown')) dy = 1;
-      if (this.keys.has('a') || this.keys.has('arrowleft')) dx = -1;
-      if (this.keys.has('d') || this.keys.has('arrowright')) dx = 1;
-      if ((dx !== 0 || dy !== 0) && Date.now() - this.lastMoveTime > this.moveThrottle) {
-        const newX = this.playerTilePos.x + dx;
-        const newY = this.playerTilePos.y + dy;
-        console.log('Attempting move:', { dx, dy, newX, newY, isMoving: this.isMoving });
-        // Check bounds
-        const mapWidth = this.tilemapRenderer['mapData']?.width || 0;
-        const mapHeight = this.tilemapRenderer['mapData']?.height || 0;
-        if (newX >= 0 && newY >= 0 && newX < mapWidth && newY < mapHeight) {
-          // Check collision: only allow movement if not collidable
-          const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
-          const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
-          const px = newX * tileWidth;
-          const py = newY * tileHeight;
-          if (!this.tilemapRenderer.isColliding(px, py, tileWidth, tileHeight)) {
-            this.playerTilePos.x = newX;
-            this.playerTilePos.y = newY;
-            this.isMoving = true;
-            this.updatePlayerSpritePosition();
-            console.log('isMoving set to true');
-          }
-        }
-        this.lastMoveTime = Date.now();
-      }
-    }
-    // Smoothly interpolate player sprite toward target pixel position
-    if (this.isMoving && this.playerSprite) {
-      const speed = 0.18; // Lerp factor (0-1), higher is faster
-      this.playerSprite.x += (this.playerTargetPixel.x - this.playerSprite.x) * speed;
-      this.playerSprite.y += (this.playerTargetPixel.y - this.playerSprite.y) * speed;
-      console.log('Lerping:', {
-        currentX: this.playerSprite.x,
-        currentY: this.playerSprite.y,
-        targetX: this.playerTargetPixel.x,
-        targetY: this.playerTargetPixel.y
-      });
-      // If close enough, snap to target and stop moving
-      if (Math.abs(this.playerSprite.x - this.playerTargetPixel.x) < 1 && Math.abs(this.playerSprite.y - this.playerTargetPixel.y) < 1) {
-        this.playerSprite.x = this.playerTargetPixel.x;
-        this.playerSprite.y = this.playerTargetPixel.y;
-        this.isMoving = false;
-        console.log('isMoving set to false (arrived at target)');
-      }
-    }
-  }
-
-  private addUser(user: PixiUser) {
-    if (this.users.has(user.id)) return;
-
-    const userContainer = new PIXI.Container();
-
-    // Create user avatar (simple colored circle for now)
-    const avatar = new PIXI.Graphics();
-    avatar.beginFill(parseInt(user.color.replace('#', '0x')));
-    avatar.drawCircle(0, 0, 15);
-    avatar.endFill();
-
-    // Add username text
-    const text = new PIXI.Text(user.username, {
-      fontSize: 12,
-      fill: 0x000000,
-      align: 'center',
-    });
-    text.anchor.set(0.5, 0);
-    text.y = 20;
-
-    userContainer.addChild(avatar);
-    userContainer.addChild(text);
-    userContainer.x = user.x;
-    userContainer.y = user.y;
-
-    this.container.addChild(userContainer);
-    this.users.set(user.id, userContainer);
-  }
-
-  private removeUser(userId: string) {
-    const userContainer = this.users.get(userId);
-    if (userContainer) {
-      this.container.removeChild(userContainer);
-      this.users.delete(userId);
-    }
-  }
-
-  private moveUser(moveData: UserMoveData) {
-    const userContainer = this.users.get(moveData.userId);
-    if (userContainer) {
-      userContainer.x = moveData.x;
-      userContainer.y = moveData.y;
-    }
-  }
-
-  public async addElement(element: PixiElement) {
-    if (this.elements.has(element.id)) return;
-
-    // Wait for initialization to complete
-    await this.initPromise;
-
-    // Load texture and create sprite
-    PIXI.Assets.load(element.imageUrl).then((texture) => {
-      const sprite = new PIXI.Sprite(texture);
-      sprite.x = element.x;
-      sprite.y = element.y;
-      sprite.width = element.width;
-      sprite.height = element.height;
-
-      this.container.addChild(sprite);
-      this.elements.set(element.id, sprite);
-    }).catch((error) => {
-      console.error('Error loading element texture:', error);
-      // Create a placeholder rectangle if image fails to load
-      const placeholder = new PIXI.Graphics();
-      placeholder.beginFill(0x888888);
-      placeholder.drawRect(element.x, element.y, element.width, element.height);
-      placeholder.endFill();
-
-      this.container.addChild(placeholder);
-      this.elements.set(element.id, placeholder as PIXI.Container);
-    });
-  }
-
-  public removeElement(elementId: string) {
-    const element = this.elements.get(elementId);
-    if (element) {
-      this.container.removeChild(element);
-      this.elements.delete(elementId);
-    }
-  }
-
-  public getMapBounds(): { width: number; height: number } {
-    if (!this.tilemapRenderer) return { width: 0, height: 0 };
-    return this.tilemapRenderer.getMapBounds();
-  }
-
-  public getCollisionData() {
-    if (!this.tilemapRenderer) return [];
-    return this.tilemapRenderer.getCollisionData();
-  }
-
-  private getRandomColor(): string {
-    const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-      '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
-    ];
-    return colors[Math.floor(Math.random() * colors.length)];
-  }
-
-  public destroy() {
+  public destroy(): void {
     if (this.ws) {
       this.ws.close();
     }
-    if (this.tilemapRenderer) {
-      this.tilemapRenderer.destroy();
-    }
-    this.app.destroy(true);
-  }
-
-  public getCurrentUser() {
-    return this.currentUser;
-  }
-
-  public getUsers() {
-    return Array.from(this.users.keys());
+    window.removeEventListener('keydown', this.handleKeyDown);
+    window.removeEventListener('keyup', this.handleKeyUp);
+    this.app.destroy();
   }
 } 
