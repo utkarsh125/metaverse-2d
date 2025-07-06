@@ -1,5 +1,5 @@
 import * as PIXI from 'pixi.js';
-import { PixiUser, PixiElement, WSMessage, UserMoveData } from '../types';
+import { PixiUser, PixiElement, WSMessage, UserMoveData, ChatMessage } from '../types';
 
 export class PixiSpaceEngine {
   private app: PIXI.Application;
@@ -50,26 +50,35 @@ export class PixiSpaceEngine {
   }
 
   private setupWebSocket(spaceId: string) {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws/space/${spaceId}`;
+    const wsUrl = 'ws://localhost:4000';
+    console.log('PixiSpaceEngine: Connecting to WebSocket:', wsUrl);
     
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('Connected to space WebSocket');
-      // Send user joined message
+      console.log('PixiSpaceEngine: Connected to space WebSocket');
+      // Send join message
       this.sendMessage({
-        type: 'user_joined',
-        data: this.currentUser!,
+        type: 'join',
+        payload: {
+          spaceId: spaceId,
+          userId: this.currentUser!.id,
+          username: this.currentUser!.username,
+          x: this.currentUser!.x,
+          y: this.currentUser!.y,
+          token: localStorage.getItem('token')
+        }
       });
     };
 
     this.ws.onmessage = (event) => {
       try {
+        console.log('PixiSpaceEngine: Raw WebSocket message received:', event.data);
         const message: WSMessage = JSON.parse(event.data);
+        console.log('PixiSpaceEngine: Parsed WebSocket message:', message);
         this.handleWebSocketMessage(message);
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('PixiSpaceEngine: Error parsing WebSocket message:', error);
       }
     };
 
@@ -83,24 +92,72 @@ export class PixiSpaceEngine {
   }
 
   private handleWebSocketMessage(message: WSMessage) {
+    console.log('PixiSpaceEngine: Received WebSocket message:', message);
     switch (message.type) {
-      case 'user_joined':
-        this.addUser(message.data as PixiUser);
+      case 'space-joined':
+        console.log('PixiSpaceEngine: Successfully joined space');
         break;
-      case 'user_left':
-        this.removeUser((message.data as PixiUser).id);
+      case 'user-joined':
+        console.log('PixiSpaceEngine: User joined:', message.payload);
+        if (message.payload && 'userId' in message.payload && 'username' in message.payload) {
+          this.addUser({
+            id: message.payload.userId as string,
+            username: message.payload.username as string,
+            x: (message.payload.x as number) || 100,
+            y: (message.payload.y as number) || 100,
+            color: this.getRandomColor()
+          });
+        }
         break;
-      case 'user_moved':
-        this.moveUser(message.data as UserMoveData);
+      case 'user-left':
+        console.log('PixiSpaceEngine: User left:', message.payload);
+        if (message.payload && 'userId' in message.payload) {
+          this.removeUser(message.payload.userId as string);
+        }
+        break;
+      case 'movement':
+        console.log('PixiSpaceEngine: User moved:', message.payload);
+        if (message.payload && 'userId' in message.payload && 'x' in message.payload && 'y' in message.payload) {
+          this.moveUser({
+            userId: message.payload.userId as string,
+            x: message.payload.x as number,
+            y: message.payload.y as number
+          });
+        }
+        break;
+      case 'chat':
+        console.log('PixiSpaceEngine: Processing chat message. Payload:', message.payload);
+        console.log('PixiSpaceEngine: Chat handler available:', !!this.chatMessageHandler);
+        if (message.payload && 'userId' in message.payload && 'username' in message.payload && 'message' in message.payload) {
+          const chatMessage: ChatMessage = {
+            userId: message.payload.userId as string,
+            username: message.payload.username as string,
+            message: message.payload.message as string,
+            timestamp: new Date()
+          };
+          console.log('PixiSpaceEngine: Created chat message object:', chatMessage);
+          if (this.chatMessageHandler) {
+            console.log('PixiSpaceEngine: Calling chat message handler');
+            this.chatMessageHandler(chatMessage);
+          } else {
+            console.error('PixiSpaceEngine: No chat message handler available!');
+          }
+        } else {
+          console.error('PixiSpaceEngine: Invalid chat message payload:', message.payload);
+        }
         break;
       default:
-        console.log('Unhandled message type:', message.type);
+        console.log('PixiSpaceEngine: Unhandled message type:', message.type);
     }
   }
 
   private sendMessage(message: WSMessage) {
+    console.log('PixiSpaceEngine: sendMessage called with:', message);
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log('PixiSpaceEngine: WebSocket is open, sending message');
       this.ws.send(JSON.stringify(message));
+    } else {
+      console.error('PixiSpaceEngine: WebSocket not open. State:', this.ws?.readyState);
     }
   }
 
@@ -164,8 +221,8 @@ export class PixiSpaceEngine {
     // Send movement update to server
     if (moved && Date.now() - this.lastMoveTime > this.moveThrottle) {
       this.sendMessage({
-        type: 'user_moved',
-        data: {
+        type: 'movement',
+        payload: {
           userId: this.currentUser.id,
           x: this.currentUser.x,
           y: this.currentUser.y,
@@ -303,5 +360,28 @@ export class PixiSpaceEngine {
 
   public getUsers() {
     return Array.from(this.users.keys());
+  }
+
+  public sendChatMessage(message: string): void {
+    console.log('PixiSpaceEngine: sendChatMessage called with:', message);
+    console.log('PixiSpaceEngine: currentUser:', this.currentUser);
+    console.log('PixiSpaceEngine: WebSocket state:', this.ws?.readyState);
+    
+    this.sendMessage({
+      type: 'chat',
+      payload: {
+        userId: this.currentUser!.id,
+        username: this.currentUser!.username,
+        message: message
+      }
+    });
+  }
+
+  private chatMessageHandler?: (message: ChatMessage) => void;
+
+  public setupChatHandler(handler: (message: ChatMessage) => void): void {
+    console.log('PixiSpaceEngine: Setting up chat handler');
+    this.chatMessageHandler = handler;
+    console.log('PixiSpaceEngine: Chat handler set successfully');
   }
 } 

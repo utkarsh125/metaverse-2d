@@ -118,6 +118,13 @@ export interface ChatMessageData {
   timestamp: string;
 }
 
+export interface ChatMessage {
+  userId: string;
+  username: string;
+  message: string;
+  timestamp: Date;
+}
+
 export interface Space{
     id: string;
     name: string;

@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { TilemapRenderer } from './TilemapRenderer';
+import { ChatMessage } from '../types';
 
 interface WSMessage {
   type: string;
@@ -10,6 +11,7 @@ interface WSMessage {
     x?: number;
     y?: number;
     spaceId?: string;
+    message?: string;
   };
 }
 
@@ -93,13 +95,15 @@ export class TilemapSpaceEngine {
 
     this.ws.onmessage = (event: MessageEvent) => {
       try {
+        console.log('TilemapSpaceEngine: Raw WebSocket message received:', event.data);
         const message = JSON.parse(event.data) as WSMessage;
+        console.log('TilemapSpaceEngine: Parsed WebSocket message:', message);
         void this.handleWebSocketMessage(message).catch((error: Error) => {
-          console.error('Error handling WebSocket message:', error);
+          console.error('TilemapSpaceEngine: Error handling WebSocket message:', error);
         });
       } catch (error) {
         const wsError = error as WebSocketError;
-        console.error('Error parsing WebSocket message:', wsError.message);
+        console.error('TilemapSpaceEngine: Error parsing WebSocket message:', wsError.message);
       }
     };
 
@@ -114,8 +118,12 @@ export class TilemapSpaceEngine {
   }
 
   private sendMessage(message: WSMessage): void {
+    console.log('TilemapSpaceEngine: sendMessage called with:', message);
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log('TilemapSpaceEngine: WebSocket is open, sending message');
       this.ws.send(JSON.stringify(message));
+    } else {
+      console.error('TilemapSpaceEngine: WebSocket not open. State:', this.ws?.readyState);
     }
   }
 
@@ -338,6 +346,28 @@ export class TilemapSpaceEngine {
             }
           }
           break;
+
+        case 'chat':
+          console.log('TilemapSpaceEngine: Processing chat message. Payload:', message.payload);
+          console.log('TilemapSpaceEngine: Chat handler available:', !!this.chatMessageHandler);
+          if (message.payload.userId && message.payload.username && message.payload.message) {
+            const chatMessage: ChatMessage = {
+              userId: message.payload.userId,
+              username: message.payload.username,
+              message: message.payload.message,
+              timestamp: new Date()
+            };
+            console.log('TilemapSpaceEngine: Created chat message object:', chatMessage);
+            if (this.chatMessageHandler) {
+              console.log('TilemapSpaceEngine: Calling chat message handler');
+              this.chatMessageHandler(chatMessage);
+            } else {
+              console.error('TilemapSpaceEngine: No chat message handler available!');
+            }
+          } else {
+            console.error('TilemapSpaceEngine: Invalid chat message payload:', message.payload);
+          }
+          break;
       }
     } catch (error) {
       const wsError = error as Error;
@@ -461,6 +491,30 @@ export class TilemapSpaceEngine {
 
   public getUsers(): string[] {
     return Array.from(this.otherPlayers.keys());
+  }
+
+  public sendChatMessage(message: string): void {
+    console.log('TilemapSpaceEngine: sendChatMessage called with:', message);
+    console.log('TilemapSpaceEngine: userId:', this.userId);
+    console.log('TilemapSpaceEngine: username:', this.username);
+    console.log('TilemapSpaceEngine: WebSocket state:', this.ws?.readyState);
+    
+    this.sendMessage({
+      type: 'chat',
+      payload: {
+        message: message,
+        userId: this.userId,
+        username: this.username
+      }
+    });
+  }
+
+  private chatMessageHandler?: (message: ChatMessage) => void;
+
+  public setupChatHandler(handler: (message: ChatMessage) => void): void {
+    console.log('TilemapSpaceEngine: Setting up chat handler');
+    this.chatMessageHandler = handler;
+    console.log('TilemapSpaceEngine: Chat handler set successfully');
   }
 
   public destroy(): void {
