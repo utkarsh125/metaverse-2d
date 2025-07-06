@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useCallback, useEffect, useState } from 'react';
+
 import { CollisionZone } from '@/lib/types';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface Element {
   id: string;
@@ -62,18 +64,9 @@ export default function AdminPage() {
     { value: 'custom', label: 'Custom', description: 'Custom collision pattern' }
   ];
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
-      setToken(storedToken);
-      fetchElements();
-      fetchMaps();
-    } else {
-      router.push('/signin');
-    }
-  }, [router]);
-
-  const fetchElements = async () => {
+  const fetchElements = useCallback(async () => {
+    if (!token) return;
+    
     try {
       const response = await fetch('http://localhost:3000/api/v1/elements', {
         headers: {
@@ -87,9 +80,11 @@ export default function AdminPage() {
     } catch {
       console.error('Failed to fetch elements');
     }
-  };
+  }, [token]);
 
-  const fetchMaps = async () => {
+  const fetchMaps = useCallback(async () => {
+    if (!token) return;
+    
     try {
       const response = await fetch('http://localhost:3000/api/v1/maps', {
         headers: {
@@ -103,7 +98,23 @@ export default function AdminPage() {
     } catch {
       console.error('Failed to fetch maps');
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    } else {
+      router.push('/signin');
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (token) {
+      fetchElements();
+      fetchMaps();
+    }
+  }, [token, fetchElements, fetchMaps]);
 
   const createElement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,14 +426,18 @@ export default function AdminPage() {
                       {element.width}x{element.height} • {element.static ? 'Static' : 'Dynamic'}
                     </div>
                   </div>
-                  <img 
-                    src={element.imageUrl} 
-                    alt="Element" 
-                    className="w-8 h-8 object-cover rounded"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
+                  <div className="relative w-8 h-8">
+                    <Image 
+                      src={element.imageUrl} 
+                      alt="Element" 
+                      fill
+                      className="object-cover rounded"
+                      sizes="32px"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -445,4 +460,4 @@ export default function AdminPage() {
       </div>
     </div>
   );
-} 
+}

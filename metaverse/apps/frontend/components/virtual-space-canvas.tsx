@@ -1,7 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
+
+import React, { useCallback, useEffect, useRef } from 'react';
+
 import { gsap } from 'gsap';
 
 const TILE_SIZE = 64;
@@ -56,12 +58,12 @@ export default function VirtualSpaceCanvas() {
   const worldContainer = useRef<PIXI.Container | null>(null);
 
   // Helper to get viewport size
-  function getViewportSize() {
+  const getViewportSize = useCallback(() => {
     return { vw: window.innerWidth, vh: window.innerHeight };
-  }
+  }, []);
 
   // Camera logic: center player, clamp to map
-  function updateCamera(animated = false) {
+  const updateCamera = useCallback((animated = false) => {
     if (!appRef.current || !worldContainer.current) return;
     const { vw, vh } = getViewportSize();
     const centerX = Math.floor(vw / 2);
@@ -80,110 +82,10 @@ export default function VirtualSpaceCanvas() {
     } else {
       worldContainer.current.position.set(offsetX, offsetY);
     }
-  }
-
-  // Load Timmy sprite sheet and slice textures
-  useEffect(() => {
-    const loadTextures = async () => {
-      try {
-        console.log('Loading Timmy sprite from:', TIMMY_PATH);
-        const base = await PIXI.Assets.load(TIMMY_PATH);
-        console.log('Timmy sprite loaded successfully:', base);
-        
-        // For 4 rows (directions), 2 columns (frames)
-        const getFrame = (row: number, col: number) => {
-          return new PIXI.Texture({
-            source: base.source,
-            frame: new PIXI.Rectangle(
-              col * TIMMY_FRAME_WIDTH,
-              row * TIMMY_FRAME_HEIGHT,
-              TIMMY_FRAME_WIDTH,
-              TIMMY_FRAME_HEIGHT
-            )
-          });
-        };
-        
-        timmyTextures.current = {
-          up:    [getFrame(0, 0), getFrame(0, 1)],
-          down:  [getFrame(1, 0), getFrame(1, 1)],
-          left:  [getFrame(2, 0), getFrame(2, 1)],
-          right: [getFrame(3, 0), getFrame(3, 1)],
-        };
-        
-        console.log('Timmy textures created:', timmyTextures.current);
-        
-        // Redraw players after textures load
-        if (appRef.current) {
-          // Update all existing player sprites to use Timmy texture
-          Object.entries(playerSprites.current).forEach(([id, sprite]) => {
-            const pos = positions.current[id];
-            if (pos && timmyTextures.current) {
-              const newTexture = timmyTextures.current[pos.dir][pos.moving ? 1 : 0];
-              if (sprite.texture !== newTexture) {
-                console.log('Updating sprite texture for', id, 'to Timmy texture');
-                sprite.texture = newTexture;
-              }
-            } else {
-              console.log('Timmy textures not set or no pos for', id);
-            }
-          });
-          drawPlayers();
-        }
-      } catch (error) {
-        console.error('Failed to load Timmy sprite:', error);
-        // Fallback to colored square
-        timmyTextures.current = null;
-      }
-    };
-    loadTextures();
-  }, []);
-
-  // Draw the map (background, grid, obstacles)
-  function drawMap(container: PIXI.Container) {
-    // Background
-    const bg = new PIXI.Graphics();
-    bg.beginFill(0x222222);
-    bg.drawRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    bg.endFill();
-    container.addChild(bg);
-    // Grid
-    const grid = new PIXI.Graphics();
-    grid.lineStyle(1, 0x333333, 0.5);
-    for (let x = 0; x <= MAP_WIDTH; x++) {
-      grid.moveTo(x * TILE_SIZE, 0);
-      grid.lineTo(x * TILE_SIZE, CANVAS_HEIGHT);
-    }
-    for (let y = 0; y <= MAP_HEIGHT; y++) {
-      grid.moveTo(0, y * TILE_SIZE);
-      grid.lineTo(CANVAS_WIDTH, y * TILE_SIZE);
-    }
-    container.addChild(grid);
-    // Obstacles
-    for (const obs of obstacles.current) {
-      const o = new PIXI.Graphics();
-      o.beginFill(obs.color);
-      o.drawRect(obs.x * TILE_SIZE, obs.y * TILE_SIZE, OBSTACLE_SIZE, OBSTACLE_SIZE);
-      o.endFill();
-      // 8-bit style: add a black border
-      o.lineStyle(2, 0x000000);
-      o.drawRect(obs.x * TILE_SIZE, obs.y * TILE_SIZE, OBSTACLE_SIZE, OBSTACLE_SIZE);
-      container.addChild(o);
-    }
-    // Border
-    const border = new PIXI.Graphics();
-    border.lineStyle(4, 0xFFD700);
-    border.drawRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    container.addChild(border);
-  }
-
-  // Collision detection
-  function isBlocked(x: number, y: number) {
-    if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) return true;
-    return obstacles.current.some((obs) => obs.x === x && obs.y === y);
-  }
+  }, [getViewportSize]);
 
   // Draw all players
-  function drawPlayers(animatedMoveId: string | null = null) {
+  const drawPlayers = useCallback((animatedMoveId: string | null = null) => {
     if (!appRef.current || !worldContainer.current) return;
     const container = worldContainer.current;
     // Track which sprites are still in use
@@ -262,10 +164,54 @@ export default function VirtualSpaceCanvas() {
     });
     // After drawing, update camera
     updateCamera(animatedMoveId === userId.current);
-  }
+  }, [updateCamera]);
+
+  // Draw the map (background, grid, obstacles)
+  const drawMap = useCallback((container: PIXI.Container) => {
+    // Background
+    const bg = new PIXI.Graphics();
+    bg.beginFill(0x222222);
+    bg.drawRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    bg.endFill();
+    container.addChild(bg);
+    // Grid
+    const grid = new PIXI.Graphics();
+    grid.lineStyle(1, 0x333333, 0.5);
+    for (let x = 0; x <= MAP_WIDTH; x++) {
+      grid.moveTo(x * TILE_SIZE, 0);
+      grid.lineTo(x * TILE_SIZE, CANVAS_HEIGHT);
+    }
+    for (let y = 0; y <= MAP_HEIGHT; y++) {
+      grid.moveTo(0, y * TILE_SIZE);
+      grid.lineTo(CANVAS_WIDTH, y * TILE_SIZE);
+    }
+    container.addChild(grid);
+    // Obstacles
+    for (const obs of obstacles.current) {
+      const o = new PIXI.Graphics();
+      o.beginFill(obs.color);
+      o.drawRect(obs.x * TILE_SIZE, obs.y * TILE_SIZE, OBSTACLE_SIZE, OBSTACLE_SIZE);
+      o.endFill();
+      // 8-bit style: add a black border
+      o.lineStyle(2, 0x000000);
+      o.drawRect(obs.x * TILE_SIZE, obs.y * TILE_SIZE, OBSTACLE_SIZE, OBSTACLE_SIZE);
+      container.addChild(o);
+    }
+    // Border
+    const border = new PIXI.Graphics();
+    border.lineStyle(4, 0xFFD700);
+    border.drawRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    container.addChild(border);
+  }, []);
+
+  // Collision detection
+  const isBlocked = useCallback((x: number, y: number) => {
+    if (x < 0 || x >= MAP_WIDTH || y < 0 || y >= MAP_HEIGHT) return true;
+    return obstacles.current.some((obs) => obs.x === x && obs.y === y);
+  }, []);
 
   // Animate local player walk
-  function animateLocalPlayerWalk() {
+  const animateLocalPlayerWalk = useCallback(() => {
     if (!timmyTextures.current) return;
     if (!playerSprites.current[userId.current]) return;
     if (!walkTicker.current) {
@@ -277,8 +223,9 @@ export default function VirtualSpaceCanvas() {
       });
       walkTicker.current.start();
     }
-  }
-  function stopLocalPlayerWalk() {
+  }, []);
+
+  const stopLocalPlayerWalk = useCallback(() => {
     if (walkTicker.current) {
       walkTicker.current.stop();
       walkTicker.current.destroy();
@@ -288,7 +235,63 @@ export default function VirtualSpaceCanvas() {
     if (timmyTextures.current && playerSprites.current[userId.current]) {
       playerSprites.current[userId.current].texture = timmyTextures.current[myDir.current][0];
     }
-  }
+  }, []);
+
+  // Load Timmy sprite sheet and slice textures
+  useEffect(() => {
+    const loadTextures = async () => {
+      try {
+        console.log('Loading Timmy sprite from:', TIMMY_PATH);
+        const base = await PIXI.Assets.load(TIMMY_PATH);
+        console.log('Timmy sprite loaded successfully:', base);
+        
+        // For 4 rows (directions), 2 columns (frames)
+        const getFrame = (row: number, col: number) => {
+          return new PIXI.Texture({
+            source: base.source,
+            frame: new PIXI.Rectangle(
+              col * TIMMY_FRAME_WIDTH,
+              row * TIMMY_FRAME_HEIGHT,
+              TIMMY_FRAME_WIDTH,
+              TIMMY_FRAME_HEIGHT
+            )
+          });
+        };
+        
+        timmyTextures.current = {
+          up:    [getFrame(0, 0), getFrame(0, 1)],
+          down:  [getFrame(1, 0), getFrame(1, 1)],
+          left:  [getFrame(2, 0), getFrame(2, 1)],
+          right: [getFrame(3, 0), getFrame(3, 1)],
+        };
+        
+        console.log('Timmy textures created:', timmyTextures.current);
+        
+        // Redraw players after textures load
+        if (appRef.current) {
+          // Update all existing player sprites to use Timmy texture
+          Object.entries(playerSprites.current).forEach(([id, sprite]) => {
+            const pos = positions.current[id];
+            if (pos && timmyTextures.current) {
+              const newTexture = timmyTextures.current[pos.dir][pos.moving ? 1 : 0];
+              if (sprite.texture !== newTexture) {
+                console.log('Updating sprite texture for', id, 'to Timmy texture');
+                sprite.texture = newTexture;
+              }
+            } else {
+              console.log('Timmy textures not set or no pos for', id);
+            }
+          });
+          drawPlayers();
+        }
+      } catch (error) {
+        console.error('Failed to load Timmy sprite:', error);
+        // Fallback to colored square
+        timmyTextures.current = null;
+      }
+    };
+    loadTextures();
+  }, [drawPlayers]);
 
   // Setup PixiJS
   useEffect(() => {
@@ -342,8 +345,7 @@ export default function VirtualSpaceCanvas() {
       stopLocalPlayerWalk();
       if (handleResize) window.removeEventListener('resize', handleResize);
     };
-    // eslint-disable-next-line
-  }, []);
+  }, [drawMap, drawPlayers, getViewportSize, updateCamera, stopLocalPlayerWalk]);
 
   // Setup WebSocket
   useEffect(() => {
@@ -396,8 +398,7 @@ export default function VirtualSpaceCanvas() {
     return () => {
       ws.close();
     };
-    // eslint-disable-next-line
-  }, []);
+  }, [drawPlayers]);
 
   // Handle movement and facing
   useEffect(() => {
@@ -476,7 +477,7 @@ export default function VirtualSpaceCanvas() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [drawPlayers, updateCamera, stopLocalPlayerWalk, animateLocalPlayerWalk, isBlocked]);
 
   // Responsive wrapper
   return (

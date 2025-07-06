@@ -5,9 +5,12 @@ const JWT_PASSWORD = "123kasdk123";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { spaceId: string } }
+  { params }: { params: Promise<{ spaceId: string }> }
 ) {
   try {
+    // Await the params since they're now a Promise
+    const { spaceId } = await params;
+    
     // Get authorization header
     const authHeader = request.headers.get('authorization');
     let userId: string | null = null;
@@ -31,7 +34,6 @@ export async function GET(
       userId = 'test-user';
     }
 
-    const spaceId = params.spaceId;
     console.log(`Accessing space ${spaceId} with userId: ${userId}`);
 
     // In a real application, you would fetch from your database
@@ -51,4 +53,4 @@ export async function GET(
       { status: 500 }
     );
   }
-} 
+}

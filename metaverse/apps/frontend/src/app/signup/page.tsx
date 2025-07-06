@@ -27,9 +27,14 @@ export default function SignupPage() {
       } else {
         setError('Unexpected response status: ' + res.status);
       }
-    } catch (err: any) {
-      if (err.response?.status === 400) {
-        setError('Signup failed: username may already exist or invalid input.');
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { status?: number } };
+        if (axiosError.response?.status === 400) {
+          setError('Signup failed: username may already exist or invalid input.');
+        } else {
+          setError('Network or server error');
+        }
       } else {
         setError('Network or server error');
       }

@@ -27,8 +27,16 @@ export default function SigninPage() {
       const data = response.data;
       localStorage.setItem('token', data.token);
       router.push('/dashboard');
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || 'Signin failed.';
+    } catch (err: unknown) {
+      let message = 'Signin failed.';
+      
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { message?: string } }; message?: string };
+        message = axiosError.response?.data?.message || axiosError.message || 'Signin failed.';
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      
       setError(message);
     } finally {
       setLoading(false);
@@ -36,18 +44,22 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-semibold text-gray-800 mb-6 text-center">Sign In</h1>
-        <form onSubmit={handleSignin} className="space-y-4">
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          Sign In
+        </h2>
+        <form className="mt-8 space-y-6" onSubmit={handleSignin}>
+          {error && <div className="text-red-600 text-sm">{error}</div>}
           <div>
-            <label htmlFor="signin-username" className="block text-gray-700 font-medium mb-1">
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700">
               Username
             </label>
             <input
-              id="signin-username"
+              id="username"
+              name="username"
               type="text"
+              required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -55,12 +67,14 @@ export default function SigninPage() {
             />
           </div>
           <div>
-            <label htmlFor="signin-password" className="block text-gray-700 font-medium mb-1">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Password
             </label>
             <input
-              id="signin-password"
+              id="password"
+              name="password"
               type="password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -70,14 +84,14 @@ export default function SigninPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        <p className="mt-6 text-center text-sm text-gray-600">
-          Don’t have an account?{' '}
-          <a href="/signup" className="text-green-600 hover:underline">
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Don&apos;t have an account?{' '}
+          <a href="/signup" className="font-medium text-green-600 hover:text-green-500">
             Sign up
           </a>
         </p>

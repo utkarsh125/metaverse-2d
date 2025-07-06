@@ -1,7 +1,8 @@
 "use client"
 
-import type { Avatar, MapTheme, Space, SpaceInvite, User } from "@/lib/types"
+import type { Avatar, MapTheme, Space, SpaceInvite } from "@/lib/types"
 import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
 
 import { API } from "@/lib/api"
 import { gsap } from "gsap"
@@ -18,8 +19,7 @@ export default function DashboardPage() {
   const [avatars, setAvatars] = useState<Avatar[]>([])
   const [maps, setMaps] = useState<MapTheme[]>([])
   const [spaces, setSpaces] = useState<Space[]>([])
-  const [invites, setInvites] = useState<SpaceInvite[]>([])
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  // Removed unused variables: invites, currentUser, setSelectedSpaceId, handleInviteResponse
 
   // onboarding step (1 = avatar, 2 = map + name)
   const [step, setStep] = useState<1 | 2>(1)
@@ -38,7 +38,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
-  const [selectedSpaceId, setSelectedSpaceId] = useState<string>('')
 
   // GSAP animations
   useEffect(() => {
@@ -105,13 +104,7 @@ export default function DashboardPage() {
       })
       .catch(console.error)
 
-    API.get<User>("/api/v1/user/me")
-      .then((res) => setCurrentUser(res.data))
-      .catch(console.error)
-
-    API.get<SpaceInvite[]>("/api/v1/space/invites/me")
-      .then((res) => setInvites(res.data))
-      .catch(console.error)
+    // Removed unused API calls for currentUser and invites
 
     setLoading(false)
   }, [router])
@@ -135,8 +128,11 @@ export default function DashboardPage() {
     try {
       await API.post("/api/v1/user/metadata", { avatarId: selectedAvatar })
       setHasAvatar(true)
-    } catch (e: any) {
-      setError(e.response?.status === 400 ? "Invalid avatar" : "Network error")
+    } catch (e: unknown) {
+      const errorMessage = e && typeof e === 'object' && 'response' in e && 
+        e.response && typeof e.response === 'object' && 'status' in e.response && 
+        e.response.status === 400 ? "Invalid avatar" : "Network error"
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -167,9 +163,13 @@ export default function DashboardPage() {
       setOnboarded(true)
       setSpaceName("")
       setSelectedMap("")
-    } catch (e: any) {
-      console.error("CreateSpace error:", e.response?.data)
-      setError(e.response?.data?.message || "Failed to create space")
+    } catch (e: unknown) {
+      console.error("CreateSpace error:", e)
+      const errorMessage = e && typeof e === 'object' && 'response' in e && 
+        e.response && typeof e.response === 'object' && 'data' in e.response && 
+        e.response.data && typeof e.response.data === 'object' && 'message' in e.response.data 
+        ? String(e.response.data.message) : "Failed to create space"
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -183,28 +183,6 @@ export default function DashboardPage() {
     setOnboarded(false)
     setStep(2)
     setError(null)
-  }
-
-  const handleInviteResponse = async (inviteId: string, status: 'ACCEPTED' | 'DECLINED') => {
-    try {
-      const response = await API.put("/api/v1/space/invite/" + inviteId, { status })
-  
-      if (response.status === 200) {
-        // Remove the invite from the list
-        setInvites(prev => prev.filter(invite => invite.id !== inviteId))
-        
-        // If accepted, refresh spaces list
-        if (status === 'ACCEPTED') {
-          await API.get<{ spaces: Space[] }>("/api/v1/space/all")
-            .then((res) => {
-              setSpaces(res.data.spaces)
-              setHasSpaces(res.data.spaces.length > 0)
-            })
-        }
-      }
-    } catch (error) {
-      console.error('Error responding to invite:', error)
-    }
   }
 
   const handleInviteSent = (invite: SpaceInvite) => {
@@ -276,9 +254,11 @@ export default function DashboardPage() {
                           }`}
                         >
                           <div className="relative overflow-hidden rounded-lg mb-3">
-                            <img
+                            <Image
                               src={avatar.imageUrl || "/placeholder.svg?height=96&width=96"}
-                              alt={avatar.name}
+                              alt={avatar.name as string}
+                              width={96}
+                              height={96}
                               className="w-full h-24 object-cover transition-transform duration-300 group-hover:scale-110"
                             />
                             {selectedAvatar === avatar.id && (
@@ -372,9 +352,11 @@ export default function DashboardPage() {
                             >
                               <div className="relative overflow-hidden rounded-lg mb-3">
                                 {map.thumbnail ? (
-                                  <img
+                                  <Image
                                     src={map.thumbnail || "/placeholder.svg?height=128&width=256"}
                                     alt={map.name}
+                                    width={256}
+                                    height={128}
                                     className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-110"
                                   />
                                 ) : (
@@ -474,9 +456,11 @@ export default function DashboardPage() {
                   >
                     <div className="relative overflow-hidden">
                       {space.thumbnail ? (
-                        <img
+                        <Image
                           src={space.thumbnail || "/placeholder.svg?height=192&width=384"}
                           alt={space.name}
+                          width={384}
+                          height={192}
                           className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
@@ -539,7 +523,7 @@ export default function DashboardPage() {
       </div>
 
       <TeamInviteModal
-        spaceId={selectedSpaceId}
+        spaceId=""
         isOpen={showInviteModal}
         onClose={() => setShowInviteModal(false)}
         onInviteSent={handleInviteSent}
