@@ -72,23 +72,23 @@ const Navbar = () => {
     <div ref={overlayRef} className="md:hidden fixed inset-0 z-[9999] bg-black pointer-events-auto" style={{ opacity: 1 }}>
       <div
         ref={menuRef}
-        className="absolute inset-0 flex flex-col justify-center items-center px-8 py-10 text-white"
+        className="absolute inset-0 flex flex-col justify-center items-center px-6 sm:px-8 py-10 text-white"
         style={{ opacity: 1, transform: 'none' }}
         onClick={e => e.stopPropagation()}
       >
         {/* Close button */}
-        <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="absolute top-6 right-6 text-white text-3xl p-2">
-          <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+        <button onClick={() => setMobileOpen(false)} aria-label="Close menu" className="absolute top-4 right-4 sm:top-6 sm:right-6 text-white text-2xl sm:text-3xl p-2">
+          <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <nav className="flex flex-col gap-8 items-center w-full">
+        <nav className="flex flex-col gap-6 sm:gap-8 items-center w-full">
           {menuItem.map((item, index) => (
             <Link
               href={item.link}
               key={index}
               ref={el => { linksRef.current[index] = el; }}
-              className="font-raleway font-bold text-2xl sm:text-3xl md:text-4xl text-white hover:text-gray-200 transition-colors duration-200"
+              className="font-raleway font-bold text-xl sm:text-2xl md:text-3xl text-white hover:text-gray-200 transition-colors duration-200"
               onClick={() => setMobileOpen(false)}
             >
               {item.name}
@@ -97,14 +97,14 @@ const Navbar = () => {
           <button 
             ref={signInRef}
             onClick={() => { setMobileOpen(false); handleSignIn(); }}
-            className="font-raleway font-semibold rounded-full border border-gray-200 px-8 py-3 text-white hover:bg-gray-900 hover:border-white transition-all duration-300 mt-4 text-lg"
+            className="font-raleway font-semibold rounded-full border border-gray-200 px-6 sm:px-8 py-3 text-white hover:bg-gray-900 hover:border-white transition-all duration-300 mt-4 text-base sm:text-lg"
           >
             Sign In
           </button>
           <button 
             ref={getStartedRef}
             onClick={() => { setMobileOpen(false); handleGetStarted(); }}
-            className="font-raleway font-semibold bg-black text-white px-8 py-3 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 text-lg"
+            className="font-raleway font-semibold bg-black text-white px-6 sm:px-8 py-3 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 text-base sm:text-lg"
           >
             Get Started
           </button>
@@ -117,16 +117,16 @@ const Navbar = () => {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+        <div className="flex justify-between items-center px-4 sm:px-6 py-4 max-w-7xl mx-auto">
           {/* Logo */}
-          <div className="flex items-center gap-3 bg-gradient-to-r from-gray-900 to-black text-white px-4 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
+          <div className="flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-gray-900 to-black text-white px-3 sm:px-4 py-2 sm:py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer">
             <svg
-              width="24"
-              height="24"
+              width="20"
+              height="20"
               viewBox="0 0 200 200"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="flex-shrink-0"
+              className="flex-shrink-0 sm:w-6 sm:h-6"
             >
               <g clipPath="url(#clip0_104_157)">
                 <path
@@ -153,11 +153,11 @@ const Navbar = () => {
                 </clipPath>
               </defs>
             </svg>
-            <h1 className="font-raleway font-bold text-lg">orbit.space</h1>
+            <h1 className="font-raleway font-bold text-base sm:text-lg">orbit.space</h1>
           </div>
 
           {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6 lg:gap-8">
             {menuItem.map((item, index) => (
               <Link 
                 href={item.link} 
@@ -176,7 +176,7 @@ const Navbar = () => {
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Open menu"
           >
-            <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -185,19 +185,21 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-3">
             <button 
               onClick={handleSignIn}
-              className="font-raleway font-medium rounded-full border border-gray-300 px-5 py-2.5 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300"
+              className="font-raleway font-medium rounded-full border border-gray-300 px-4 lg:px-5 py-2 lg:py-2.5 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-sm lg:text-base"
             >
               Sign In
             </button>
             <button 
               onClick={handleGetStarted}
-              className="font-raleway font-medium bg-gradient-to-r from-gray-900 to-black text-white px-5 py-2.5 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300"
+              className="font-raleway font-medium bg-gradient-to-r from-gray-900 to-black text-white px-4 lg:px-5 py-2 lg:py-2.5 rounded-full hover:shadow-lg hover:scale-105 transition-all duration-300 text-sm lg:text-base"
             >
               Get Started
             </button>
           </div>
         </div>
       </nav>
+
+      {/* Mobile Menu Portal */}
       {mobileMenuPortal}
     </>
   );

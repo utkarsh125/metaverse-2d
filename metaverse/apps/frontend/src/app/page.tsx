@@ -7,7 +7,7 @@ import Footer from '../components/landing/Footer';
 
 const Page = () => {
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100 flex flex-col overflow-x-hidden">
       <Navbar />
       <HeroSection />
       <HowItWorksSection />

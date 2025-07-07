@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fontsource/inter": "^5.2.6",
+    "@fontsource/pixelify-sans": "^5.2.6",
+    "@next/font": "^14.2.15",
     "@pixi/tilemap": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.7",
     "axios": "^1.10.0",

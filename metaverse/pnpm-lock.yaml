@@ -20,6 +20,15 @@ importers:
 
   apps/frontend:
     dependencies:
+      '@fontsource/inter':
+        specifier: ^5.2.6
+        version: 5.2.6
+      '@fontsource/pixelify-sans':
+        specifier: ^5.2.6
+        version: 5.2.6
+      '@next/font':
+        specifier: ^14.2.15
+        version: 14.2.15(next@15.3.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       '@pixi/tilemap':
         specifier: ^5.0.1
         version: 5.0.1(pixi.js@8.10.2)
@@ -644,6 +653,12 @@ packages:
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
 
+  '@fontsource/inter@5.2.6':
+    resolution: {integrity: sha512-CZs9S1CrjD0jPwsNy9W6j0BhsmRSQrgwlTNkgQXTsAeDRM42LBRLo3eo9gCzfH4GvV7zpyf78Ozfl773826csw==}
+
+  '@fontsource/pixelify-sans@5.2.6':
+    resolution: {integrity: sha512-OvHb2k35TJPy75LRyBi1EUG8hkj9BBW64QpUS+b8IBnbTDN/XOg1BDVjXYEbWptLZfHsRnwu5FB7P97qHmJjNg==}
+
   '@hookform/resolvers@3.10.0':
     resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
     peerDependencies:
@@ -936,6 +951,11 @@ packages:
 
   '@next/eslint-plugin-next@15.3.4':
     resolution: {integrity: sha512-lBxYdj7TI8phbJcLSAqDt57nIcobEign5NYIKCiy0hXQhrUbTqLqOaSDi568U6vFg4hJfBdZYsG4iP/uKhCqgg==}
+
+  '@next/font@14.2.15':
+    resolution: {integrity: sha512-QopYhBmCDDrNDynbi+ZD1hDZXmQXVFo7TmAFp4DQgO/kogz1OLbQ92hPigJbj572eZ3GaaVxNIyYVn3/eAsehg==}
+    peerDependencies:
+      next: '*'
 
   '@next/swc-darwin-arm64@15.2.4':
     resolution: {integrity: sha512-1AnMfs655ipJEDC/FHkSr0r3lXBgpqKo4K1kiwfUf3iE68rDFXZ1TtHdMvf7D0hMItgDZ7Vuq3JgNMbt/+3bYw==}
@@ -5041,6 +5061,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.9': {}
 
+  '@fontsource/inter@5.2.6': {}
+
+  '@fontsource/pixelify-sans@5.2.6': {}
+
   '@hookform/resolvers@3.10.0(react-hook-form@7.56.4(react@19.1.0))':
     dependencies:
       react-hook-form: 7.56.4(react@19.1.0)
@@ -5269,6 +5293,10 @@ snapshots:
   '@next/eslint-plugin-next@15.3.4':
     dependencies:
       fast-glob: 3.3.1
+
+  '@next/font@14.2.15(next@15.3.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0))':
+    dependencies:
+      next: 15.3.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
 
   '@next/swc-darwin-arm64@15.2.4':
     optional: true

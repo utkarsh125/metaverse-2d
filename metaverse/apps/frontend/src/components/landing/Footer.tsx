@@ -2,12 +2,12 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-50 py-16">
-      <div className="max-w-6xl mx-auto px-6">
+    <footer className="bg-purple-300 py-16 rounded-t-3xl sm:rounded-t-6xl">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <div className="flex items-center gap-3 mb-6">
               <div className="flex items-center gap-3 bg-gradient-to-r from-gray-900 to-black text-white px-4 py-2.5 rounded-full">
                 <svg
@@ -45,74 +45,13 @@ const Footer = () => {
                 <span className="font-raleway font-bold text-lg">orbit.space</span>
               </div>
             </div>
-            <p className="font-raleway text-gray-600 mb-6 max-w-md leading-relaxed">
+            <p className="font-raleway text-gray-800 mb-6 max-w-md leading-relaxed text-sm sm:text-base">
               Creating the future of virtual collaboration with immersive 2D spaces that bring teams together from anywhere in the world.
             </p>
-            <div className="flex gap-4">
-              {['Twitter', 'LinkedIn', 'Discord', 'GitHub'].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="font-raleway text-gray-500 hover:text-gray-700 transition-colors duration-200 hover:scale-105"
-                >
-                  {social}
-                </a>
-              ))}
-            </div>
           </div>
 
-          {/* Product Links */}
-          <div>
-            <h4 className="font-raleway font-bold text-gray-900 mb-4 text-lg">Product</h4>
-            <ul className="space-y-3">
-              {['Features', 'Pricing', 'API', 'Documentation'].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    className="font-raleway text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company Links */}
-          <div>
-            <h4 className="font-raleway font-bold text-gray-900 mb-4 text-lg">Company</h4>
-            <ul className="space-y-3">
-              {['About', 'Blog', 'Careers', 'Contact'].map((item) => (
-                <li key={item}>
-                  <a
-                    href="#"
-                    className="font-raleway text-gray-600 hover:text-gray-900 transition-colors duration-200"
-                  >
-                    {item}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="font-raleway text-gray-500 text-sm">
-            © {new Date().getFullYear()} orbit.space. All rights reserved.
-          </p>
-          <div className="flex gap-6 text-sm">
-            {['Privacy Policy', 'Terms of Service', 'Cookies'].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="font-raleway text-gray-500 hover:text-gray-700 transition-colors duration-200"
-              >
-                {item}
-              </a>
-            ))}
-          </div>
-        </div>
       </div>
     </footer>
   );

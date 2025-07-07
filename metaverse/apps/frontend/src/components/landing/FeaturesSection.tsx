@@ -21,31 +21,31 @@ const features = [
 const FeaturesSection = () => {
   return (
     <section id="features" className="py-24 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="text-center mb-16">
-          <h2 className="font-merriweather text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+          <h2 className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
             Everything you need to build
             <br />
             <span className="text-gray-600">amazing virtual experiences</span>
           </h2>
-          <p className="font-raleway text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="font-inter text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Powerful tools and features designed to make virtual collaboration seamless and engaging.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {features.map((feature) => (
             <div 
               key={feature.title} 
-              className="group bg-gray-50 rounded-2xl p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-200"
+              className="group bg-gray-50 rounded-2xl p-6 sm:p-8 hover:bg-white hover:shadow-xl transition-all duration-300 border border-transparent hover:border-gray-200"
             >
-              <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
+              <div className="text-4xl sm:text-5xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                 {feature.icon}
               </div>
-              <h3 className="font-merriweather text-2xl font-bold mb-4 text-gray-900">
+              <h3 className="font-pixelify text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-gray-900">
                 {feature.title}
               </h3>
-              <p className="font-raleway text-gray-600 leading-relaxed text-lg">
+              <p className="font-inter text-gray-600 leading-relaxed text-base sm:text-lg">
                 {feature.description}
               </p>
             </div>
@@ -54,7 +54,7 @@ const FeaturesSection = () => {
 
         {/* Additional CTA */}
         <div className="text-center mt-16">
-          <button className="font-raleway font-medium bg-gradient-to-r from-gray-900 to-black text-white px-8 py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300 text-lg">
+          <button className="font-inter font-medium bg-gradient-to-r from-gray-900 to-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300 text-base sm:text-lg">
             Explore All Features
           </button>
         </div>
