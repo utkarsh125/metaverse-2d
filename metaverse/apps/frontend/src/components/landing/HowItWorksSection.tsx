@@ -26,8 +26,9 @@ const HowItWorksSection = () => {
           <h2 className="font-merriweather text-3xl md:text-4xl font-bold text-gray-900 mb-8 max-w-xs md:max-w-sm">
             Three easy steps to get started
           </h2>
-          <div className="w-48 md:w-64 mx-auto md:mx-0">
+          <div className="gap-2 flex w-30 md:w-64 md:mx-0">
             <Image src="/how-it-works.png" alt="How it works" width={256} height={256} className="w-full h-auto rounded-3xl" />
+            <Image src="/celebrating.png" alt="How it works" width={256} height={256} className="w-full h-auto rounded-3xl" />
           </div>
         </div>
         {/* Right: Steps */}
