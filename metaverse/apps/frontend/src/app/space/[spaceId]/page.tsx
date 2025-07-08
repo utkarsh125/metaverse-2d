@@ -74,12 +74,23 @@ export default function SpacePage() {
         />
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/60 z-10" />
-        {/* Content */}
+        {/* Loading Content */}
         <div className="relative z-20 text-center">
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 max-w-md mx-auto">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-6"></div>
-            <h2 className="font-pixelify text-xl font-bold text-gray-900 mb-2">Loading Space</h2>
-            <p className="font-inter text-gray-600">Preparing your virtual world...</p>
+          <div className="bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-700/50 shadow-2xl p-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full mb-6 shadow-lg shadow-blue-500/25">
+              <svg className="w-10 h-10 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
+              Loading Space
+            </h2>
+            <p className="text-gray-400 text-lg">Preparing your virtual world...</p>
           </div>
         </div>
       </div>
@@ -99,26 +110,28 @@ export default function SpacePage() {
         />
         {/* Overlay for readability */}
         <div className="absolute inset-0 bg-black/60 z-10" />
-        {/* Content */}
+        {/* Error Content */}
         <div className="relative z-20 text-center">
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 max-w-md mx-auto">
-            <div className="mb-6">
-              <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gray-800/95 backdrop-blur-md rounded-2xl border border-gray-700/50 shadow-2xl p-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-red-500 to-pink-500 rounded-full mb-6 shadow-lg shadow-red-500/25">
+              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
               </svg>
             </div>
-            <h2 className="font-pixelify text-2xl font-bold text-red-600 mb-4">Error</h2>
-            <p className="font-inter text-gray-600 mb-6">{error || 'Space or user data not found'}</p>
-            <div className="flex gap-3 justify-center">
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-red-400 to-pink-400 bg-clip-text text-transparent mb-4">
+              Error
+            </h2>
+            <p className="text-gray-400 text-lg mb-8">{error || 'Space or user data not found'}</p>
+            <div className="flex gap-4 justify-center">
               <Link 
                 href="/dashboard" 
-                className="font-inter font-semibold bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-full hover:from-purple-700 hover:to-blue-700 transition-all duration-300 hover:shadow-lg hover:scale-105"
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/25"
               >
                 Back to Dashboard
               </Link>
               <button
                 onClick={handleLogout}
-                className="font-inter font-semibold bg-gradient-to-r from-gray-600 to-gray-700 text-white px-6 py-3 rounded-full hover:from-gray-700 hover:to-gray-800 transition-all duration-300"
+                className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg"
               >
                 Logout
               </button>
