@@ -19,7 +19,6 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
   const engineRef = useRef<PixiSpaceEngine | TilemapSpaceEngine | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // Get spaceId from props or fallback to URL
@@ -68,8 +67,6 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
       console.log('MetaverseSpace: Ignoring own message (already added)');
     }
   };
-
-
 
   useEffect(() => {
     console.log("MetaverseSpace useEffect running");
@@ -187,128 +184,74 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
     };
   }, [space, userId, username, mapFile, spaceId]);
 
-  // Update connected users list
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (engineRef.current) {
-        const users = engineRef.current.getUsers();
-        setConnectedUsers(users);
-      }
-    }, 1000);
 
-    return () => clearInterval(interval);
-  }, []);
 
   if (!spaceId) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Invalid Space</h2>
-          <p className="text-gray-600">No space ID provided</p>
-        </div>
+      <div className="text-center text-white">
+        <h2 className="text-xl font-bold mb-2">Invalid Space</h2>
+        <p className="text-gray-300">No space ID provided</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Space</h2>
-          <p className="text-gray-600">{error}</p>
-        </div>
+      <div className="text-center text-white">
+        <h2 className="text-xl font-bold mb-2">Error Loading Space</h2>
+        <p className="text-gray-300">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white font-mono">
-      {/* Modern Top Navigation */}
-      <nav className="fixed top-0 left-0 right-96 bg-slate-900/95 backdrop-blur-sm border-b border-slate-700 text-white px-6 py-4 z-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-green-400 animate-pulse"></div>
-              <span className="text-lg font-bold text-white">{username}</span>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-slate-300">
-              <span className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
-                </svg>
-                Space: {spaceId}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
-                </svg>
-                {connectedUsers.length} Online
-              </span>
-            </div>
-          </div>
-          <button 
-            onClick={() => window.location.href = '/dashboard'}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 hover:scale-105"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd"/>
-            </svg>
-            Exit Space
-          </button>
-        </div>
-      </nav>
-
-      {/* Main Content Area with Static Chat */}
-      <div className="flex h-screen pt-16">
-        {/* Game Canvas Area */}
-        <div className="flex-1 relative bg-slate-800 border-r border-slate-700">
-          <div 
-            className="w-full h-full flex items-center justify-center p-4"
+    <div className="flex h-[calc(100vh-5rem)]">
+      {/* Game Canvas Area */}
+      <div className="flex-1 relative">
+        <div 
+          className="w-full h-full flex items-center justify-center p-4"
+          style={{ 
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full max-w-full max-h-full rounded-lg shadow-2xl"
             style={{ 
-              position: 'relative',
-              overflow: 'hidden'
+              display: 'block'
             }}
-          >
-            <canvas
-              ref={canvasRef}
-              className="w-full h-full max-w-full max-h-full rounded-lg shadow-2xl border border-slate-600"
-              style={{ 
-                display: 'block', 
-                backgroundColor: '#1e293b'
-              }}
-            />
-            
-            {/* Loading overlay */}
-            {isLoading && (
-              <div className="absolute inset-4 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center rounded-lg">
-                <div className="text-center bg-slate-800 p-8 rounded-xl shadow-2xl border border-slate-600">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-white font-semibold">Loading space...</p>
-                </div>
+          />
+          
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-4 bg-black/60 backdrop-blur-sm flex items-center justify-center rounded-lg">
+              <div className="text-center bg-white/90 backdrop-blur-sm p-8 rounded-xl shadow-2xl">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                <p className="font-inter font-semibold text-gray-900">Loading space...</p>
               </div>
-            )}
-            
-            {/* Modern Controls overlay */}
-            <div className="absolute bottom-6 left-6 bg-slate-800/90 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl border border-slate-600">
-              <h3 className="font-bold mb-2 text-sm text-blue-400">CONTROLS</h3>
-              <div className="flex items-center gap-2 text-xs text-slate-300">
-                <kbd className="px-2 py-1 bg-slate-700 rounded text-xs">WASD</kbd>
-                <span>or</span>
-                <kbd className="px-2 py-1 bg-slate-700 rounded text-xs">↑↓←→</kbd>
-                <span>to move</span>
-              </div>
+            </div>
+          )}
+          
+          {/* Controls overlay */}
+          <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl border border-white/20">
+            <h3 className="font-inter font-bold mb-2 text-sm">CONTROLS</h3>
+            <div className="flex items-center gap-2 text-xs text-gray-300">
+              <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">WASD</kbd>
+              <span>or</span>
+              <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">↑↓←→</kbd>
+              <span>to move</span>
             </div>
           </div>
         </div>
-
-        {/* Static Chat Sidebar */}
-        <ModernChatSidebar
-          onSendMessage={handleSendMessage}
-          messages={chatMessages}
-          currentUsername={username}
-        />
       </div>
+
+      {/* Chat Sidebar */}
+      <ModernChatSidebar
+        onSendMessage={handleSendMessage}
+        messages={chatMessages}
+        currentUsername={username}
+      />
     </div>
   );
 } 

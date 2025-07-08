@@ -190,6 +190,12 @@ export default function DashboardPage() {
     console.log('Invite sent:', invite)
   }
 
+  // Logout button handler
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    router.push('/signin');
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -205,16 +211,26 @@ export default function DashboardPage() {
   console.log('[DEBUG] Spaces to render:', spaces);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 text-gray-100">
-      {/* Animated background particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse opacity-60"></div>
-        <div className="absolute top-3/4 right-1/4 w-1 h-1 bg-blue-400 rounded-full animate-pulse opacity-40 animation-delay-1000"></div>
-        <div className="absolute top-1/2 left-3/4 w-1.5 h-1.5 bg-pink-400 rounded-full animate-pulse opacity-50 animation-delay-2000"></div>
-        <div className="absolute top-1/6 right-1/3 w-1 h-1 bg-cyan-400 rounded-full animate-pulse opacity-30 animation-delay-3000"></div>
-      </div>
-
-      <div className="relative z-10 p-8">
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden">
+      {/* Background Image */}
+      <img
+        src="/bg-2k.png"
+        alt="Metaverse background"
+        className="fixed inset-0 w-full h-full object-cover z-0"
+        style={{ pointerEvents: 'none' }}
+        draggable={false}
+      />
+      {/* Overlay for readability */}
+      <div className="absolute inset-0 bg-black/60 z-10" />
+      {/* Logout Button */}
+      <button
+        onClick={handleLogout}
+        className="fixed top-6 right-6 z-30 bg-gradient-to-r from-gray-100 to-gray-200 hover:cursor-pointer text-black px-5 py-2 rounded-full shadow-lg font-inter font-semibold hover:from-gray-200 hover:to-gray-300 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+      >
+        Logout
+      </button>
+      {/* Content */}
+      <div className="relative z-20 w-full max-w-5xl mx-auto">
         {/* Onboarding Modal */}
         {!onboarded && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
