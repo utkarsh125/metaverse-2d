@@ -129,8 +129,8 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
               width: 1024,
               height: 768,
               backgroundAlpha: 0,
-              resolution: window.devicePixelRatio || 1,
-              autoDensity: true,
+              resolution: 1, // Use fixed resolution to prevent blur
+              autoDensity: false, // Disable auto density to prevent scaling issues
               view: canvasRef.current,
               preference: 'webgl', // Try WebGL first
               failIfMajorPerformanceCaveat: false
@@ -307,7 +307,8 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
             ref={canvasRef}
             className="w-full h-full max-w-full max-h-full rounded-lg shadow-2xl"
             style={{ 
-              display: 'block'
+              display: 'block',
+              imageRendering: 'pixelated' // Use pixelated rendering for crisp pixels
             }}
           />
           

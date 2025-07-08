@@ -61,6 +61,8 @@ export interface CollisionData {
   layerId: number;
 }
 
+// Removed complex atlas and chunk interfaces for simplified approach
+
 export class TilemapRenderer {
   private app: PIXI.Application;
   private container: PIXI.Container;
@@ -70,6 +72,11 @@ export class TilemapRenderer {
   private collisionData: CollisionData[] = [];
   private tileSize = 32;
   private mapBaseDir: string = '';
+  private viewportCulling = false; // Temporarily disable viewport culling to prevent visual issues
+  private renderBounds = { x: 0, y: 0, width: 1024, height: 768 };
+  private spritePool: PIXI.Sprite[] = [];
+  private maxPoolSize = 1000;
+  private useBatchedRendering = false; // Temporarily disable batching to ensure stability
 
   constructor(app: PIXI.Application, container: PIXI.Container) {
     this.app = app;
@@ -290,7 +297,7 @@ export class TilemapRenderer {
       return;
     }
 
-    console.log('=== renderMap START ===');
+    console.log('=== renderMap START (Optimized) ===');
     console.log('Map dimensions:', {
       width: this.mapData.width * this.mapData.tilewidth,
       height: this.mapData.height * this.mapData.tileheight
@@ -310,14 +317,20 @@ export class TilemapRenderer {
       this.mapData.height * this.mapData.tileheight
     );
 
+    // Use optimized rendering if enabled, otherwise fall back to original
     let totalTilesRendered = 0;
-    // Render all layers using the fixed renderLayer
     for (const layer of this.mapData.layers) {
       if (layer.type === 'tilelayer' && layer.visible) {
-        console.log(`Rendering layer: ${layer.name}`);
-        const layerTiles = this.renderLayer(layer);
-        totalTilesRendered += layerTiles;
-        console.log(`Layer ${layer.name} rendered ${layerTiles} tiles`);
+        console.log(`🚀 Rendering layer: ${layer.name}`);
+        if (this.useBatchedRendering) {
+          const layerTiles = this.renderLayerBatched(layer);
+          totalTilesRendered += layerTiles;
+          console.log(`✅ Layer ${layer.name} rendered ${layerTiles} tiles (batched)`);
+        } else {
+          const layerTiles = this.renderLayer(layer);
+          totalTilesRendered += layerTiles;
+          console.log(`Layer ${layer.name} rendered ${layerTiles} tiles (standard)`);
+        }
       }
     }
     
@@ -332,7 +345,7 @@ export class TilemapRenderer {
         height: this.mapData.height * this.mapData.tileheight
       }
     });
-}
+  }
 
   private renderLayer(layer: TiledLayer): number {
     if (!layer.data) return 0;
@@ -348,14 +361,29 @@ export class TilemapRenderer {
     const layerWidth = layer.width || this.mapData!.width;
     const layerHeight = layer.height || this.mapData!.height;
 
+    // Calculate viewport bounds for culling
+    let startX = 0, endX = layerWidth;
+    let startY = 0, endY = layerHeight;
+    
+    if (this.viewportCulling) {
+      // Add padding to avoid pop-in at edges
+      const padding = 2;
+      startX = Math.max(0, Math.floor(this.renderBounds.x / tileWidth) - padding);
+      endX = Math.min(layerWidth, Math.ceil((this.renderBounds.x + this.renderBounds.width) / tileWidth) + padding);
+      startY = Math.max(0, Math.floor(this.renderBounds.y / tileHeight) - padding);
+      endY = Math.min(layerHeight, Math.ceil((this.renderBounds.y + this.renderBounds.height) / tileHeight) + padding);
+      
+      console.log(`Viewport culling: rendering tiles from (${startX},${startY}) to (${endX},${endY}) of (${layerWidth},${layerHeight})`);
+    }
+
     // Handle Tiled flipping/rotation bits
     const FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
     const FLIPPED_VERTICALLY_FLAG   = 0x40000000;
     const FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
     let tilesRendered = 0;
-    for (let y = 0; y < layerHeight; y++) {
-      for (let x = 0; x < layerWidth; x++) {
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
         const index = y * layerWidth + x;
         const tileId = layer.data[index];
         if (tileId === 0) continue; // Empty tile
@@ -552,7 +580,18 @@ export class TilemapRenderer {
     return [...this.collisionData];
   }
 
+  public updateViewport(x: number, y: number, width: number, height: number): void {
+    this.renderBounds = { x, y, width, height };
+  }
+
+  public enableViewportCulling(enabled: boolean): void {
+    this.viewportCulling = enabled;
+  }
+
   public destroy(): void {
+    this.spritePool.forEach(sprite => sprite.destroy());
+    this.spritePool = [];
+    
     this.tilemap.destroy();
     this.tilesets.clear();
     this.collisionData = [];
@@ -694,5 +733,179 @@ export class TilemapRenderer {
       console.error(`Error loading tileset ${source}:`, error);
       return null;
     }
+  }
+
+  // Removed complex texture atlas and chunk methods for simplified approach
+
+  private renderLayerBatched(layer: TiledLayer): number {
+    if (!layer.data) return 0;
+
+    console.log(`📦 Using batched rendering for layer: ${layer.name}`);
+
+    // Create a container for this layer
+    const layerContainer = new PIXI.Container();
+    layerContainer.alpha = layer.opacity ?? 1.0;
+    layerContainer.sortableChildren = true;
+    this.tilemap.addChild(layerContainer);
+
+    const tileWidth = this.mapData!.tilewidth;
+    const tileHeight = this.mapData!.tileheight;
+    const layerWidth = layer.width || this.mapData!.width;
+    const layerHeight = layer.height || this.mapData!.height;
+
+    // Calculate viewport bounds for culling
+    let startX = 0, endX = layerWidth;
+    let startY = 0, endY = layerHeight;
+    
+    if (this.viewportCulling) {
+      // Add padding to avoid pop-in at edges
+      const padding = 5; // Increased padding for safety
+      startX = Math.max(0, Math.floor(this.renderBounds.x / tileWidth) - padding);
+      endX = Math.min(layerWidth, Math.ceil((this.renderBounds.x + this.renderBounds.width) / tileWidth) + padding);
+      startY = Math.max(0, Math.floor(this.renderBounds.y / tileHeight) - padding);
+      endY = Math.min(layerHeight, Math.ceil((this.renderBounds.y + this.renderBounds.height) / tileHeight) + padding);
+      
+      console.log(`🔍 Viewport culling: rendering tiles from (${startX},${startY}) to (${endX},${endY}) of (${layerWidth},${layerHeight})`);
+      console.log(`⚡ Rendering ${(endX-startX)*(endY-startY)} tiles instead of ${layerWidth*layerHeight} (${(((endX-startX)*(endY-startY))/(layerWidth*layerHeight)*100).toFixed(1)}%)`);
+    }
+
+    // Handle Tiled flipping/rotation bits
+    const FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
+    const FLIPPED_VERTICALLY_FLAG   = 0x40000000;
+    const FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
+
+    // Group tiles by tileset for batching
+    const tilesetBatches = new Map<number, PIXI.Sprite[]>();
+
+    let tilesRendered = 0;
+    for (let y = startY; y < endY; y++) {
+      for (let x = startX; x < endX; x++) {
+        const index = y * layerWidth + x;
+        const tileId = layer.data[index];
+        if (tileId === 0) continue; // Empty tile
+
+        // Handle Tiled flipping/rotation bits
+        const rawGid = tileId;
+        const flippedHorizontally = (rawGid & FLIPPED_HORIZONTALLY_FLAG) !== 0;
+        const flippedVertically   = (rawGid & FLIPPED_VERTICALLY_FLAG) !== 0;
+        const flippedDiagonally   = (rawGid & FLIPPED_DIAGONALLY_FLAG) !== 0;
+        const gid = rawGid & ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
+
+        // Find which tileset this tile belongs to
+        const tileset = this.findTilesetForTile(gid);
+        let localTileId = gid;
+        if (tileset) {
+          localTileId = gid - tileset.firstgid;
+        }
+
+        if (!tileset) {
+          continue;
+        }
+
+        const texture = this.tilesets.get(tileset.firstgid);
+        if (!texture) {
+          continue;
+        }
+
+        // Extract the correct tile from the tileset texture
+        const tilesPerRow = Math.floor(texture.width / tileWidth);
+        const tileX = (localTileId % tilesPerRow) * tileWidth;
+        const tileY = Math.floor(localTileId / tilesPerRow) * tileHeight;
+
+        // Create a new texture for this tile using PIXI v8's method
+        const frame = new PIXI.Rectangle(tileX, tileY, tileWidth, tileHeight);
+        const tileTexture = new PIXI.Texture({
+          source: texture.source,
+          frame,
+          orig: frame.clone()
+        });
+
+        // Get sprite from pool or create new one
+        let sprite = this.spritePool.pop();
+        if (!sprite) {
+          sprite = new PIXI.Sprite();
+        }
+
+        sprite.texture = tileTexture;
+        sprite.x = x * tileWidth;
+        sprite.y = y * tileHeight;
+        sprite.width = tileWidth;
+        sprite.height = tileHeight;
+
+        // Reset transformations
+        sprite.scale.set(1, 1);
+        sprite.rotation = 0;
+
+        // Apply flipping/rotation
+        if (flippedHorizontally) {
+          sprite.scale.x = -1;
+          sprite.x += tileWidth;
+        }
+        if (flippedVertically) {
+          sprite.scale.y = -1;
+          sprite.y += tileHeight;
+        }
+        if (flippedDiagonally) {
+          const temp = sprite.scale.x;
+          sprite.scale.x = sprite.scale.y;
+          sprite.scale.y = temp;
+          sprite.rotation = Math.PI / 2;
+          sprite.x += tileHeight;
+        }
+
+        // Add to batch for this tileset
+        if (!tilesetBatches.has(tileset.firstgid)) {
+          tilesetBatches.set(tileset.firstgid, []);
+        }
+        tilesetBatches.get(tileset.firstgid)!.push(sprite);
+
+        tilesRendered++;
+      }
+    }
+
+    // Add all batched sprites to layer container
+    let totalSprites = 0;
+    for (const [tilesetId, sprites] of tilesetBatches) {
+      console.log(`📦 Adding ${sprites.length} sprites from tileset ${tilesetId}`);
+      sprites.forEach(sprite => layerContainer.addChild(sprite));
+      totalSprites += sprites.length;
+    }
+    
+    console.log(`📊 Batched rendering stats:`, {
+      tilesetsUsed: tilesetBatches.size,
+      totalSprites: totalSprites,
+      layerVisible: layerContainer.visible,
+      layerAlpha: layerContainer.alpha,
+      layerChildren: layerContainer.children.length
+    });
+    
+    return tilesRendered;
+  }
+
+  private returnSpriteToPool(sprite: PIXI.Sprite): void {
+    if (this.spritePool.length < this.maxPoolSize) {
+      // Reset sprite properties
+      sprite.texture = PIXI.Texture.EMPTY;
+      sprite.position.set(0, 0);
+      sprite.scale.set(1, 1);
+      sprite.rotation = 0;
+      sprite.alpha = 1;
+      sprite.visible = true;
+      sprite.tint = 0xFFFFFF;
+      
+      // Remove from parent
+      if (sprite.parent) {
+        sprite.parent.removeChild(sprite);
+      }
+      
+      this.spritePool.push(sprite);
+    } else {
+      sprite.destroy();
+    }
+  }
+
+  public enableOptimizations(enabled: boolean): void {
+    this.useBatchedRendering = enabled;
+    console.log(`🎛️ Batched rendering ${enabled ? 'enabled' : 'disabled'}`);
   }
 } 
