@@ -6,6 +6,17 @@ import type { PixiSpaceEngine } from '../lib/metaverse/PixiSpaceEngine';
 import type { TilemapSpaceEngine } from '../lib/metaverse/TilemapSpaceEngine';
 import ModernChatSidebar from './ModernChatSidebar';
 
+// Type for engines with zoom capabilities
+interface EngineWithZoom {
+  getZoomLevel?: () => number;
+  zoomIn?: () => void;
+  zoomOut?: () => void;
+  resetZoomAndPan?: () => void;
+  destroy: () => void;
+  sendChatMessage?: (msg: string) => void;
+  setupChatHandler?: (handler: (message: ChatMessage) => void) => void;
+}
+
 interface MetaverseSpaceProps {
   space: Space;
   userId: string;
@@ -16,11 +27,12 @@ interface MetaverseSpaceProps {
 export default function MetaverseSpace({ space, userId, username, mapFile }: MetaverseSpaceProps) {
   console.log("MetaverseSpace props", { space, userId, username, mapFile });
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<PixiSpaceEngine | TilemapSpaceEngine | null>(null);
+  const engineRef = useRef<(PixiSpaceEngine | TilemapSpaceEngine) & EngineWithZoom | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [lastInitializedSpaceId, setLastInitializedSpaceId] = useState<string>('');
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // Get spaceId from props or fallback to URL
   const spaceId = space.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '');
@@ -40,10 +52,9 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
     
     // Send message to server
     if (engineRef.current) {
-      const engine = engineRef.current as { sendChatMessage?: (msg: string) => void };
-      if (engine.sendChatMessage) {
+      if (engineRef.current.sendChatMessage) {
         console.log('MetaverseSpace: Calling engine.sendChatMessage');
-        engine.sendChatMessage(message);
+        engineRef.current.sendChatMessage(message);
       } else {
         console.error('MetaverseSpace: engine.sendChatMessage not available');
       }
@@ -68,6 +79,42 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
       console.log('MetaverseSpace: Ignoring own message (already added)');
     }
   };
+
+  // Zoom controls
+  const handleZoomIn = () => {
+    if (engineRef.current) {
+      engineRef.current.zoomIn?.();
+      const currentZoom = engineRef.current.getZoomLevel?.() || 1;
+      setZoomLevel(currentZoom);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (engineRef.current) {
+      engineRef.current.zoomOut?.();
+      const currentZoom = engineRef.current.getZoomLevel?.() || 1;
+      setZoomLevel(currentZoom);
+    }
+  };
+
+  const handleResetZoom = () => {
+    if (engineRef.current) {
+      engineRef.current.resetZoomAndPan?.();
+      setZoomLevel(1);
+    }
+  };
+
+  // Update zoom level periodically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (engineRef.current) {
+        const currentZoom = engineRef.current.getZoomLevel?.() || 1;
+        setZoomLevel(currentZoom);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     console.log("MetaverseSpace useEffect running - spaceId:", spaceId, "loading:", isLoading);
@@ -185,9 +232,8 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           console.log("WebSocket connection initialized");
           
           // Set up chat message handler
-          const tileEngine = engineRef.current as { setupChatHandler?: (handler: (message: ChatMessage) => void) => void };
-          if (tileEngine.setupChatHandler) {
-            tileEngine.setupChatHandler(handleChatMessage);
+          if (engineRef.current.setupChatHandler) {
+            engineRef.current.setupChatHandler(handleChatMessage);
           }
 
           if (!mounted) {
@@ -222,9 +268,8 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           }
           
           // Set up chat message handler
-          const engine = engineRef.current as { setupChatHandler?: (handler: (message: ChatMessage) => void) => void };
-          if (engine.setupChatHandler) {
-            engine.setupChatHandler(handleChatMessage);
+          if (engineRef.current.setupChatHandler) {
+            engineRef.current.setupChatHandler(handleChatMessage);
           }
           
           console.log("PixiSpaceEngine initialized and elements added");
@@ -334,11 +379,44 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
           {/* Controls overlay */}
           <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl border border-white/20">
             <h3 className="font-inter font-bold mb-2 text-sm">CONTROLS</h3>
-            <div className="flex items-center gap-2 text-xs text-gray-300">
+            <div className="flex items-center gap-2 text-xs text-gray-300 mb-3">
               <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">WASD</kbd>
               <span>or</span>
               <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">↑↓←→</kbd>
               <span>to move</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-300">
+              <span>Scroll wheel: zoom</span>
+              <span>•</span>
+              <span>Click + drag: pan</span>
+            </div>
+          </div>
+
+          {/* Zoom controls */}
+          <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-sm text-white p-3 rounded-lg shadow-xl border border-white/20">
+            <h3 className="font-inter font-bold mb-2 text-sm">ZOOM</h3>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleZoomIn}
+                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+              >
+                Zoom In
+              </button>
+              <button
+                onClick={handleZoomOut}
+                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+              >
+                Zoom Out
+              </button>
+              <button
+                onClick={handleResetZoom}
+                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+              >
+                Reset
+              </button>
+              <div className="text-xs text-gray-300 text-center mt-1">
+                {Math.round(zoomLevel * 100)}%
+              </div>
             </div>
           </div>
         </div>

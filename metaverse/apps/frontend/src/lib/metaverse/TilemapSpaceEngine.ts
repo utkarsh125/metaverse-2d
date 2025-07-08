@@ -81,6 +81,14 @@ export class TilemapSpaceEngine {
   private isMoving = false;
   private userId: string;
   private username: string;
+  
+  // Zoom and Pan functionality
+  private zoomLevel = 1;
+  private minZoom = 0.5;
+  private maxZoom = 3;
+  private isDragging = false;
+  private lastMousePosition = { x: 0, y: 0 };
+  private panOffset = { x: 0, y: 0 };
 
   constructor(app: PIXI.Application, userId: string, username: string) {
     this.app = app;
@@ -184,14 +192,102 @@ export class TilemapSpaceEngine {
   private setupInputHandling(): void {
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
+    
+    // Add zoom and pan controls
+    this.app.canvas.addEventListener('wheel', this.handleWheel, { passive: false });
+    this.app.canvas.addEventListener('mousedown', this.handleMouseDown);
+    this.app.canvas.addEventListener('mousemove', this.handleMouseMove);
+    this.app.canvas.addEventListener('mouseup', this.handleMouseUp);
+    this.app.canvas.addEventListener('mouseleave', this.handleMouseUp);
+  }
+
+  private isTyping(): boolean {
+    // Check if user is typing in an input field
+    const activeElement = document.activeElement;
+    return activeElement instanceof HTMLInputElement || 
+           activeElement instanceof HTMLTextAreaElement ||
+           activeElement?.tagName === 'INPUT' ||
+           activeElement?.tagName === 'TEXTAREA';
   }
 
   private handleKeyDown = (event: KeyboardEvent): void => {
+    // Ignore keyboard input when user is typing in chat or other inputs
+    if (this.isTyping()) {
+      return;
+    }
+    
     this.keys.add(event.key.toLowerCase());
   };
 
   private handleKeyUp = (event: KeyboardEvent): void => {
+    // Ignore keyboard input when user is typing in chat or other inputs
+    if (this.isTyping()) {
+      return;
+    }
+    
     this.keys.delete(event.key.toLowerCase());
+  };
+
+  private handleWheel = (event: WheelEvent): void => {
+    event.preventDefault();
+    
+    // Get mouse position relative to canvas
+    const rect = this.app.canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    // Calculate zoom
+    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+    const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel * zoomFactor));
+    
+    if (newZoom !== this.zoomLevel) {
+      // Calculate zoom around mouse position
+      const worldX = (mouseX - this.panOffset.x) / this.zoomLevel;
+      const worldY = (mouseY - this.panOffset.y) / this.zoomLevel;
+      
+      this.zoomLevel = newZoom;
+      
+      // Adjust pan offset to keep mouse position consistent
+      this.panOffset.x = mouseX - worldX * this.zoomLevel;
+      this.panOffset.y = mouseY - worldY * this.zoomLevel;
+      
+      this.updateTransform();
+    }
+  };
+
+  private handleMouseDown = (event: MouseEvent): void => {
+    if (event.button === 0) { // Left mouse button
+      this.isDragging = true;
+      this.lastMousePosition.x = event.clientX;
+      this.lastMousePosition.y = event.clientY;
+      this.app.canvas.style.cursor = 'grabbing';
+    }
+  };
+
+  private handleMouseMove = (event: MouseEvent): void => {
+    if (this.isDragging) {
+      const deltaX = event.clientX - this.lastMousePosition.x;
+      const deltaY = event.clientY - this.lastMousePosition.y;
+      
+      this.panOffset.x += deltaX;
+      this.panOffset.y += deltaY;
+      
+      this.lastMousePosition.x = event.clientX;
+      this.lastMousePosition.y = event.clientY;
+      
+      this.updateTransform();
+    }
+  };
+
+  private handleMouseUp = (): void => {
+    this.isDragging = false;
+    this.app.canvas.style.cursor = 'default';
+  };
+
+  private updateTransform(): void {
+    // Apply zoom and pan to the main container
+    this.container.scale.set(this.zoomLevel);
+    this.container.position.set(this.panOffset.x, this.panOffset.y);
   };
 
   private updatePlayerSpritePosition(): void {
@@ -658,6 +754,33 @@ export class TilemapSpaceEngine {
     console.log('TilemapSpaceEngine: Chat handler set successfully');
   }
 
+  public zoomIn(): void {
+    const newZoom = Math.min(this.maxZoom, this.zoomLevel * 1.2);
+    if (newZoom !== this.zoomLevel) {
+      this.zoomLevel = newZoom;
+      this.updateTransform();
+    }
+  }
+
+  public zoomOut(): void {
+    const newZoom = Math.max(this.minZoom, this.zoomLevel / 1.2);
+    if (newZoom !== this.zoomLevel) {
+      this.zoomLevel = newZoom;
+      this.updateTransform();
+    }
+  }
+
+  public resetZoomAndPan(): void {
+    this.zoomLevel = 1;
+    this.panOffset.x = 0;
+    this.panOffset.y = 0;
+    this.updateTransform();
+  }
+
+  public getZoomLevel(): number {
+    return this.zoomLevel;
+  }
+
   public destroy(): void {
     // Clean up timers
     if (this.batchTimer) {
@@ -680,6 +803,15 @@ export class TilemapSpaceEngine {
     // Clean up event listeners
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
+    
+    // Remove zoom and pan event listeners
+    if (this.app.canvas) {
+      this.app.canvas.removeEventListener('wheel', this.handleWheel);
+      this.app.canvas.removeEventListener('mousedown', this.handleMouseDown);
+      this.app.canvas.removeEventListener('mousemove', this.handleMouseMove);
+      this.app.canvas.removeEventListener('mouseup', this.handleMouseUp);
+      this.app.canvas.removeEventListener('mouseleave', this.handleMouseUp);
+    }
     
     // Clean up PIXI app
     this.app.destroy();
