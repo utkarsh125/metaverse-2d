@@ -97,7 +97,7 @@ const Navbar = () => {
           <button 
             ref={signInRef}
             onClick={() => { setMobileOpen(false); handleSignIn(); }}
-            className="font-raleway font-semibold rounded-full border border-gray-200 px-6 sm:px-8 py-3 text-white hover:bg-gray-900 hover:border-white transition-all duration-300 mt-4 text-base sm:text-lg"
+            className="font-raleway cursor-pointer font-semibold rounded-full border border-gray-200 px-6 sm:px-8 py-3 text-white hover:bg-gray-900 hover:border-white transition-all duration-300 mt-4 text-base sm:text-lg"
           >
             Sign In
           </button>

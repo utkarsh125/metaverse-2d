@@ -2,14 +2,14 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-purple-300 py-16 rounded-t-3xl sm:rounded-t-6xl">
+    <footer className="bg-black py-16 rounded-t-3xl sm:rounded-t-6xl">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {/* Company Info */}
           <div className="sm:col-span-2">
             <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center gap-3 bg-gradient-to-r from-gray-900 to-black text-white px-4 py-2.5 rounded-full">
+              <div className="flex items-center gap-3 text-white px-4 py-2.5 rounded-full">
                 <svg
                   width="20"
                   height="20"
@@ -45,7 +45,7 @@ const Footer = () => {
                 <span className="font-raleway font-bold text-lg">orbit.space</span>
               </div>
             </div>
-            <p className="font-raleway text-gray-800 mb-6 max-w-md leading-relaxed text-sm sm:text-base">
+            <p className="font-raleway text-gray-200 mb-6 max-w-md leading-relaxed text-sm sm:text-base">
               Creating the future of virtual collaboration with immersive 2D spaces that bring teams together from anywhere in the world.
             </p>
           </div>

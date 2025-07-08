@@ -3,6 +3,8 @@ import Navbar from '../components/landing/Navbar';
 import HeroSection from '../components/landing/HeroSection';
 import HowItWorksSection from '../components/landing/HowItWorksSection';
 import FeaturesSection from '../components/landing/FeaturesSection';
+import AboutSection from '../components/landing/AboutSection';
+import FAQSection from '../components/landing/FAQSection';
 import Footer from '../components/landing/Footer';
 
 const Page = () => {
@@ -12,6 +14,8 @@ const Page = () => {
       <HeroSection />
       <HowItWorksSection />
       <FeaturesSection />
+      <AboutSection />
+      <FAQSection />
       <Footer />
     </div>
   );
