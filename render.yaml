@@ -12,7 +12,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile.http
     dockerContext: .
-    dockerCommand: cd metaverse && pnpm --filter http start
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
@@ -24,7 +24,9 @@ services:
           name: metaverse-postgres
           property: connectionString
       - key: JWT_PASSWORD
-        value: your-secret-jwt-password-here
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://metaverse-frontend.onrender.com
 
   # WebSocket Server
   - type: web
@@ -32,7 +34,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile.ws
     dockerContext: .
-    dockerCommand: cd metaverse && pnpm --filter ws start
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
@@ -44,7 +46,9 @@ services:
           name: metaverse-postgres
           property: connectionString
       - key: JWT_PASSWORD
-        value: your-secret-jwt-password-here
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://metaverse-frontend.onrender.com
 
   # Frontend Application
   - type: web
@@ -52,7 +56,7 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile.frontend
     dockerContext: .
-    dockerCommand: cd metaverse && pnpm --filter frontend start
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
