@@ -1,0 +1,64 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: metaverse-postgres
+    env: postgres
+    plan: free
+    ipAllowList: []
+
+  # HTTP API Server
+  - type: web
+    name: metaverse-api
+    env: docker
+    dockerfilePath: ./Dockerfile.http
+    dockerContext: .
+    dockerCommand: cd metaverse && pnpm --filter http start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: metaverse-postgres
+          property: connectionString
+      - key: JWT_PASSWORD
+        value: your-secret-jwt-password-here
+
+  # WebSocket Server
+  - type: web
+    name: metaverse-ws
+    env: docker
+    dockerfilePath: ./Dockerfile.ws
+    dockerContext: .
+    dockerCommand: cd metaverse && pnpm --filter ws start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: metaverse-postgres
+          property: connectionString
+      - key: JWT_PASSWORD
+        value: your-secret-jwt-password-here
+
+  # Frontend Application
+  - type: web
+    name: metaverse-frontend
+    env: docker
+    dockerfilePath: ./Dockerfile.frontend
+    dockerContext: .
+    dockerCommand: cd metaverse && pnpm --filter frontend start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_API_URL
+        value: https://metaverse-api.onrender.com/api/v1
+      - key: NEXT_PUBLIC_WS_URL
+        value: wss://metaverse-ws.onrender.com 
