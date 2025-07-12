@@ -8,17 +8,24 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files
-COPY metaverse/package.json metaverse/pnpm-lock.yaml metaverse/pnpm-workspace.yaml ./
-COPY metaverse/apps/ws/package.json ./apps/ws/
-COPY metaverse/packages/db/package.json ./packages/db/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/ws/package.json ./apps/ws/
+COPY packages/db/package.json ./packages/db/
+COPY packages/*/package.json ./packages/*/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
-COPY metaverse/ .
+COPY . .
 
-# Build the application
+# Build the database package first
+RUN pnpm --filter @metaverse/db run build
+
+# Generate Prisma client
+RUN cd packages/db && npx prisma generate
+
+# Build the WebSocket server
 RUN pnpm --filter ws run build
 
 # Production stage
@@ -30,9 +37,10 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files
-COPY metaverse/package.json metaverse/pnpm-lock.yaml metaverse/pnpm-workspace.yaml ./
-COPY metaverse/apps/ws/package.json ./apps/ws/
-COPY metaverse/packages/db/package.json ./packages/db/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/ws/package.json ./apps/ws/
+COPY packages/db/package.json ./packages/db/
+COPY packages/*/package.json ./packages/*/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
@@ -40,6 +48,7 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built application from build stage
 COPY --from=base /app/apps/ws/dist ./apps/ws/dist
 COPY --from=base /app/packages/db/dist ./packages/db/dist
+COPY --from=base /app/packages/db/src/generated ./packages/db/src/generated
 
 # Expose port
 EXPOSE 4000
