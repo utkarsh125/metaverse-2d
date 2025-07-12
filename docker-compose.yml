@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: metaverse_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./metaverse/packages/db/prisma/migrations:/docker-entrypoint-initdb.d
+      - ./packages/db/prisma/migrations:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     healthcheck:

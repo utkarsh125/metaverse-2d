@@ -8,18 +8,18 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files
-COPY metaverse/package.json metaverse/pnpm-lock.yaml metaverse/pnpm-workspace.yaml ./
-COPY metaverse/apps/http/package.json ./apps/http/
-COPY metaverse/packages/db/package.json ./packages/db/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/frontend/package.json ./apps/frontend/
+COPY packages/db/package.json ./packages/db/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
-COPY metaverse/ .
+COPY . .
 
 # Build the application
-RUN pnpm --filter http run build
+RUN pnpm run build
 
 # Production stage
 FROM node:18-alpine AS production
@@ -30,23 +30,25 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files
-COPY metaverse/package.json metaverse/pnpm-lock.yaml metaverse/pnpm-workspace.yaml ./
-COPY metaverse/apps/http/package.json ./apps/http/
-COPY metaverse/packages/db/package.json ./packages/db/
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/frontend/package.json ./apps/frontend/
+COPY packages/db/package.json ./packages/db/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
 
 # Copy built application from build stage
-COPY --from=base /app/apps/http/dist ./apps/http/dist
+COPY --from=base /app/apps/frontend/.next ./apps/frontend/.next
+COPY --from=base /app/apps/frontend/public ./apps/frontend/public
+COPY --from=base /app/apps/frontend/next.config.ts ./apps/frontend/
 COPY --from=base /app/packages/db/dist ./packages/db/dist
 
 # Expose port
-EXPOSE 3000
+EXPOSE 3001
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 
 # Start the application
-CMD ["pnpm", "--filter", "http", "start"] 
+CMD ["pnpm", "--filter", "frontend", "start"] 

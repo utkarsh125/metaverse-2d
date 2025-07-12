@@ -8,15 +8,15 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/frontend/package.json ./apps/frontend/
-COPY packages/db/package.json ./packages/db/
+COPY metaverse/package.json metaverse/pnpm-lock.yaml metaverse/pnpm-workspace.yaml ./
+COPY metaverse/apps/frontend/package.json ./apps/frontend/
+COPY metaverse/packages/db/package.json ./packages/db/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
-COPY . .
+COPY metaverse/ .
 
 # Build the application
 RUN pnpm run build
@@ -30,9 +30,9 @@ RUN npm install -g pnpm
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/frontend/package.json ./apps/frontend/
-COPY packages/db/package.json ./packages/db/
+COPY metaverse/package.json metaverse/pnpm-lock.yaml metaverse/pnpm-workspace.yaml ./
+COPY metaverse/apps/frontend/package.json ./apps/frontend/
+COPY metaverse/packages/db/package.json ./packages/db/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod

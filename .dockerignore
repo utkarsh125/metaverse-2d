@@ -105,7 +105,4 @@ jspm_packages/
 .vscode-test
 
 # Turbo
-.turbo
-
-# Tests directory
-tests/ 
+.turbo 
