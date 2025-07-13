@@ -2,8 +2,7 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "metaverse/Dockerfile.ws",
-    "dockerContext": "metaverse"
+    "dockerfilePath": "Dockerfile.ws"
   },
   "deploy": {
     "startCommand": "pnpm --filter ws start",
