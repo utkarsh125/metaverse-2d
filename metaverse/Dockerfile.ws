@@ -11,7 +11,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ws/package.json ./apps/ws/
 COPY packages/db/package.json ./packages/db/
-COPY packages/*/package.json ./packages/*/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/ui/package.json ./packages/ui/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -25,7 +27,7 @@ RUN pnpm --filter @metaverse/db run build
 # Generate Prisma client
 RUN cd packages/db && npx prisma generate
 
-# Build the WebSocket server
+# Build the WebSocket application
 RUN pnpm --filter ws run build
 
 # Production stage
@@ -40,7 +42,9 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/ws/package.json ./apps/ws/
 COPY packages/db/package.json ./packages/db/
-COPY packages/*/package.json ./packages/*/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY packages/ui/package.json ./packages/ui/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
