@@ -136,7 +136,17 @@ exports.Prisma.SpaceScalarFieldEnum = {
   width: 'width',
   height: 'height',
   thumbnail: 'thumbnail',
-  creatorId: 'creatorId'
+  creatorId: 'creatorId',
+  mapId: 'mapId'
+};
+
+exports.Prisma.SpaceInviteScalarFieldEnum = {
+  id: 'id',
+  spaceId: 'spaceId',
+  inviterId: 'inviterId',
+  inviteeId: 'inviteeId',
+  status: 'status',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.SpaceElementsScalarFieldEnum = {
@@ -151,14 +161,22 @@ exports.Prisma.ElementScalarFieldEnum = {
   id: 'id',
   width: 'width',
   height: 'height',
-  imageUrl: 'imageUrl'
+  static: 'static',
+  imageUrl: 'imageUrl',
+  collisionZone: 'collisionZone',
+  collisionMask: 'collisionMask'
 };
 
 exports.Prisma.MapScalarFieldEnum = {
   id: 'id',
   width: 'width',
   height: 'height',
-  name: 'name'
+  name: 'name',
+  thumbnail: 'thumbnail',
+  description: 'description',
+  isPublic: 'isPublic',
+  creatorId: 'creatorId',
+  tiledMapFile: 'tiledMapFile'
 };
 
 exports.Prisma.MapElementsScalarFieldEnum = {
@@ -194,9 +212,16 @@ exports.Role = exports.$Enums.Role = {
   User: 'User'
 };
 
+exports.InviteStatus = exports.$Enums.InviteStatus = {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Space: 'Space',
+  SpaceInvite: 'SpaceInvite',
   spaceElements: 'spaceElements',
   Element: 'Element',
   Map: 'Map',

@@ -24,6 +24,11 @@ export type User = $Result.DefaultSelection<Prisma.$UserPayload>
  */
 export type Space = $Result.DefaultSelection<Prisma.$SpacePayload>
 /**
+ * Model SpaceInvite
+ * 
+ */
+export type SpaceInvite = $Result.DefaultSelection<Prisma.$SpaceInvitePayload>
+/**
  * Model spaceElements
  * 
  */
@@ -60,11 +65,24 @@ export namespace $Enums {
 
 export type Role = (typeof Role)[keyof typeof Role]
 
+
+export const InviteStatus: {
+  PENDING: 'PENDING',
+  ACCEPTED: 'ACCEPTED',
+  DECLINED: 'DECLINED'
+};
+
+export type InviteStatus = (typeof InviteStatus)[keyof typeof InviteStatus]
+
 }
 
 export type Role = $Enums.Role
 
 export const Role: typeof $Enums.Role
+
+export type InviteStatus = $Enums.InviteStatus
+
+export const InviteStatus: typeof $Enums.InviteStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -208,6 +226,16 @@ export class PrismaClient<
     * ```
     */
   get space(): Prisma.SpaceDelegate<ExtArgs>;
+
+  /**
+   * `prisma.spaceInvite`: Exposes CRUD operations for the **SpaceInvite** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SpaceInvites
+    * const spaceInvites = await prisma.spaceInvite.findMany()
+    * ```
+    */
+  get spaceInvite(): Prisma.SpaceInviteDelegate<ExtArgs>;
 
   /**
    * `prisma.spaceElements`: Exposes CRUD operations for the **spaceElements** model.
@@ -701,6 +729,7 @@ export namespace Prisma {
   export const ModelName: {
     User: 'User',
     Space: 'Space',
+    SpaceInvite: 'SpaceInvite',
     spaceElements: 'spaceElements',
     Element: 'Element',
     Map: 'Map',
@@ -721,7 +750,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "space" | "spaceElements" | "element" | "map" | "mapElements" | "avatar"
+      modelProps: "user" | "space" | "spaceInvite" | "spaceElements" | "element" | "map" | "mapElements" | "avatar"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -862,6 +891,76 @@ export namespace Prisma {
           count: {
             args: Prisma.SpaceCountArgs<ExtArgs>
             result: $Utils.Optional<SpaceCountAggregateOutputType> | number
+          }
+        }
+      }
+      SpaceInvite: {
+        payload: Prisma.$SpaceInvitePayload<ExtArgs>
+        fields: Prisma.SpaceInviteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SpaceInviteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SpaceInviteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>
+          }
+          findFirst: {
+            args: Prisma.SpaceInviteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SpaceInviteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>
+          }
+          findMany: {
+            args: Prisma.SpaceInviteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>[]
+          }
+          create: {
+            args: Prisma.SpaceInviteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>
+          }
+          createMany: {
+            args: Prisma.SpaceInviteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SpaceInviteCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>[]
+          }
+          delete: {
+            args: Prisma.SpaceInviteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>
+          }
+          update: {
+            args: Prisma.SpaceInviteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>
+          }
+          deleteMany: {
+            args: Prisma.SpaceInviteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SpaceInviteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.SpaceInviteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SpaceInvitePayload>
+          }
+          aggregate: {
+            args: Prisma.SpaceInviteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSpaceInvite>
+          }
+          groupBy: {
+            args: Prisma.SpaceInviteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SpaceInviteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SpaceInviteCountArgs<ExtArgs>
+            result: $Utils.Optional<SpaceInviteCountAggregateOutputType> | number
           }
         }
       }
@@ -1377,10 +1476,14 @@ export namespace Prisma {
 
   export type UserCountOutputType = {
     Space: number
+    sentInvites: number
+    receivedInvites: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Space?: boolean | UserCountOutputTypeCountSpaceArgs
+    sentInvites?: boolean | UserCountOutputTypeCountSentInvitesArgs
+    receivedInvites?: boolean | UserCountOutputTypeCountReceivedInvitesArgs
   }
 
   // Custom InputTypes
@@ -1401,6 +1504,20 @@ export namespace Prisma {
     where?: SpaceWhereInput
   }
 
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountSentInvitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SpaceInviteWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountReceivedInvitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SpaceInviteWhereInput
+  }
+
 
   /**
    * Count Type SpaceCountOutputType
@@ -1408,10 +1525,12 @@ export namespace Prisma {
 
   export type SpaceCountOutputType = {
     elements: number
+    invites: number
   }
 
   export type SpaceCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     elements?: boolean | SpaceCountOutputTypeCountElementsArgs
+    invites?: boolean | SpaceCountOutputTypeCountInvitesArgs
   }
 
   // Custom InputTypes
@@ -1430,6 +1549,13 @@ export namespace Prisma {
    */
   export type SpaceCountOutputTypeCountElementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: spaceElementsWhereInput
+  }
+
+  /**
+   * SpaceCountOutputType without action
+   */
+  export type SpaceCountOutputTypeCountInvitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SpaceInviteWhereInput
   }
 
 
@@ -1479,10 +1605,12 @@ export namespace Prisma {
 
   export type MapCountOutputType = {
     mapElements: number
+    spaces: number
   }
 
   export type MapCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     mapElements?: boolean | MapCountOutputTypeCountMapElementsArgs
+    spaces?: boolean | MapCountOutputTypeCountSpacesArgs
   }
 
   // Custom InputTypes
@@ -1501,6 +1629,13 @@ export namespace Prisma {
    */
   export type MapCountOutputTypeCountMapElementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: MapElementsWhereInput
+  }
+
+  /**
+   * MapCountOutputType without action
+   */
+  export type MapCountOutputTypeCountSpacesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SpaceWhereInput
   }
 
 
@@ -1705,6 +1840,8 @@ export namespace Prisma {
     role?: boolean
     Space?: boolean | User$SpaceArgs<ExtArgs>
     avatar?: boolean | User$avatarArgs<ExtArgs>
+    sentInvites?: boolean | User$sentInvitesArgs<ExtArgs>
+    receivedInvites?: boolean | User$receivedInvitesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -1728,6 +1865,8 @@ export namespace Prisma {
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Space?: boolean | User$SpaceArgs<ExtArgs>
     avatar?: boolean | User$avatarArgs<ExtArgs>
+    sentInvites?: boolean | User$sentInvitesArgs<ExtArgs>
+    receivedInvites?: boolean | User$receivedInvitesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -1739,6 +1878,8 @@ export namespace Prisma {
     objects: {
       Space: Prisma.$SpacePayload<ExtArgs>[]
       avatar: Prisma.$AvatarPayload<ExtArgs> | null
+      sentInvites: Prisma.$SpaceInvitePayload<ExtArgs>[]
+      receivedInvites: Prisma.$SpaceInvitePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2112,6 +2253,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     Space<T extends User$SpaceArgs<ExtArgs> = {}>(args?: Subset<T, User$SpaceArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpacePayload<ExtArgs>, T, "findMany"> | Null>
     avatar<T extends User$avatarArgs<ExtArgs> = {}>(args?: Subset<T, User$avatarArgs<ExtArgs>>): Prisma__AvatarClient<$Result.GetResult<Prisma.$AvatarPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    sentInvites<T extends User$sentInvitesArgs<ExtArgs> = {}>(args?: Subset<T, User$sentInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findMany"> | Null>
+    receivedInvites<T extends User$receivedInvitesArgs<ExtArgs> = {}>(args?: Subset<T, User$receivedInvitesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2499,6 +2642,46 @@ export namespace Prisma {
   }
 
   /**
+   * User.sentInvites
+   */
+  export type User$sentInvitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    where?: SpaceInviteWhereInput
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    cursor?: SpaceInviteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SpaceInviteScalarFieldEnum | SpaceInviteScalarFieldEnum[]
+  }
+
+  /**
+   * User.receivedInvites
+   */
+  export type User$receivedInvitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    where?: SpaceInviteWhereInput
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    cursor?: SpaceInviteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SpaceInviteScalarFieldEnum | SpaceInviteScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2542,6 +2725,7 @@ export namespace Prisma {
     height: number | null
     thumbnail: string | null
     creatorId: string | null
+    mapId: string | null
   }
 
   export type SpaceMaxAggregateOutputType = {
@@ -2551,6 +2735,7 @@ export namespace Prisma {
     height: number | null
     thumbnail: string | null
     creatorId: string | null
+    mapId: string | null
   }
 
   export type SpaceCountAggregateOutputType = {
@@ -2560,6 +2745,7 @@ export namespace Prisma {
     height: number
     thumbnail: number
     creatorId: number
+    mapId: number
     _all: number
   }
 
@@ -2581,6 +2767,7 @@ export namespace Prisma {
     height?: true
     thumbnail?: true
     creatorId?: true
+    mapId?: true
   }
 
   export type SpaceMaxAggregateInputType = {
@@ -2590,6 +2777,7 @@ export namespace Prisma {
     height?: true
     thumbnail?: true
     creatorId?: true
+    mapId?: true
   }
 
   export type SpaceCountAggregateInputType = {
@@ -2599,6 +2787,7 @@ export namespace Prisma {
     height?: true
     thumbnail?: true
     creatorId?: true
+    mapId?: true
     _all?: true
   }
 
@@ -2692,9 +2881,10 @@ export namespace Prisma {
     id: string
     name: string
     width: number
-    height: number | null
+    height: number
     thumbnail: string | null
     creatorId: string
+    mapId: string | null
     _count: SpaceCountAggregateOutputType | null
     _avg: SpaceAvgAggregateOutputType | null
     _sum: SpaceSumAggregateOutputType | null
@@ -2723,8 +2913,11 @@ export namespace Prisma {
     height?: boolean
     thumbnail?: boolean
     creatorId?: boolean
+    mapId?: boolean
     creator?: boolean | UserDefaultArgs<ExtArgs>
     elements?: boolean | Space$elementsArgs<ExtArgs>
+    invites?: boolean | Space$invitesArgs<ExtArgs>
+    map?: boolean | Space$mapArgs<ExtArgs>
     _count?: boolean | SpaceCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["space"]>
 
@@ -2735,7 +2928,9 @@ export namespace Prisma {
     height?: boolean
     thumbnail?: boolean
     creatorId?: boolean
+    mapId?: boolean
     creator?: boolean | UserDefaultArgs<ExtArgs>
+    map?: boolean | Space$mapArgs<ExtArgs>
   }, ExtArgs["result"]["space"]>
 
   export type SpaceSelectScalar = {
@@ -2745,15 +2940,19 @@ export namespace Prisma {
     height?: boolean
     thumbnail?: boolean
     creatorId?: boolean
+    mapId?: boolean
   }
 
   export type SpaceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     creator?: boolean | UserDefaultArgs<ExtArgs>
     elements?: boolean | Space$elementsArgs<ExtArgs>
+    invites?: boolean | Space$invitesArgs<ExtArgs>
+    map?: boolean | Space$mapArgs<ExtArgs>
     _count?: boolean | SpaceCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type SpaceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     creator?: boolean | UserDefaultArgs<ExtArgs>
+    map?: boolean | Space$mapArgs<ExtArgs>
   }
 
   export type $SpacePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2761,14 +2960,17 @@ export namespace Prisma {
     objects: {
       creator: Prisma.$UserPayload<ExtArgs>
       elements: Prisma.$spaceElementsPayload<ExtArgs>[]
+      invites: Prisma.$SpaceInvitePayload<ExtArgs>[]
+      map: Prisma.$MapPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       name: string
       width: number
-      height: number | null
+      height: number
       thumbnail: string | null
       creatorId: string
+      mapId: string | null
     }, ExtArgs["result"]["space"]>
     composites: {}
   }
@@ -3135,6 +3337,8 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     creator<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     elements<T extends Space$elementsArgs<ExtArgs> = {}>(args?: Subset<T, Space$elementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$spaceElementsPayload<ExtArgs>, T, "findMany"> | Null>
+    invites<T extends Space$invitesArgs<ExtArgs> = {}>(args?: Subset<T, Space$invitesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findMany"> | Null>
+    map<T extends Space$mapArgs<ExtArgs> = {}>(args?: Subset<T, Space$mapArgs<ExtArgs>>): Prisma__MapClient<$Result.GetResult<Prisma.$MapPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3170,6 +3374,7 @@ export namespace Prisma {
     readonly height: FieldRef<"Space", 'Int'>
     readonly thumbnail: FieldRef<"Space", 'String'>
     readonly creatorId: FieldRef<"Space", 'String'>
+    readonly mapId: FieldRef<"Space", 'String'>
   }
     
 
@@ -3508,6 +3713,41 @@ export namespace Prisma {
   }
 
   /**
+   * Space.invites
+   */
+  export type Space$invitesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    where?: SpaceInviteWhereInput
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    cursor?: SpaceInviteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SpaceInviteScalarFieldEnum | SpaceInviteScalarFieldEnum[]
+  }
+
+  /**
+   * Space.map
+   */
+  export type Space$mapArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Map
+     */
+    select?: MapSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MapInclude<ExtArgs> | null
+    where?: MapWhereInput
+  }
+
+  /**
    * Space without action
    */
   export type SpaceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3519,6 +3759,963 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: SpaceInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SpaceInvite
+   */
+
+  export type AggregateSpaceInvite = {
+    _count: SpaceInviteCountAggregateOutputType | null
+    _min: SpaceInviteMinAggregateOutputType | null
+    _max: SpaceInviteMaxAggregateOutputType | null
+  }
+
+  export type SpaceInviteMinAggregateOutputType = {
+    id: string | null
+    spaceId: string | null
+    inviterId: string | null
+    inviteeId: string | null
+    status: $Enums.InviteStatus | null
+    createdAt: Date | null
+  }
+
+  export type SpaceInviteMaxAggregateOutputType = {
+    id: string | null
+    spaceId: string | null
+    inviterId: string | null
+    inviteeId: string | null
+    status: $Enums.InviteStatus | null
+    createdAt: Date | null
+  }
+
+  export type SpaceInviteCountAggregateOutputType = {
+    id: number
+    spaceId: number
+    inviterId: number
+    inviteeId: number
+    status: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type SpaceInviteMinAggregateInputType = {
+    id?: true
+    spaceId?: true
+    inviterId?: true
+    inviteeId?: true
+    status?: true
+    createdAt?: true
+  }
+
+  export type SpaceInviteMaxAggregateInputType = {
+    id?: true
+    spaceId?: true
+    inviterId?: true
+    inviteeId?: true
+    status?: true
+    createdAt?: true
+  }
+
+  export type SpaceInviteCountAggregateInputType = {
+    id?: true
+    spaceId?: true
+    inviterId?: true
+    inviteeId?: true
+    status?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type SpaceInviteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SpaceInvite to aggregate.
+     */
+    where?: SpaceInviteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SpaceInvites to fetch.
+     */
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SpaceInviteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SpaceInvites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SpaceInvites.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SpaceInvites
+    **/
+    _count?: true | SpaceInviteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SpaceInviteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SpaceInviteMaxAggregateInputType
+  }
+
+  export type GetSpaceInviteAggregateType<T extends SpaceInviteAggregateArgs> = {
+        [P in keyof T & keyof AggregateSpaceInvite]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSpaceInvite[P]>
+      : GetScalarType<T[P], AggregateSpaceInvite[P]>
+  }
+
+
+
+
+  export type SpaceInviteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SpaceInviteWhereInput
+    orderBy?: SpaceInviteOrderByWithAggregationInput | SpaceInviteOrderByWithAggregationInput[]
+    by: SpaceInviteScalarFieldEnum[] | SpaceInviteScalarFieldEnum
+    having?: SpaceInviteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SpaceInviteCountAggregateInputType | true
+    _min?: SpaceInviteMinAggregateInputType
+    _max?: SpaceInviteMaxAggregateInputType
+  }
+
+  export type SpaceInviteGroupByOutputType = {
+    id: string
+    spaceId: string
+    inviterId: string
+    inviteeId: string
+    status: $Enums.InviteStatus
+    createdAt: Date
+    _count: SpaceInviteCountAggregateOutputType | null
+    _min: SpaceInviteMinAggregateOutputType | null
+    _max: SpaceInviteMaxAggregateOutputType | null
+  }
+
+  type GetSpaceInviteGroupByPayload<T extends SpaceInviteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SpaceInviteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SpaceInviteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SpaceInviteGroupByOutputType[P]>
+            : GetScalarType<T[P], SpaceInviteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SpaceInviteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    spaceId?: boolean
+    inviterId?: boolean
+    inviteeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+    space?: boolean | SpaceDefaultArgs<ExtArgs>
+    inviter?: boolean | UserDefaultArgs<ExtArgs>
+    invitee?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["spaceInvite"]>
+
+  export type SpaceInviteSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    spaceId?: boolean
+    inviterId?: boolean
+    inviteeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+    space?: boolean | SpaceDefaultArgs<ExtArgs>
+    inviter?: boolean | UserDefaultArgs<ExtArgs>
+    invitee?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["spaceInvite"]>
+
+  export type SpaceInviteSelectScalar = {
+    id?: boolean
+    spaceId?: boolean
+    inviterId?: boolean
+    inviteeId?: boolean
+    status?: boolean
+    createdAt?: boolean
+  }
+
+  export type SpaceInviteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    space?: boolean | SpaceDefaultArgs<ExtArgs>
+    inviter?: boolean | UserDefaultArgs<ExtArgs>
+    invitee?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type SpaceInviteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    space?: boolean | SpaceDefaultArgs<ExtArgs>
+    inviter?: boolean | UserDefaultArgs<ExtArgs>
+    invitee?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $SpaceInvitePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SpaceInvite"
+    objects: {
+      space: Prisma.$SpacePayload<ExtArgs>
+      inviter: Prisma.$UserPayload<ExtArgs>
+      invitee: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      spaceId: string
+      inviterId: string
+      inviteeId: string
+      status: $Enums.InviteStatus
+      createdAt: Date
+    }, ExtArgs["result"]["spaceInvite"]>
+    composites: {}
+  }
+
+  type SpaceInviteGetPayload<S extends boolean | null | undefined | SpaceInviteDefaultArgs> = $Result.GetResult<Prisma.$SpaceInvitePayload, S>
+
+  type SpaceInviteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<SpaceInviteFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: SpaceInviteCountAggregateInputType | true
+    }
+
+  export interface SpaceInviteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SpaceInvite'], meta: { name: 'SpaceInvite' } }
+    /**
+     * Find zero or one SpaceInvite that matches the filter.
+     * @param {SpaceInviteFindUniqueArgs} args - Arguments to find a SpaceInvite
+     * @example
+     * // Get one SpaceInvite
+     * const spaceInvite = await prisma.spaceInvite.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SpaceInviteFindUniqueArgs>(args: SelectSubset<T, SpaceInviteFindUniqueArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one SpaceInvite that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {SpaceInviteFindUniqueOrThrowArgs} args - Arguments to find a SpaceInvite
+     * @example
+     * // Get one SpaceInvite
+     * const spaceInvite = await prisma.spaceInvite.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SpaceInviteFindUniqueOrThrowArgs>(args: SelectSubset<T, SpaceInviteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first SpaceInvite that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteFindFirstArgs} args - Arguments to find a SpaceInvite
+     * @example
+     * // Get one SpaceInvite
+     * const spaceInvite = await prisma.spaceInvite.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SpaceInviteFindFirstArgs>(args?: SelectSubset<T, SpaceInviteFindFirstArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first SpaceInvite that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteFindFirstOrThrowArgs} args - Arguments to find a SpaceInvite
+     * @example
+     * // Get one SpaceInvite
+     * const spaceInvite = await prisma.spaceInvite.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SpaceInviteFindFirstOrThrowArgs>(args?: SelectSubset<T, SpaceInviteFindFirstOrThrowArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more SpaceInvites that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SpaceInvites
+     * const spaceInvites = await prisma.spaceInvite.findMany()
+     * 
+     * // Get first 10 SpaceInvites
+     * const spaceInvites = await prisma.spaceInvite.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const spaceInviteWithIdOnly = await prisma.spaceInvite.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SpaceInviteFindManyArgs>(args?: SelectSubset<T, SpaceInviteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a SpaceInvite.
+     * @param {SpaceInviteCreateArgs} args - Arguments to create a SpaceInvite.
+     * @example
+     * // Create one SpaceInvite
+     * const SpaceInvite = await prisma.spaceInvite.create({
+     *   data: {
+     *     // ... data to create a SpaceInvite
+     *   }
+     * })
+     * 
+     */
+    create<T extends SpaceInviteCreateArgs>(args: SelectSubset<T, SpaceInviteCreateArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many SpaceInvites.
+     * @param {SpaceInviteCreateManyArgs} args - Arguments to create many SpaceInvites.
+     * @example
+     * // Create many SpaceInvites
+     * const spaceInvite = await prisma.spaceInvite.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SpaceInviteCreateManyArgs>(args?: SelectSubset<T, SpaceInviteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SpaceInvites and returns the data saved in the database.
+     * @param {SpaceInviteCreateManyAndReturnArgs} args - Arguments to create many SpaceInvites.
+     * @example
+     * // Create many SpaceInvites
+     * const spaceInvite = await prisma.spaceInvite.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SpaceInvites and only return the `id`
+     * const spaceInviteWithIdOnly = await prisma.spaceInvite.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SpaceInviteCreateManyAndReturnArgs>(args?: SelectSubset<T, SpaceInviteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a SpaceInvite.
+     * @param {SpaceInviteDeleteArgs} args - Arguments to delete one SpaceInvite.
+     * @example
+     * // Delete one SpaceInvite
+     * const SpaceInvite = await prisma.spaceInvite.delete({
+     *   where: {
+     *     // ... filter to delete one SpaceInvite
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SpaceInviteDeleteArgs>(args: SelectSubset<T, SpaceInviteDeleteArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one SpaceInvite.
+     * @param {SpaceInviteUpdateArgs} args - Arguments to update one SpaceInvite.
+     * @example
+     * // Update one SpaceInvite
+     * const spaceInvite = await prisma.spaceInvite.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SpaceInviteUpdateArgs>(args: SelectSubset<T, SpaceInviteUpdateArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more SpaceInvites.
+     * @param {SpaceInviteDeleteManyArgs} args - Arguments to filter SpaceInvites to delete.
+     * @example
+     * // Delete a few SpaceInvites
+     * const { count } = await prisma.spaceInvite.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SpaceInviteDeleteManyArgs>(args?: SelectSubset<T, SpaceInviteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SpaceInvites.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SpaceInvites
+     * const spaceInvite = await prisma.spaceInvite.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SpaceInviteUpdateManyArgs>(args: SelectSubset<T, SpaceInviteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one SpaceInvite.
+     * @param {SpaceInviteUpsertArgs} args - Arguments to update or create a SpaceInvite.
+     * @example
+     * // Update or create a SpaceInvite
+     * const spaceInvite = await prisma.spaceInvite.upsert({
+     *   create: {
+     *     // ... data to create a SpaceInvite
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SpaceInvite we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SpaceInviteUpsertArgs>(args: SelectSubset<T, SpaceInviteUpsertArgs<ExtArgs>>): Prisma__SpaceInviteClient<$Result.GetResult<Prisma.$SpaceInvitePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of SpaceInvites.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteCountArgs} args - Arguments to filter SpaceInvites to count.
+     * @example
+     * // Count the number of SpaceInvites
+     * const count = await prisma.spaceInvite.count({
+     *   where: {
+     *     // ... the filter for the SpaceInvites we want to count
+     *   }
+     * })
+    **/
+    count<T extends SpaceInviteCountArgs>(
+      args?: Subset<T, SpaceInviteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SpaceInviteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SpaceInvite.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SpaceInviteAggregateArgs>(args: Subset<T, SpaceInviteAggregateArgs>): Prisma.PrismaPromise<GetSpaceInviteAggregateType<T>>
+
+    /**
+     * Group by SpaceInvite.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SpaceInviteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SpaceInviteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SpaceInviteGroupByArgs['orderBy'] }
+        : { orderBy?: SpaceInviteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SpaceInviteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSpaceInviteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SpaceInvite model
+   */
+  readonly fields: SpaceInviteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SpaceInvite.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SpaceInviteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    space<T extends SpaceDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SpaceDefaultArgs<ExtArgs>>): Prisma__SpaceClient<$Result.GetResult<Prisma.$SpacePayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    inviter<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    invitee<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SpaceInvite model
+   */ 
+  interface SpaceInviteFieldRefs {
+    readonly id: FieldRef<"SpaceInvite", 'String'>
+    readonly spaceId: FieldRef<"SpaceInvite", 'String'>
+    readonly inviterId: FieldRef<"SpaceInvite", 'String'>
+    readonly inviteeId: FieldRef<"SpaceInvite", 'String'>
+    readonly status: FieldRef<"SpaceInvite", 'InviteStatus'>
+    readonly createdAt: FieldRef<"SpaceInvite", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SpaceInvite findUnique
+   */
+  export type SpaceInviteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * Filter, which SpaceInvite to fetch.
+     */
+    where: SpaceInviteWhereUniqueInput
+  }
+
+  /**
+   * SpaceInvite findUniqueOrThrow
+   */
+  export type SpaceInviteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * Filter, which SpaceInvite to fetch.
+     */
+    where: SpaceInviteWhereUniqueInput
+  }
+
+  /**
+   * SpaceInvite findFirst
+   */
+  export type SpaceInviteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * Filter, which SpaceInvite to fetch.
+     */
+    where?: SpaceInviteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SpaceInvites to fetch.
+     */
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SpaceInvites.
+     */
+    cursor?: SpaceInviteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SpaceInvites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SpaceInvites.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SpaceInvites.
+     */
+    distinct?: SpaceInviteScalarFieldEnum | SpaceInviteScalarFieldEnum[]
+  }
+
+  /**
+   * SpaceInvite findFirstOrThrow
+   */
+  export type SpaceInviteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * Filter, which SpaceInvite to fetch.
+     */
+    where?: SpaceInviteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SpaceInvites to fetch.
+     */
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SpaceInvites.
+     */
+    cursor?: SpaceInviteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SpaceInvites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SpaceInvites.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SpaceInvites.
+     */
+    distinct?: SpaceInviteScalarFieldEnum | SpaceInviteScalarFieldEnum[]
+  }
+
+  /**
+   * SpaceInvite findMany
+   */
+  export type SpaceInviteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * Filter, which SpaceInvites to fetch.
+     */
+    where?: SpaceInviteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SpaceInvites to fetch.
+     */
+    orderBy?: SpaceInviteOrderByWithRelationInput | SpaceInviteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SpaceInvites.
+     */
+    cursor?: SpaceInviteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SpaceInvites from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SpaceInvites.
+     */
+    skip?: number
+    distinct?: SpaceInviteScalarFieldEnum | SpaceInviteScalarFieldEnum[]
+  }
+
+  /**
+   * SpaceInvite create
+   */
+  export type SpaceInviteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SpaceInvite.
+     */
+    data: XOR<SpaceInviteCreateInput, SpaceInviteUncheckedCreateInput>
+  }
+
+  /**
+   * SpaceInvite createMany
+   */
+  export type SpaceInviteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SpaceInvites.
+     */
+    data: SpaceInviteCreateManyInput | SpaceInviteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SpaceInvite createManyAndReturn
+   */
+  export type SpaceInviteCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many SpaceInvites.
+     */
+    data: SpaceInviteCreateManyInput | SpaceInviteCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SpaceInvite update
+   */
+  export type SpaceInviteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SpaceInvite.
+     */
+    data: XOR<SpaceInviteUpdateInput, SpaceInviteUncheckedUpdateInput>
+    /**
+     * Choose, which SpaceInvite to update.
+     */
+    where: SpaceInviteWhereUniqueInput
+  }
+
+  /**
+   * SpaceInvite updateMany
+   */
+  export type SpaceInviteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SpaceInvites.
+     */
+    data: XOR<SpaceInviteUpdateManyMutationInput, SpaceInviteUncheckedUpdateManyInput>
+    /**
+     * Filter which SpaceInvites to update
+     */
+    where?: SpaceInviteWhereInput
+  }
+
+  /**
+   * SpaceInvite upsert
+   */
+  export type SpaceInviteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SpaceInvite to update in case it exists.
+     */
+    where: SpaceInviteWhereUniqueInput
+    /**
+     * In case the SpaceInvite found by the `where` argument doesn't exist, create a new SpaceInvite with this data.
+     */
+    create: XOR<SpaceInviteCreateInput, SpaceInviteUncheckedCreateInput>
+    /**
+     * In case the SpaceInvite was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SpaceInviteUpdateInput, SpaceInviteUncheckedUpdateInput>
+  }
+
+  /**
+   * SpaceInvite delete
+   */
+  export type SpaceInviteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
+    /**
+     * Filter which SpaceInvite to delete.
+     */
+    where: SpaceInviteWhereUniqueInput
+  }
+
+  /**
+   * SpaceInvite deleteMany
+   */
+  export type SpaceInviteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SpaceInvites to delete
+     */
+    where?: SpaceInviteWhereInput
+  }
+
+  /**
+   * SpaceInvite without action
+   */
+  export type SpaceInviteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SpaceInvite
+     */
+    select?: SpaceInviteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInviteInclude<ExtArgs> | null
   }
 
 
@@ -4525,21 +5722,30 @@ export namespace Prisma {
     id: string | null
     width: number | null
     height: number | null
+    static: boolean | null
     imageUrl: string | null
+    collisionZone: string | null
+    collisionMask: string | null
   }
 
   export type ElementMaxAggregateOutputType = {
     id: string | null
     width: number | null
     height: number | null
+    static: boolean | null
     imageUrl: string | null
+    collisionZone: string | null
+    collisionMask: string | null
   }
 
   export type ElementCountAggregateOutputType = {
     id: number
     width: number
     height: number
+    static: number
     imageUrl: number
+    collisionZone: number
+    collisionMask: number
     _all: number
   }
 
@@ -4558,21 +5764,30 @@ export namespace Prisma {
     id?: true
     width?: true
     height?: true
+    static?: true
     imageUrl?: true
+    collisionZone?: true
+    collisionMask?: true
   }
 
   export type ElementMaxAggregateInputType = {
     id?: true
     width?: true
     height?: true
+    static?: true
     imageUrl?: true
+    collisionZone?: true
+    collisionMask?: true
   }
 
   export type ElementCountAggregateInputType = {
     id?: true
     width?: true
     height?: true
+    static?: true
     imageUrl?: true
+    collisionZone?: true
+    collisionMask?: true
     _all?: true
   }
 
@@ -4666,7 +5881,10 @@ export namespace Prisma {
     id: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone: string
+    collisionMask: string | null
     _count: ElementCountAggregateOutputType | null
     _avg: ElementAvgAggregateOutputType | null
     _sum: ElementSumAggregateOutputType | null
@@ -4692,7 +5910,10 @@ export namespace Prisma {
     id?: boolean
     width?: boolean
     height?: boolean
+    static?: boolean
     imageUrl?: boolean
+    collisionZone?: boolean
+    collisionMask?: boolean
     spaces?: boolean | Element$spacesArgs<ExtArgs>
     mapElements?: boolean | Element$mapElementsArgs<ExtArgs>
     _count?: boolean | ElementCountOutputTypeDefaultArgs<ExtArgs>
@@ -4702,14 +5923,20 @@ export namespace Prisma {
     id?: boolean
     width?: boolean
     height?: boolean
+    static?: boolean
     imageUrl?: boolean
+    collisionZone?: boolean
+    collisionMask?: boolean
   }, ExtArgs["result"]["element"]>
 
   export type ElementSelectScalar = {
     id?: boolean
     width?: boolean
     height?: boolean
+    static?: boolean
     imageUrl?: boolean
+    collisionZone?: boolean
+    collisionMask?: boolean
   }
 
   export type ElementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4729,7 +5956,10 @@ export namespace Prisma {
       id: string
       width: number
       height: number
+      static: boolean
       imageUrl: string
+      collisionZone: string
+      collisionMask: string | null
     }, ExtArgs["result"]["element"]>
     composites: {}
   }
@@ -5128,7 +6358,10 @@ export namespace Prisma {
     readonly id: FieldRef<"Element", 'String'>
     readonly width: FieldRef<"Element", 'Int'>
     readonly height: FieldRef<"Element", 'Int'>
+    readonly static: FieldRef<"Element", 'Boolean'>
     readonly imageUrl: FieldRef<"Element", 'String'>
+    readonly collisionZone: FieldRef<"Element", 'String'>
+    readonly collisionMask: FieldRef<"Element", 'String'>
   }
     
 
@@ -5524,6 +6757,11 @@ export namespace Prisma {
     width: number | null
     height: number | null
     name: string | null
+    thumbnail: string | null
+    description: string | null
+    isPublic: boolean | null
+    creatorId: string | null
+    tiledMapFile: string | null
   }
 
   export type MapMaxAggregateOutputType = {
@@ -5531,6 +6769,11 @@ export namespace Prisma {
     width: number | null
     height: number | null
     name: string | null
+    thumbnail: string | null
+    description: string | null
+    isPublic: boolean | null
+    creatorId: string | null
+    tiledMapFile: string | null
   }
 
   export type MapCountAggregateOutputType = {
@@ -5538,6 +6781,11 @@ export namespace Prisma {
     width: number
     height: number
     name: number
+    thumbnail: number
+    description: number
+    isPublic: number
+    creatorId: number
+    tiledMapFile: number
     _all: number
   }
 
@@ -5557,6 +6805,11 @@ export namespace Prisma {
     width?: true
     height?: true
     name?: true
+    thumbnail?: true
+    description?: true
+    isPublic?: true
+    creatorId?: true
+    tiledMapFile?: true
   }
 
   export type MapMaxAggregateInputType = {
@@ -5564,6 +6817,11 @@ export namespace Prisma {
     width?: true
     height?: true
     name?: true
+    thumbnail?: true
+    description?: true
+    isPublic?: true
+    creatorId?: true
+    tiledMapFile?: true
   }
 
   export type MapCountAggregateInputType = {
@@ -5571,6 +6829,11 @@ export namespace Prisma {
     width?: true
     height?: true
     name?: true
+    thumbnail?: true
+    description?: true
+    isPublic?: true
+    creatorId?: true
+    tiledMapFile?: true
     _all?: true
   }
 
@@ -5665,6 +6928,11 @@ export namespace Prisma {
     width: number
     height: number
     name: string
+    thumbnail: string | null
+    description: string | null
+    isPublic: boolean
+    creatorId: string | null
+    tiledMapFile: string | null
     _count: MapCountAggregateOutputType | null
     _avg: MapAvgAggregateOutputType | null
     _sum: MapSumAggregateOutputType | null
@@ -5691,7 +6959,13 @@ export namespace Prisma {
     width?: boolean
     height?: boolean
     name?: boolean
+    thumbnail?: boolean
+    description?: boolean
+    isPublic?: boolean
+    creatorId?: boolean
+    tiledMapFile?: boolean
     mapElements?: boolean | Map$mapElementsArgs<ExtArgs>
+    spaces?: boolean | Map$spacesArgs<ExtArgs>
     _count?: boolean | MapCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["map"]>
 
@@ -5700,6 +6974,11 @@ export namespace Prisma {
     width?: boolean
     height?: boolean
     name?: boolean
+    thumbnail?: boolean
+    description?: boolean
+    isPublic?: boolean
+    creatorId?: boolean
+    tiledMapFile?: boolean
   }, ExtArgs["result"]["map"]>
 
   export type MapSelectScalar = {
@@ -5707,10 +6986,16 @@ export namespace Prisma {
     width?: boolean
     height?: boolean
     name?: boolean
+    thumbnail?: boolean
+    description?: boolean
+    isPublic?: boolean
+    creatorId?: boolean
+    tiledMapFile?: boolean
   }
 
   export type MapInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     mapElements?: boolean | Map$mapElementsArgs<ExtArgs>
+    spaces?: boolean | Map$spacesArgs<ExtArgs>
     _count?: boolean | MapCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type MapIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -5719,12 +7004,18 @@ export namespace Prisma {
     name: "Map"
     objects: {
       mapElements: Prisma.$MapElementsPayload<ExtArgs>[]
+      spaces: Prisma.$SpacePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       width: number
       height: number
       name: string
+      thumbnail: string | null
+      description: string | null
+      isPublic: boolean
+      creatorId: string | null
+      tiledMapFile: string | null
     }, ExtArgs["result"]["map"]>
     composites: {}
   }
@@ -6090,6 +7381,7 @@ export namespace Prisma {
   export interface Prisma__MapClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     mapElements<T extends Map$mapElementsArgs<ExtArgs> = {}>(args?: Subset<T, Map$mapElementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MapElementsPayload<ExtArgs>, T, "findMany"> | Null>
+    spaces<T extends Map$spacesArgs<ExtArgs> = {}>(args?: Subset<T, Map$spacesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SpacePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6123,6 +7415,11 @@ export namespace Prisma {
     readonly width: FieldRef<"Map", 'Int'>
     readonly height: FieldRef<"Map", 'Int'>
     readonly name: FieldRef<"Map", 'String'>
+    readonly thumbnail: FieldRef<"Map", 'String'>
+    readonly description: FieldRef<"Map", 'String'>
+    readonly isPublic: FieldRef<"Map", 'Boolean'>
+    readonly creatorId: FieldRef<"Map", 'String'>
+    readonly tiledMapFile: FieldRef<"Map", 'String'>
   }
     
 
@@ -6454,6 +7751,26 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: MapElementsScalarFieldEnum | MapElementsScalarFieldEnum[]
+  }
+
+  /**
+   * Map.spaces
+   */
+  export type Map$spacesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Space
+     */
+    select?: SpaceSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SpaceInclude<ExtArgs> | null
+    where?: SpaceWhereInput
+    orderBy?: SpaceOrderByWithRelationInput | SpaceOrderByWithRelationInput[]
+    cursor?: SpaceWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SpaceScalarFieldEnum | SpaceScalarFieldEnum[]
   }
 
   /**
@@ -8403,10 +9720,23 @@ export namespace Prisma {
     width: 'width',
     height: 'height',
     thumbnail: 'thumbnail',
-    creatorId: 'creatorId'
+    creatorId: 'creatorId',
+    mapId: 'mapId'
   };
 
   export type SpaceScalarFieldEnum = (typeof SpaceScalarFieldEnum)[keyof typeof SpaceScalarFieldEnum]
+
+
+  export const SpaceInviteScalarFieldEnum: {
+    id: 'id',
+    spaceId: 'spaceId',
+    inviterId: 'inviterId',
+    inviteeId: 'inviteeId',
+    status: 'status',
+    createdAt: 'createdAt'
+  };
+
+  export type SpaceInviteScalarFieldEnum = (typeof SpaceInviteScalarFieldEnum)[keyof typeof SpaceInviteScalarFieldEnum]
 
 
   export const SpaceElementsScalarFieldEnum: {
@@ -8424,7 +9754,10 @@ export namespace Prisma {
     id: 'id',
     width: 'width',
     height: 'height',
-    imageUrl: 'imageUrl'
+    static: 'static',
+    imageUrl: 'imageUrl',
+    collisionZone: 'collisionZone',
+    collisionMask: 'collisionMask'
   };
 
   export type ElementScalarFieldEnum = (typeof ElementScalarFieldEnum)[keyof typeof ElementScalarFieldEnum]
@@ -8434,7 +9767,12 @@ export namespace Prisma {
     id: 'id',
     width: 'width',
     height: 'height',
-    name: 'name'
+    name: 'name',
+    thumbnail: 'thumbnail',
+    description: 'description',
+    isPublic: 'isPublic',
+    creatorId: 'creatorId',
+    tiledMapFile: 'tiledMapFile'
   };
 
   export type MapScalarFieldEnum = (typeof MapScalarFieldEnum)[keyof typeof MapScalarFieldEnum]
@@ -8532,6 +9870,41 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'InviteStatus'
+   */
+  export type EnumInviteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InviteStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'InviteStatus[]'
+   */
+  export type ListEnumInviteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'InviteStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
    * Reference to a field of type 'Float'
    */
   export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -8559,6 +9932,8 @@ export namespace Prisma {
     role?: EnumRoleFilter<"User"> | $Enums.Role
     Space?: SpaceListRelationFilter
     avatar?: XOR<AvatarNullableRelationFilter, AvatarWhereInput> | null
+    sentInvites?: SpaceInviteListRelationFilter
+    receivedInvites?: SpaceInviteListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -8569,6 +9944,8 @@ export namespace Prisma {
     role?: SortOrder
     Space?: SpaceOrderByRelationAggregateInput
     avatar?: AvatarOrderByWithRelationInput
+    sentInvites?: SpaceInviteOrderByRelationAggregateInput
+    receivedInvites?: SpaceInviteOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -8582,6 +9959,8 @@ export namespace Prisma {
     role?: EnumRoleFilter<"User"> | $Enums.Role
     Space?: SpaceListRelationFilter
     avatar?: XOR<AvatarNullableRelationFilter, AvatarWhereInput> | null
+    sentInvites?: SpaceInviteListRelationFilter
+    receivedInvites?: SpaceInviteListRelationFilter
   }, "id" | "id" | "username">
 
   export type UserOrderByWithAggregationInput = {
@@ -8613,22 +9992,28 @@ export namespace Prisma {
     id?: StringFilter<"Space"> | string
     name?: StringFilter<"Space"> | string
     width?: IntFilter<"Space"> | number
-    height?: IntNullableFilter<"Space"> | number | null
+    height?: IntFilter<"Space"> | number
     thumbnail?: StringNullableFilter<"Space"> | string | null
     creatorId?: StringFilter<"Space"> | string
+    mapId?: StringNullableFilter<"Space"> | string | null
     creator?: XOR<UserRelationFilter, UserWhereInput>
     elements?: SpaceElementsListRelationFilter
+    invites?: SpaceInviteListRelationFilter
+    map?: XOR<MapNullableRelationFilter, MapWhereInput> | null
   }
 
   export type SpaceOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
     width?: SortOrder
-    height?: SortOrderInput | SortOrder
+    height?: SortOrder
     thumbnail?: SortOrderInput | SortOrder
     creatorId?: SortOrder
+    mapId?: SortOrderInput | SortOrder
     creator?: UserOrderByWithRelationInput
     elements?: spaceElementsOrderByRelationAggregateInput
+    invites?: SpaceInviteOrderByRelationAggregateInput
+    map?: MapOrderByWithRelationInput
   }
 
   export type SpaceWhereUniqueInput = Prisma.AtLeast<{
@@ -8638,20 +10023,24 @@ export namespace Prisma {
     NOT?: SpaceWhereInput | SpaceWhereInput[]
     name?: StringFilter<"Space"> | string
     width?: IntFilter<"Space"> | number
-    height?: IntNullableFilter<"Space"> | number | null
+    height?: IntFilter<"Space"> | number
     thumbnail?: StringNullableFilter<"Space"> | string | null
     creatorId?: StringFilter<"Space"> | string
+    mapId?: StringNullableFilter<"Space"> | string | null
     creator?: XOR<UserRelationFilter, UserWhereInput>
     elements?: SpaceElementsListRelationFilter
+    invites?: SpaceInviteListRelationFilter
+    map?: XOR<MapNullableRelationFilter, MapWhereInput> | null
   }, "id" | "id">
 
   export type SpaceOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
     width?: SortOrder
-    height?: SortOrderInput | SortOrder
+    height?: SortOrder
     thumbnail?: SortOrderInput | SortOrder
     creatorId?: SortOrder
+    mapId?: SortOrderInput | SortOrder
     _count?: SpaceCountOrderByAggregateInput
     _avg?: SpaceAvgOrderByAggregateInput
     _max?: SpaceMaxOrderByAggregateInput
@@ -8666,9 +10055,77 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Space"> | string
     name?: StringWithAggregatesFilter<"Space"> | string
     width?: IntWithAggregatesFilter<"Space"> | number
-    height?: IntNullableWithAggregatesFilter<"Space"> | number | null
+    height?: IntWithAggregatesFilter<"Space"> | number
     thumbnail?: StringNullableWithAggregatesFilter<"Space"> | string | null
     creatorId?: StringWithAggregatesFilter<"Space"> | string
+    mapId?: StringNullableWithAggregatesFilter<"Space"> | string | null
+  }
+
+  export type SpaceInviteWhereInput = {
+    AND?: SpaceInviteWhereInput | SpaceInviteWhereInput[]
+    OR?: SpaceInviteWhereInput[]
+    NOT?: SpaceInviteWhereInput | SpaceInviteWhereInput[]
+    id?: StringFilter<"SpaceInvite"> | string
+    spaceId?: StringFilter<"SpaceInvite"> | string
+    inviterId?: StringFilter<"SpaceInvite"> | string
+    inviteeId?: StringFilter<"SpaceInvite"> | string
+    status?: EnumInviteStatusFilter<"SpaceInvite"> | $Enums.InviteStatus
+    createdAt?: DateTimeFilter<"SpaceInvite"> | Date | string
+    space?: XOR<SpaceRelationFilter, SpaceWhereInput>
+    inviter?: XOR<UserRelationFilter, UserWhereInput>
+    invitee?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type SpaceInviteOrderByWithRelationInput = {
+    id?: SortOrder
+    spaceId?: SortOrder
+    inviterId?: SortOrder
+    inviteeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    space?: SpaceOrderByWithRelationInput
+    inviter?: UserOrderByWithRelationInput
+    invitee?: UserOrderByWithRelationInput
+  }
+
+  export type SpaceInviteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    spaceId_inviteeId?: SpaceInviteSpaceIdInviteeIdCompoundUniqueInput
+    AND?: SpaceInviteWhereInput | SpaceInviteWhereInput[]
+    OR?: SpaceInviteWhereInput[]
+    NOT?: SpaceInviteWhereInput | SpaceInviteWhereInput[]
+    spaceId?: StringFilter<"SpaceInvite"> | string
+    inviterId?: StringFilter<"SpaceInvite"> | string
+    inviteeId?: StringFilter<"SpaceInvite"> | string
+    status?: EnumInviteStatusFilter<"SpaceInvite"> | $Enums.InviteStatus
+    createdAt?: DateTimeFilter<"SpaceInvite"> | Date | string
+    space?: XOR<SpaceRelationFilter, SpaceWhereInput>
+    inviter?: XOR<UserRelationFilter, UserWhereInput>
+    invitee?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id" | "id" | "spaceId_inviteeId">
+
+  export type SpaceInviteOrderByWithAggregationInput = {
+    id?: SortOrder
+    spaceId?: SortOrder
+    inviterId?: SortOrder
+    inviteeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+    _count?: SpaceInviteCountOrderByAggregateInput
+    _max?: SpaceInviteMaxOrderByAggregateInput
+    _min?: SpaceInviteMinOrderByAggregateInput
+  }
+
+  export type SpaceInviteScalarWhereWithAggregatesInput = {
+    AND?: SpaceInviteScalarWhereWithAggregatesInput | SpaceInviteScalarWhereWithAggregatesInput[]
+    OR?: SpaceInviteScalarWhereWithAggregatesInput[]
+    NOT?: SpaceInviteScalarWhereWithAggregatesInput | SpaceInviteScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SpaceInvite"> | string
+    spaceId?: StringWithAggregatesFilter<"SpaceInvite"> | string
+    inviterId?: StringWithAggregatesFilter<"SpaceInvite"> | string
+    inviteeId?: StringWithAggregatesFilter<"SpaceInvite"> | string
+    status?: EnumInviteStatusWithAggregatesFilter<"SpaceInvite"> | $Enums.InviteStatus
+    createdAt?: DateTimeWithAggregatesFilter<"SpaceInvite"> | Date | string
   }
 
   export type spaceElementsWhereInput = {
@@ -8738,7 +10195,10 @@ export namespace Prisma {
     id?: StringFilter<"Element"> | string
     width?: IntFilter<"Element"> | number
     height?: IntFilter<"Element"> | number
+    static?: BoolFilter<"Element"> | boolean
     imageUrl?: StringFilter<"Element"> | string
+    collisionZone?: StringFilter<"Element"> | string
+    collisionMask?: StringNullableFilter<"Element"> | string | null
     spaces?: SpaceElementsListRelationFilter
     mapElements?: MapElementsListRelationFilter
   }
@@ -8747,7 +10207,10 @@ export namespace Prisma {
     id?: SortOrder
     width?: SortOrder
     height?: SortOrder
+    static?: SortOrder
     imageUrl?: SortOrder
+    collisionZone?: SortOrder
+    collisionMask?: SortOrderInput | SortOrder
     spaces?: spaceElementsOrderByRelationAggregateInput
     mapElements?: MapElementsOrderByRelationAggregateInput
   }
@@ -8759,7 +10222,10 @@ export namespace Prisma {
     NOT?: ElementWhereInput | ElementWhereInput[]
     width?: IntFilter<"Element"> | number
     height?: IntFilter<"Element"> | number
+    static?: BoolFilter<"Element"> | boolean
     imageUrl?: StringFilter<"Element"> | string
+    collisionZone?: StringFilter<"Element"> | string
+    collisionMask?: StringNullableFilter<"Element"> | string | null
     spaces?: SpaceElementsListRelationFilter
     mapElements?: MapElementsListRelationFilter
   }, "id" | "id">
@@ -8768,7 +10234,10 @@ export namespace Prisma {
     id?: SortOrder
     width?: SortOrder
     height?: SortOrder
+    static?: SortOrder
     imageUrl?: SortOrder
+    collisionZone?: SortOrder
+    collisionMask?: SortOrderInput | SortOrder
     _count?: ElementCountOrderByAggregateInput
     _avg?: ElementAvgOrderByAggregateInput
     _max?: ElementMaxOrderByAggregateInput
@@ -8783,7 +10252,10 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Element"> | string
     width?: IntWithAggregatesFilter<"Element"> | number
     height?: IntWithAggregatesFilter<"Element"> | number
+    static?: BoolWithAggregatesFilter<"Element"> | boolean
     imageUrl?: StringWithAggregatesFilter<"Element"> | string
+    collisionZone?: StringWithAggregatesFilter<"Element"> | string
+    collisionMask?: StringNullableWithAggregatesFilter<"Element"> | string | null
   }
 
   export type MapWhereInput = {
@@ -8794,7 +10266,13 @@ export namespace Prisma {
     width?: IntFilter<"Map"> | number
     height?: IntFilter<"Map"> | number
     name?: StringFilter<"Map"> | string
+    thumbnail?: StringNullableFilter<"Map"> | string | null
+    description?: StringNullableFilter<"Map"> | string | null
+    isPublic?: BoolFilter<"Map"> | boolean
+    creatorId?: StringNullableFilter<"Map"> | string | null
+    tiledMapFile?: StringNullableFilter<"Map"> | string | null
     mapElements?: MapElementsListRelationFilter
+    spaces?: SpaceListRelationFilter
   }
 
   export type MapOrderByWithRelationInput = {
@@ -8802,7 +10280,13 @@ export namespace Prisma {
     width?: SortOrder
     height?: SortOrder
     name?: SortOrder
+    thumbnail?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    isPublic?: SortOrder
+    creatorId?: SortOrderInput | SortOrder
+    tiledMapFile?: SortOrderInput | SortOrder
     mapElements?: MapElementsOrderByRelationAggregateInput
+    spaces?: SpaceOrderByRelationAggregateInput
   }
 
   export type MapWhereUniqueInput = Prisma.AtLeast<{
@@ -8813,7 +10297,13 @@ export namespace Prisma {
     width?: IntFilter<"Map"> | number
     height?: IntFilter<"Map"> | number
     name?: StringFilter<"Map"> | string
+    thumbnail?: StringNullableFilter<"Map"> | string | null
+    description?: StringNullableFilter<"Map"> | string | null
+    isPublic?: BoolFilter<"Map"> | boolean
+    creatorId?: StringNullableFilter<"Map"> | string | null
+    tiledMapFile?: StringNullableFilter<"Map"> | string | null
     mapElements?: MapElementsListRelationFilter
+    spaces?: SpaceListRelationFilter
   }, "id" | "id">
 
   export type MapOrderByWithAggregationInput = {
@@ -8821,6 +10311,11 @@ export namespace Prisma {
     width?: SortOrder
     height?: SortOrder
     name?: SortOrder
+    thumbnail?: SortOrderInput | SortOrder
+    description?: SortOrderInput | SortOrder
+    isPublic?: SortOrder
+    creatorId?: SortOrderInput | SortOrder
+    tiledMapFile?: SortOrderInput | SortOrder
     _count?: MapCountOrderByAggregateInput
     _avg?: MapAvgOrderByAggregateInput
     _max?: MapMaxOrderByAggregateInput
@@ -8836,6 +10331,11 @@ export namespace Prisma {
     width?: IntWithAggregatesFilter<"Map"> | number
     height?: IntWithAggregatesFilter<"Map"> | number
     name?: StringWithAggregatesFilter<"Map"> | string
+    thumbnail?: StringNullableWithAggregatesFilter<"Map"> | string | null
+    description?: StringNullableWithAggregatesFilter<"Map"> | string | null
+    isPublic?: BoolWithAggregatesFilter<"Map"> | boolean
+    creatorId?: StringNullableWithAggregatesFilter<"Map"> | string | null
+    tiledMapFile?: StringNullableWithAggregatesFilter<"Map"> | string | null
   }
 
   export type MapElementsWhereInput = {
@@ -8950,6 +10450,8 @@ export namespace Prisma {
     role: $Enums.Role
     Space?: SpaceCreateNestedManyWithoutCreatorInput
     avatar?: AvatarCreateNestedOneWithoutUsersInput
+    sentInvites?: SpaceInviteCreateNestedManyWithoutInviterInput
+    receivedInvites?: SpaceInviteCreateNestedManyWithoutInviteeInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -8959,6 +10461,8 @@ export namespace Prisma {
     avatarId?: string | null
     role: $Enums.Role
     Space?: SpaceUncheckedCreateNestedManyWithoutCreatorInput
+    sentInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviterInput
+    receivedInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviteeInput
   }
 
   export type UserUpdateInput = {
@@ -8968,6 +10472,8 @@ export namespace Prisma {
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     Space?: SpaceUpdateManyWithoutCreatorNestedInput
     avatar?: AvatarUpdateOneWithoutUsersNestedInput
+    sentInvites?: SpaceInviteUpdateManyWithoutInviterNestedInput
+    receivedInvites?: SpaceInviteUpdateManyWithoutInviteeNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -8977,6 +10483,8 @@ export namespace Prisma {
     avatarId?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     Space?: SpaceUncheckedUpdateManyWithoutCreatorNestedInput
+    sentInvites?: SpaceInviteUncheckedUpdateManyWithoutInviterNestedInput
+    receivedInvites?: SpaceInviteUncheckedUpdateManyWithoutInviteeNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -9006,56 +10514,65 @@ export namespace Prisma {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
     creator: UserCreateNestedOneWithoutSpaceInput
     elements?: spaceElementsCreateNestedManyWithoutSpaceInput
+    invites?: SpaceInviteCreateNestedManyWithoutSpaceInput
+    map?: MapCreateNestedOneWithoutSpacesInput
   }
 
   export type SpaceUncheckedCreateInput = {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
     creatorId: string
+    mapId?: string | null
     elements?: spaceElementsUncheckedCreateNestedManyWithoutSpaceInput
+    invites?: SpaceInviteUncheckedCreateNestedManyWithoutSpaceInput
   }
 
   export type SpaceUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
     creator?: UserUpdateOneRequiredWithoutSpaceNestedInput
     elements?: spaceElementsUpdateManyWithoutSpaceNestedInput
+    invites?: SpaceInviteUpdateManyWithoutSpaceNestedInput
+    map?: MapUpdateOneWithoutSpacesNestedInput
   }
 
   export type SpaceUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
     creatorId?: StringFieldUpdateOperationsInput | string
+    mapId?: NullableStringFieldUpdateOperationsInput | string | null
     elements?: spaceElementsUncheckedUpdateManyWithoutSpaceNestedInput
+    invites?: SpaceInviteUncheckedUpdateManyWithoutSpaceNestedInput
   }
 
   export type SpaceCreateManyInput = {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
     creatorId: string
+    mapId?: string | null
   }
 
   export type SpaceUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -9063,9 +10580,70 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
     creatorId?: StringFieldUpdateOperationsInput | string
+    mapId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SpaceInviteCreateInput = {
+    id?: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+    space: SpaceCreateNestedOneWithoutInvitesInput
+    inviter: UserCreateNestedOneWithoutSentInvitesInput
+    invitee: UserCreateNestedOneWithoutReceivedInvitesInput
+  }
+
+  export type SpaceInviteUncheckedCreateInput = {
+    id?: string
+    spaceId: string
+    inviterId: string
+    inviteeId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+  }
+
+  export type SpaceInviteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    space?: SpaceUpdateOneRequiredWithoutInvitesNestedInput
+    inviter?: UserUpdateOneRequiredWithoutSentInvitesNestedInput
+    invitee?: UserUpdateOneRequiredWithoutReceivedInvitesNestedInput
+  }
+
+  export type SpaceInviteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    spaceId?: StringFieldUpdateOperationsInput | string
+    inviterId?: StringFieldUpdateOperationsInput | string
+    inviteeId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SpaceInviteCreateManyInput = {
+    id?: string
+    spaceId: string
+    inviterId: string
+    inviteeId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+  }
+
+  export type SpaceInviteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SpaceInviteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    spaceId?: StringFieldUpdateOperationsInput | string
+    inviterId?: StringFieldUpdateOperationsInput | string
+    inviteeId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type spaceElementsCreateInput = {
@@ -9126,7 +10704,10 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
     spaces?: spaceElementsCreateNestedManyWithoutElementInput
     mapElements?: MapElementsCreateNestedManyWithoutElementInput
   }
@@ -9135,7 +10716,10 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
     spaces?: spaceElementsUncheckedCreateNestedManyWithoutElementInput
     mapElements?: MapElementsUncheckedCreateNestedManyWithoutElementInput
   }
@@ -9144,7 +10728,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
     spaces?: spaceElementsUpdateManyWithoutElementNestedInput
     mapElements?: MapElementsUpdateManyWithoutElementNestedInput
   }
@@ -9153,7 +10740,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
     spaces?: spaceElementsUncheckedUpdateManyWithoutElementNestedInput
     mapElements?: MapElementsUncheckedUpdateManyWithoutElementNestedInput
   }
@@ -9162,21 +10752,30 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
   }
 
   export type ElementUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ElementUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MapCreateInput = {
@@ -9184,7 +10783,13 @@ export namespace Prisma {
     width: number
     height: number
     name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
     mapElements?: MapElementsCreateNestedManyWithoutMapInput
+    spaces?: SpaceCreateNestedManyWithoutMapInput
   }
 
   export type MapUncheckedCreateInput = {
@@ -9192,7 +10797,13 @@ export namespace Prisma {
     width: number
     height: number
     name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
     mapElements?: MapElementsUncheckedCreateNestedManyWithoutMapInput
+    spaces?: SpaceUncheckedCreateNestedManyWithoutMapInput
   }
 
   export type MapUpdateInput = {
@@ -9200,7 +10811,13 @@ export namespace Prisma {
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
     mapElements?: MapElementsUpdateManyWithoutMapNestedInput
+    spaces?: SpaceUpdateManyWithoutMapNestedInput
   }
 
   export type MapUncheckedUpdateInput = {
@@ -9208,7 +10825,13 @@ export namespace Prisma {
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
     mapElements?: MapElementsUncheckedUpdateManyWithoutMapNestedInput
+    spaces?: SpaceUncheckedUpdateManyWithoutMapNestedInput
   }
 
   export type MapCreateManyInput = {
@@ -9216,6 +10839,11 @@ export namespace Prisma {
     width: number
     height: number
     name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
   }
 
   export type MapUpdateManyMutationInput = {
@@ -9223,6 +10851,11 @@ export namespace Prisma {
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MapUncheckedUpdateManyInput = {
@@ -9230,6 +10863,11 @@ export namespace Prisma {
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type MapElementsCreateInput = {
@@ -9380,12 +11018,22 @@ export namespace Prisma {
     isNot?: AvatarWhereInput | null
   }
 
+  export type SpaceInviteListRelationFilter = {
+    every?: SpaceInviteWhereInput
+    some?: SpaceInviteWhereInput
+    none?: SpaceInviteWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
   }
 
   export type SpaceOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SpaceInviteOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -9470,17 +11118,6 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
-  export type IntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
-  }
-
   export type UserRelationFilter = {
     is?: UserWhereInput
     isNot?: UserWhereInput
@@ -9490,6 +11127,11 @@ export namespace Prisma {
     every?: spaceElementsWhereInput
     some?: spaceElementsWhereInput
     none?: spaceElementsWhereInput
+  }
+
+  export type MapNullableRelationFilter = {
+    is?: MapWhereInput | null
+    isNot?: MapWhereInput | null
   }
 
   export type spaceElementsOrderByRelationAggregateInput = {
@@ -9503,6 +11145,7 @@ export namespace Prisma {
     height?: SortOrder
     thumbnail?: SortOrder
     creatorId?: SortOrder
+    mapId?: SortOrder
   }
 
   export type SpaceAvgOrderByAggregateInput = {
@@ -9517,6 +11160,7 @@ export namespace Prisma {
     height?: SortOrder
     thumbnail?: SortOrder
     creatorId?: SortOrder
+    mapId?: SortOrder
   }
 
   export type SpaceMinOrderByAggregateInput = {
@@ -9526,6 +11170,7 @@ export namespace Prisma {
     height?: SortOrder
     thumbnail?: SortOrder
     creatorId?: SortOrder
+    mapId?: SortOrder
   }
 
   export type SpaceSumOrderByAggregateInput = {
@@ -9549,25 +11194,83 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedIntNullableFilter<$PrismaModel>
-    _max?: NestedIntNullableFilter<$PrismaModel>
+  export type EnumInviteStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.InviteStatus | EnumInviteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInviteStatusFilter<$PrismaModel> | $Enums.InviteStatus
+  }
+
+  export type DateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
   export type SpaceRelationFilter = {
     is?: SpaceWhereInput
     isNot?: SpaceWhereInput
+  }
+
+  export type SpaceInviteSpaceIdInviteeIdCompoundUniqueInput = {
+    spaceId: string
+    inviteeId: string
+  }
+
+  export type SpaceInviteCountOrderByAggregateInput = {
+    id?: SortOrder
+    spaceId?: SortOrder
+    inviterId?: SortOrder
+    inviteeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SpaceInviteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    spaceId?: SortOrder
+    inviterId?: SortOrder
+    inviteeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SpaceInviteMinOrderByAggregateInput = {
+    id?: SortOrder
+    spaceId?: SortOrder
+    inviterId?: SortOrder
+    inviteeId?: SortOrder
+    status?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumInviteStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InviteStatus | EnumInviteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInviteStatusWithAggregatesFilter<$PrismaModel> | $Enums.InviteStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInviteStatusFilter<$PrismaModel>
+    _max?: NestedEnumInviteStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
   export type ElementRelationFilter = {
@@ -9609,6 +11312,11 @@ export namespace Prisma {
     y?: SortOrder
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type MapElementsListRelationFilter = {
     every?: MapElementsWhereInput
     some?: MapElementsWhereInput
@@ -9623,7 +11331,10 @@ export namespace Prisma {
     id?: SortOrder
     width?: SortOrder
     height?: SortOrder
+    static?: SortOrder
     imageUrl?: SortOrder
+    collisionZone?: SortOrder
+    collisionMask?: SortOrder
   }
 
   export type ElementAvgOrderByAggregateInput = {
@@ -9635,14 +11346,20 @@ export namespace Prisma {
     id?: SortOrder
     width?: SortOrder
     height?: SortOrder
+    static?: SortOrder
     imageUrl?: SortOrder
+    collisionZone?: SortOrder
+    collisionMask?: SortOrder
   }
 
   export type ElementMinOrderByAggregateInput = {
     id?: SortOrder
     width?: SortOrder
     height?: SortOrder
+    static?: SortOrder
     imageUrl?: SortOrder
+    collisionZone?: SortOrder
+    collisionMask?: SortOrder
   }
 
   export type ElementSumOrderByAggregateInput = {
@@ -9650,11 +11367,24 @@ export namespace Prisma {
     height?: SortOrder
   }
 
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type MapCountOrderByAggregateInput = {
     id?: SortOrder
     width?: SortOrder
     height?: SortOrder
     name?: SortOrder
+    thumbnail?: SortOrder
+    description?: SortOrder
+    isPublic?: SortOrder
+    creatorId?: SortOrder
+    tiledMapFile?: SortOrder
   }
 
   export type MapAvgOrderByAggregateInput = {
@@ -9667,6 +11397,11 @@ export namespace Prisma {
     width?: SortOrder
     height?: SortOrder
     name?: SortOrder
+    thumbnail?: SortOrder
+    description?: SortOrder
+    isPublic?: SortOrder
+    creatorId?: SortOrder
+    tiledMapFile?: SortOrder
   }
 
   export type MapMinOrderByAggregateInput = {
@@ -9674,11 +11409,27 @@ export namespace Prisma {
     width?: SortOrder
     height?: SortOrder
     name?: SortOrder
+    thumbnail?: SortOrder
+    description?: SortOrder
+    isPublic?: SortOrder
+    creatorId?: SortOrder
+    tiledMapFile?: SortOrder
   }
 
   export type MapSumOrderByAggregateInput = {
     width?: SortOrder
     height?: SortOrder
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
   export type MapRelationFilter = {
@@ -9718,6 +11469,22 @@ export namespace Prisma {
   export type MapElementsSumOrderByAggregateInput = {
     x?: SortOrder
     y?: SortOrder
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
   }
 
   export type UserListRelationFilter = {
@@ -9761,11 +11528,39 @@ export namespace Prisma {
     connect?: AvatarWhereUniqueInput
   }
 
+  export type SpaceInviteCreateNestedManyWithoutInviterInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviterInput, SpaceInviteUncheckedCreateWithoutInviterInput> | SpaceInviteCreateWithoutInviterInput[] | SpaceInviteUncheckedCreateWithoutInviterInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviterInput | SpaceInviteCreateOrConnectWithoutInviterInput[]
+    createMany?: SpaceInviteCreateManyInviterInputEnvelope
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+  }
+
+  export type SpaceInviteCreateNestedManyWithoutInviteeInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviteeInput, SpaceInviteUncheckedCreateWithoutInviteeInput> | SpaceInviteCreateWithoutInviteeInput[] | SpaceInviteUncheckedCreateWithoutInviteeInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviteeInput | SpaceInviteCreateOrConnectWithoutInviteeInput[]
+    createMany?: SpaceInviteCreateManyInviteeInputEnvelope
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+  }
+
   export type SpaceUncheckedCreateNestedManyWithoutCreatorInput = {
     create?: XOR<SpaceCreateWithoutCreatorInput, SpaceUncheckedCreateWithoutCreatorInput> | SpaceCreateWithoutCreatorInput[] | SpaceUncheckedCreateWithoutCreatorInput[]
     connectOrCreate?: SpaceCreateOrConnectWithoutCreatorInput | SpaceCreateOrConnectWithoutCreatorInput[]
     createMany?: SpaceCreateManyCreatorInputEnvelope
     connect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+  }
+
+  export type SpaceInviteUncheckedCreateNestedManyWithoutInviterInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviterInput, SpaceInviteUncheckedCreateWithoutInviterInput> | SpaceInviteCreateWithoutInviterInput[] | SpaceInviteUncheckedCreateWithoutInviterInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviterInput | SpaceInviteCreateOrConnectWithoutInviterInput[]
+    createMany?: SpaceInviteCreateManyInviterInputEnvelope
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+  }
+
+  export type SpaceInviteUncheckedCreateNestedManyWithoutInviteeInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviteeInput, SpaceInviteUncheckedCreateWithoutInviteeInput> | SpaceInviteCreateWithoutInviteeInput[] | SpaceInviteUncheckedCreateWithoutInviteeInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviteeInput | SpaceInviteCreateOrConnectWithoutInviteeInput[]
+    createMany?: SpaceInviteCreateManyInviteeInputEnvelope
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -9800,6 +11595,34 @@ export namespace Prisma {
     update?: XOR<XOR<AvatarUpdateToOneWithWhereWithoutUsersInput, AvatarUpdateWithoutUsersInput>, AvatarUncheckedUpdateWithoutUsersInput>
   }
 
+  export type SpaceInviteUpdateManyWithoutInviterNestedInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviterInput, SpaceInviteUncheckedCreateWithoutInviterInput> | SpaceInviteCreateWithoutInviterInput[] | SpaceInviteUncheckedCreateWithoutInviterInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviterInput | SpaceInviteCreateOrConnectWithoutInviterInput[]
+    upsert?: SpaceInviteUpsertWithWhereUniqueWithoutInviterInput | SpaceInviteUpsertWithWhereUniqueWithoutInviterInput[]
+    createMany?: SpaceInviteCreateManyInviterInputEnvelope
+    set?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    disconnect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    delete?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    update?: SpaceInviteUpdateWithWhereUniqueWithoutInviterInput | SpaceInviteUpdateWithWhereUniqueWithoutInviterInput[]
+    updateMany?: SpaceInviteUpdateManyWithWhereWithoutInviterInput | SpaceInviteUpdateManyWithWhereWithoutInviterInput[]
+    deleteMany?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+  }
+
+  export type SpaceInviteUpdateManyWithoutInviteeNestedInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviteeInput, SpaceInviteUncheckedCreateWithoutInviteeInput> | SpaceInviteCreateWithoutInviteeInput[] | SpaceInviteUncheckedCreateWithoutInviteeInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviteeInput | SpaceInviteCreateOrConnectWithoutInviteeInput[]
+    upsert?: SpaceInviteUpsertWithWhereUniqueWithoutInviteeInput | SpaceInviteUpsertWithWhereUniqueWithoutInviteeInput[]
+    createMany?: SpaceInviteCreateManyInviteeInputEnvelope
+    set?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    disconnect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    delete?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    update?: SpaceInviteUpdateWithWhereUniqueWithoutInviteeInput | SpaceInviteUpdateWithWhereUniqueWithoutInviteeInput[]
+    updateMany?: SpaceInviteUpdateManyWithWhereWithoutInviteeInput | SpaceInviteUpdateManyWithWhereWithoutInviteeInput[]
+    deleteMany?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+  }
+
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
   }
@@ -9818,6 +11641,34 @@ export namespace Prisma {
     deleteMany?: SpaceScalarWhereInput | SpaceScalarWhereInput[]
   }
 
+  export type SpaceInviteUncheckedUpdateManyWithoutInviterNestedInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviterInput, SpaceInviteUncheckedCreateWithoutInviterInput> | SpaceInviteCreateWithoutInviterInput[] | SpaceInviteUncheckedCreateWithoutInviterInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviterInput | SpaceInviteCreateOrConnectWithoutInviterInput[]
+    upsert?: SpaceInviteUpsertWithWhereUniqueWithoutInviterInput | SpaceInviteUpsertWithWhereUniqueWithoutInviterInput[]
+    createMany?: SpaceInviteCreateManyInviterInputEnvelope
+    set?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    disconnect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    delete?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    update?: SpaceInviteUpdateWithWhereUniqueWithoutInviterInput | SpaceInviteUpdateWithWhereUniqueWithoutInviterInput[]
+    updateMany?: SpaceInviteUpdateManyWithWhereWithoutInviterInput | SpaceInviteUpdateManyWithWhereWithoutInviterInput[]
+    deleteMany?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+  }
+
+  export type SpaceInviteUncheckedUpdateManyWithoutInviteeNestedInput = {
+    create?: XOR<SpaceInviteCreateWithoutInviteeInput, SpaceInviteUncheckedCreateWithoutInviteeInput> | SpaceInviteCreateWithoutInviteeInput[] | SpaceInviteUncheckedCreateWithoutInviteeInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutInviteeInput | SpaceInviteCreateOrConnectWithoutInviteeInput[]
+    upsert?: SpaceInviteUpsertWithWhereUniqueWithoutInviteeInput | SpaceInviteUpsertWithWhereUniqueWithoutInviteeInput[]
+    createMany?: SpaceInviteCreateManyInviteeInputEnvelope
+    set?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    disconnect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    delete?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    update?: SpaceInviteUpdateWithWhereUniqueWithoutInviteeInput | SpaceInviteUpdateWithWhereUniqueWithoutInviteeInput[]
+    updateMany?: SpaceInviteUpdateManyWithWhereWithoutInviteeInput | SpaceInviteUpdateManyWithWhereWithoutInviteeInput[]
+    deleteMany?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+  }
+
   export type UserCreateNestedOneWithoutSpaceInput = {
     create?: XOR<UserCreateWithoutSpaceInput, UserUncheckedCreateWithoutSpaceInput>
     connectOrCreate?: UserCreateOrConnectWithoutSpaceInput
@@ -9831,6 +11682,19 @@ export namespace Prisma {
     connect?: spaceElementsWhereUniqueInput | spaceElementsWhereUniqueInput[]
   }
 
+  export type SpaceInviteCreateNestedManyWithoutSpaceInput = {
+    create?: XOR<SpaceInviteCreateWithoutSpaceInput, SpaceInviteUncheckedCreateWithoutSpaceInput> | SpaceInviteCreateWithoutSpaceInput[] | SpaceInviteUncheckedCreateWithoutSpaceInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutSpaceInput | SpaceInviteCreateOrConnectWithoutSpaceInput[]
+    createMany?: SpaceInviteCreateManySpaceInputEnvelope
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+  }
+
+  export type MapCreateNestedOneWithoutSpacesInput = {
+    create?: XOR<MapCreateWithoutSpacesInput, MapUncheckedCreateWithoutSpacesInput>
+    connectOrCreate?: MapCreateOrConnectWithoutSpacesInput
+    connect?: MapWhereUniqueInput
+  }
+
   export type spaceElementsUncheckedCreateNestedManyWithoutSpaceInput = {
     create?: XOR<spaceElementsCreateWithoutSpaceInput, spaceElementsUncheckedCreateWithoutSpaceInput> | spaceElementsCreateWithoutSpaceInput[] | spaceElementsUncheckedCreateWithoutSpaceInput[]
     connectOrCreate?: spaceElementsCreateOrConnectWithoutSpaceInput | spaceElementsCreateOrConnectWithoutSpaceInput[]
@@ -9838,16 +11702,15 @@ export namespace Prisma {
     connect?: spaceElementsWhereUniqueInput | spaceElementsWhereUniqueInput[]
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
+  export type SpaceInviteUncheckedCreateNestedManyWithoutSpaceInput = {
+    create?: XOR<SpaceInviteCreateWithoutSpaceInput, SpaceInviteUncheckedCreateWithoutSpaceInput> | SpaceInviteCreateWithoutSpaceInput[] | SpaceInviteUncheckedCreateWithoutSpaceInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutSpaceInput | SpaceInviteCreateOrConnectWithoutSpaceInput[]
+    createMany?: SpaceInviteCreateManySpaceInputEnvelope
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
   }
 
-  export type NullableIntFieldUpdateOperationsInput = {
-    set?: number | null
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
     increment?: number
     decrement?: number
     multiply?: number
@@ -9876,6 +11739,30 @@ export namespace Prisma {
     deleteMany?: spaceElementsScalarWhereInput | spaceElementsScalarWhereInput[]
   }
 
+  export type SpaceInviteUpdateManyWithoutSpaceNestedInput = {
+    create?: XOR<SpaceInviteCreateWithoutSpaceInput, SpaceInviteUncheckedCreateWithoutSpaceInput> | SpaceInviteCreateWithoutSpaceInput[] | SpaceInviteUncheckedCreateWithoutSpaceInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutSpaceInput | SpaceInviteCreateOrConnectWithoutSpaceInput[]
+    upsert?: SpaceInviteUpsertWithWhereUniqueWithoutSpaceInput | SpaceInviteUpsertWithWhereUniqueWithoutSpaceInput[]
+    createMany?: SpaceInviteCreateManySpaceInputEnvelope
+    set?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    disconnect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    delete?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    update?: SpaceInviteUpdateWithWhereUniqueWithoutSpaceInput | SpaceInviteUpdateWithWhereUniqueWithoutSpaceInput[]
+    updateMany?: SpaceInviteUpdateManyWithWhereWithoutSpaceInput | SpaceInviteUpdateManyWithWhereWithoutSpaceInput[]
+    deleteMany?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+  }
+
+  export type MapUpdateOneWithoutSpacesNestedInput = {
+    create?: XOR<MapCreateWithoutSpacesInput, MapUncheckedCreateWithoutSpacesInput>
+    connectOrCreate?: MapCreateOrConnectWithoutSpacesInput
+    upsert?: MapUpsertWithoutSpacesInput
+    disconnect?: MapWhereInput | boolean
+    delete?: MapWhereInput | boolean
+    connect?: MapWhereUniqueInput
+    update?: XOR<XOR<MapUpdateToOneWithWhereWithoutSpacesInput, MapUpdateWithoutSpacesInput>, MapUncheckedUpdateWithoutSpacesInput>
+  }
+
   export type spaceElementsUncheckedUpdateManyWithoutSpaceNestedInput = {
     create?: XOR<spaceElementsCreateWithoutSpaceInput, spaceElementsUncheckedCreateWithoutSpaceInput> | spaceElementsCreateWithoutSpaceInput[] | spaceElementsUncheckedCreateWithoutSpaceInput[]
     connectOrCreate?: spaceElementsCreateOrConnectWithoutSpaceInput | spaceElementsCreateOrConnectWithoutSpaceInput[]
@@ -9888,6 +11775,70 @@ export namespace Prisma {
     update?: spaceElementsUpdateWithWhereUniqueWithoutSpaceInput | spaceElementsUpdateWithWhereUniqueWithoutSpaceInput[]
     updateMany?: spaceElementsUpdateManyWithWhereWithoutSpaceInput | spaceElementsUpdateManyWithWhereWithoutSpaceInput[]
     deleteMany?: spaceElementsScalarWhereInput | spaceElementsScalarWhereInput[]
+  }
+
+  export type SpaceInviteUncheckedUpdateManyWithoutSpaceNestedInput = {
+    create?: XOR<SpaceInviteCreateWithoutSpaceInput, SpaceInviteUncheckedCreateWithoutSpaceInput> | SpaceInviteCreateWithoutSpaceInput[] | SpaceInviteUncheckedCreateWithoutSpaceInput[]
+    connectOrCreate?: SpaceInviteCreateOrConnectWithoutSpaceInput | SpaceInviteCreateOrConnectWithoutSpaceInput[]
+    upsert?: SpaceInviteUpsertWithWhereUniqueWithoutSpaceInput | SpaceInviteUpsertWithWhereUniqueWithoutSpaceInput[]
+    createMany?: SpaceInviteCreateManySpaceInputEnvelope
+    set?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    disconnect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    delete?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    connect?: SpaceInviteWhereUniqueInput | SpaceInviteWhereUniqueInput[]
+    update?: SpaceInviteUpdateWithWhereUniqueWithoutSpaceInput | SpaceInviteUpdateWithWhereUniqueWithoutSpaceInput[]
+    updateMany?: SpaceInviteUpdateManyWithWhereWithoutSpaceInput | SpaceInviteUpdateManyWithWhereWithoutSpaceInput[]
+    deleteMany?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+  }
+
+  export type SpaceCreateNestedOneWithoutInvitesInput = {
+    create?: XOR<SpaceCreateWithoutInvitesInput, SpaceUncheckedCreateWithoutInvitesInput>
+    connectOrCreate?: SpaceCreateOrConnectWithoutInvitesInput
+    connect?: SpaceWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutSentInvitesInput = {
+    create?: XOR<UserCreateWithoutSentInvitesInput, UserUncheckedCreateWithoutSentInvitesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutSentInvitesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutReceivedInvitesInput = {
+    create?: XOR<UserCreateWithoutReceivedInvitesInput, UserUncheckedCreateWithoutReceivedInvitesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReceivedInvitesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumInviteStatusFieldUpdateOperationsInput = {
+    set?: $Enums.InviteStatus
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type SpaceUpdateOneRequiredWithoutInvitesNestedInput = {
+    create?: XOR<SpaceCreateWithoutInvitesInput, SpaceUncheckedCreateWithoutInvitesInput>
+    connectOrCreate?: SpaceCreateOrConnectWithoutInvitesInput
+    upsert?: SpaceUpsertWithoutInvitesInput
+    connect?: SpaceWhereUniqueInput
+    update?: XOR<XOR<SpaceUpdateToOneWithWhereWithoutInvitesInput, SpaceUpdateWithoutInvitesInput>, SpaceUncheckedUpdateWithoutInvitesInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutSentInvitesNestedInput = {
+    create?: XOR<UserCreateWithoutSentInvitesInput, UserUncheckedCreateWithoutSentInvitesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutSentInvitesInput
+    upsert?: UserUpsertWithoutSentInvitesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutSentInvitesInput, UserUpdateWithoutSentInvitesInput>, UserUncheckedUpdateWithoutSentInvitesInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutReceivedInvitesNestedInput = {
+    create?: XOR<UserCreateWithoutReceivedInvitesInput, UserUncheckedCreateWithoutReceivedInvitesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutReceivedInvitesInput
+    upsert?: UserUpsertWithoutReceivedInvitesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutReceivedInvitesInput, UserUpdateWithoutReceivedInvitesInput>, UserUncheckedUpdateWithoutReceivedInvitesInput>
   }
 
   export type SpaceCreateNestedOneWithoutElementsInput = {
@@ -9944,6 +11895,10 @@ export namespace Prisma {
     connectOrCreate?: MapElementsCreateOrConnectWithoutElementInput | MapElementsCreateOrConnectWithoutElementInput[]
     createMany?: MapElementsCreateManyElementInputEnvelope
     connect?: MapElementsWhereUniqueInput | MapElementsWhereUniqueInput[]
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type spaceElementsUpdateManyWithoutElementNestedInput = {
@@ -10009,11 +11964,25 @@ export namespace Prisma {
     connect?: MapElementsWhereUniqueInput | MapElementsWhereUniqueInput[]
   }
 
+  export type SpaceCreateNestedManyWithoutMapInput = {
+    create?: XOR<SpaceCreateWithoutMapInput, SpaceUncheckedCreateWithoutMapInput> | SpaceCreateWithoutMapInput[] | SpaceUncheckedCreateWithoutMapInput[]
+    connectOrCreate?: SpaceCreateOrConnectWithoutMapInput | SpaceCreateOrConnectWithoutMapInput[]
+    createMany?: SpaceCreateManyMapInputEnvelope
+    connect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+  }
+
   export type MapElementsUncheckedCreateNestedManyWithoutMapInput = {
     create?: XOR<MapElementsCreateWithoutMapInput, MapElementsUncheckedCreateWithoutMapInput> | MapElementsCreateWithoutMapInput[] | MapElementsUncheckedCreateWithoutMapInput[]
     connectOrCreate?: MapElementsCreateOrConnectWithoutMapInput | MapElementsCreateOrConnectWithoutMapInput[]
     createMany?: MapElementsCreateManyMapInputEnvelope
     connect?: MapElementsWhereUniqueInput | MapElementsWhereUniqueInput[]
+  }
+
+  export type SpaceUncheckedCreateNestedManyWithoutMapInput = {
+    create?: XOR<SpaceCreateWithoutMapInput, SpaceUncheckedCreateWithoutMapInput> | SpaceCreateWithoutMapInput[] | SpaceUncheckedCreateWithoutMapInput[]
+    connectOrCreate?: SpaceCreateOrConnectWithoutMapInput | SpaceCreateOrConnectWithoutMapInput[]
+    createMany?: SpaceCreateManyMapInputEnvelope
+    connect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
   }
 
   export type MapElementsUpdateManyWithoutMapNestedInput = {
@@ -10030,6 +11999,20 @@ export namespace Prisma {
     deleteMany?: MapElementsScalarWhereInput | MapElementsScalarWhereInput[]
   }
 
+  export type SpaceUpdateManyWithoutMapNestedInput = {
+    create?: XOR<SpaceCreateWithoutMapInput, SpaceUncheckedCreateWithoutMapInput> | SpaceCreateWithoutMapInput[] | SpaceUncheckedCreateWithoutMapInput[]
+    connectOrCreate?: SpaceCreateOrConnectWithoutMapInput | SpaceCreateOrConnectWithoutMapInput[]
+    upsert?: SpaceUpsertWithWhereUniqueWithoutMapInput | SpaceUpsertWithWhereUniqueWithoutMapInput[]
+    createMany?: SpaceCreateManyMapInputEnvelope
+    set?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    disconnect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    delete?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    connect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    update?: SpaceUpdateWithWhereUniqueWithoutMapInput | SpaceUpdateWithWhereUniqueWithoutMapInput[]
+    updateMany?: SpaceUpdateManyWithWhereWithoutMapInput | SpaceUpdateManyWithWhereWithoutMapInput[]
+    deleteMany?: SpaceScalarWhereInput | SpaceScalarWhereInput[]
+  }
+
   export type MapElementsUncheckedUpdateManyWithoutMapNestedInput = {
     create?: XOR<MapElementsCreateWithoutMapInput, MapElementsUncheckedCreateWithoutMapInput> | MapElementsCreateWithoutMapInput[] | MapElementsUncheckedCreateWithoutMapInput[]
     connectOrCreate?: MapElementsCreateOrConnectWithoutMapInput | MapElementsCreateOrConnectWithoutMapInput[]
@@ -10044,6 +12027,20 @@ export namespace Prisma {
     deleteMany?: MapElementsScalarWhereInput | MapElementsScalarWhereInput[]
   }
 
+  export type SpaceUncheckedUpdateManyWithoutMapNestedInput = {
+    create?: XOR<SpaceCreateWithoutMapInput, SpaceUncheckedCreateWithoutMapInput> | SpaceCreateWithoutMapInput[] | SpaceUncheckedCreateWithoutMapInput[]
+    connectOrCreate?: SpaceCreateOrConnectWithoutMapInput | SpaceCreateOrConnectWithoutMapInput[]
+    upsert?: SpaceUpsertWithWhereUniqueWithoutMapInput | SpaceUpsertWithWhereUniqueWithoutMapInput[]
+    createMany?: SpaceCreateManyMapInputEnvelope
+    set?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    disconnect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    delete?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    connect?: SpaceWhereUniqueInput | SpaceWhereUniqueInput[]
+    update?: SpaceUpdateWithWhereUniqueWithoutMapInput | SpaceUpdateWithWhereUniqueWithoutMapInput[]
+    updateMany?: SpaceUpdateManyWithWhereWithoutMapInput | SpaceUpdateManyWithWhereWithoutMapInput[]
+    deleteMany?: SpaceScalarWhereInput | SpaceScalarWhereInput[]
+  }
+
   export type MapCreateNestedOneWithoutMapElementsInput = {
     create?: XOR<MapCreateWithoutMapElementsInput, MapUncheckedCreateWithoutMapElementsInput>
     connectOrCreate?: MapCreateOrConnectWithoutMapElementsInput
@@ -10054,6 +12051,14 @@ export namespace Prisma {
     create?: XOR<ElementCreateWithoutMapElementsInput, ElementUncheckedCreateWithoutMapElementsInput>
     connectOrCreate?: ElementCreateOrConnectWithoutMapElementsInput
     connect?: ElementWhereUniqueInput
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type MapUpdateOneRequiredWithoutMapElementsNestedInput = {
@@ -10242,6 +12247,61 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedEnumInviteStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.InviteStatus | EnumInviteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInviteStatusFilter<$PrismaModel> | $Enums.InviteStatus
+  }
+
+  export type NestedDateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedEnumInviteStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.InviteStatus | EnumInviteStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.InviteStatus[] | ListEnumInviteStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumInviteStatusWithAggregatesFilter<$PrismaModel> | $Enums.InviteStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumInviteStatusFilter<$PrismaModel>
+    _max?: NestedEnumInviteStatusFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
   export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel> | null
     in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
@@ -10273,18 +12333,22 @@ export namespace Prisma {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
     elements?: spaceElementsCreateNestedManyWithoutSpaceInput
+    invites?: SpaceInviteCreateNestedManyWithoutSpaceInput
+    map?: MapCreateNestedOneWithoutSpacesInput
   }
 
   export type SpaceUncheckedCreateWithoutCreatorInput = {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
+    mapId?: string | null
     elements?: spaceElementsUncheckedCreateNestedManyWithoutSpaceInput
+    invites?: SpaceInviteUncheckedCreateNestedManyWithoutSpaceInput
   }
 
   export type SpaceCreateOrConnectWithoutCreatorInput = {
@@ -10314,6 +12378,58 @@ export namespace Prisma {
     create: XOR<AvatarCreateWithoutUsersInput, AvatarUncheckedCreateWithoutUsersInput>
   }
 
+  export type SpaceInviteCreateWithoutInviterInput = {
+    id?: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+    space: SpaceCreateNestedOneWithoutInvitesInput
+    invitee: UserCreateNestedOneWithoutReceivedInvitesInput
+  }
+
+  export type SpaceInviteUncheckedCreateWithoutInviterInput = {
+    id?: string
+    spaceId: string
+    inviteeId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+  }
+
+  export type SpaceInviteCreateOrConnectWithoutInviterInput = {
+    where: SpaceInviteWhereUniqueInput
+    create: XOR<SpaceInviteCreateWithoutInviterInput, SpaceInviteUncheckedCreateWithoutInviterInput>
+  }
+
+  export type SpaceInviteCreateManyInviterInputEnvelope = {
+    data: SpaceInviteCreateManyInviterInput | SpaceInviteCreateManyInviterInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SpaceInviteCreateWithoutInviteeInput = {
+    id?: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+    space: SpaceCreateNestedOneWithoutInvitesInput
+    inviter: UserCreateNestedOneWithoutSentInvitesInput
+  }
+
+  export type SpaceInviteUncheckedCreateWithoutInviteeInput = {
+    id?: string
+    spaceId: string
+    inviterId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+  }
+
+  export type SpaceInviteCreateOrConnectWithoutInviteeInput = {
+    where: SpaceInviteWhereUniqueInput
+    create: XOR<SpaceInviteCreateWithoutInviteeInput, SpaceInviteUncheckedCreateWithoutInviteeInput>
+  }
+
+  export type SpaceInviteCreateManyInviteeInputEnvelope = {
+    data: SpaceInviteCreateManyInviteeInput | SpaceInviteCreateManyInviteeInput[]
+    skipDuplicates?: boolean
+  }
+
   export type SpaceUpsertWithWhereUniqueWithoutCreatorInput = {
     where: SpaceWhereUniqueInput
     update: XOR<SpaceUpdateWithoutCreatorInput, SpaceUncheckedUpdateWithoutCreatorInput>
@@ -10337,9 +12453,10 @@ export namespace Prisma {
     id?: StringFilter<"Space"> | string
     name?: StringFilter<"Space"> | string
     width?: IntFilter<"Space"> | number
-    height?: IntNullableFilter<"Space"> | number | null
+    height?: IntFilter<"Space"> | number
     thumbnail?: StringNullableFilter<"Space"> | string | null
     creatorId?: StringFilter<"Space"> | string
+    mapId?: StringNullableFilter<"Space"> | string | null
   }
 
   export type AvatarUpsertWithoutUsersInput = {
@@ -10365,12 +12482,58 @@ export namespace Prisma {
     name?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type SpaceInviteUpsertWithWhereUniqueWithoutInviterInput = {
+    where: SpaceInviteWhereUniqueInput
+    update: XOR<SpaceInviteUpdateWithoutInviterInput, SpaceInviteUncheckedUpdateWithoutInviterInput>
+    create: XOR<SpaceInviteCreateWithoutInviterInput, SpaceInviteUncheckedCreateWithoutInviterInput>
+  }
+
+  export type SpaceInviteUpdateWithWhereUniqueWithoutInviterInput = {
+    where: SpaceInviteWhereUniqueInput
+    data: XOR<SpaceInviteUpdateWithoutInviterInput, SpaceInviteUncheckedUpdateWithoutInviterInput>
+  }
+
+  export type SpaceInviteUpdateManyWithWhereWithoutInviterInput = {
+    where: SpaceInviteScalarWhereInput
+    data: XOR<SpaceInviteUpdateManyMutationInput, SpaceInviteUncheckedUpdateManyWithoutInviterInput>
+  }
+
+  export type SpaceInviteScalarWhereInput = {
+    AND?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+    OR?: SpaceInviteScalarWhereInput[]
+    NOT?: SpaceInviteScalarWhereInput | SpaceInviteScalarWhereInput[]
+    id?: StringFilter<"SpaceInvite"> | string
+    spaceId?: StringFilter<"SpaceInvite"> | string
+    inviterId?: StringFilter<"SpaceInvite"> | string
+    inviteeId?: StringFilter<"SpaceInvite"> | string
+    status?: EnumInviteStatusFilter<"SpaceInvite"> | $Enums.InviteStatus
+    createdAt?: DateTimeFilter<"SpaceInvite"> | Date | string
+  }
+
+  export type SpaceInviteUpsertWithWhereUniqueWithoutInviteeInput = {
+    where: SpaceInviteWhereUniqueInput
+    update: XOR<SpaceInviteUpdateWithoutInviteeInput, SpaceInviteUncheckedUpdateWithoutInviteeInput>
+    create: XOR<SpaceInviteCreateWithoutInviteeInput, SpaceInviteUncheckedCreateWithoutInviteeInput>
+  }
+
+  export type SpaceInviteUpdateWithWhereUniqueWithoutInviteeInput = {
+    where: SpaceInviteWhereUniqueInput
+    data: XOR<SpaceInviteUpdateWithoutInviteeInput, SpaceInviteUncheckedUpdateWithoutInviteeInput>
+  }
+
+  export type SpaceInviteUpdateManyWithWhereWithoutInviteeInput = {
+    where: SpaceInviteScalarWhereInput
+    data: XOR<SpaceInviteUpdateManyMutationInput, SpaceInviteUncheckedUpdateManyWithoutInviteeInput>
+  }
+
   export type UserCreateWithoutSpaceInput = {
     id?: string
     username: string
     password: string
     role: $Enums.Role
     avatar?: AvatarCreateNestedOneWithoutUsersInput
+    sentInvites?: SpaceInviteCreateNestedManyWithoutInviterInput
+    receivedInvites?: SpaceInviteCreateNestedManyWithoutInviteeInput
   }
 
   export type UserUncheckedCreateWithoutSpaceInput = {
@@ -10379,6 +12542,8 @@ export namespace Prisma {
     password: string
     avatarId?: string | null
     role: $Enums.Role
+    sentInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviterInput
+    receivedInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviteeInput
   }
 
   export type UserCreateOrConnectWithoutSpaceInput = {
@@ -10410,6 +12575,63 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SpaceInviteCreateWithoutSpaceInput = {
+    id?: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+    inviter: UserCreateNestedOneWithoutSentInvitesInput
+    invitee: UserCreateNestedOneWithoutReceivedInvitesInput
+  }
+
+  export type SpaceInviteUncheckedCreateWithoutSpaceInput = {
+    id?: string
+    inviterId: string
+    inviteeId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+  }
+
+  export type SpaceInviteCreateOrConnectWithoutSpaceInput = {
+    where: SpaceInviteWhereUniqueInput
+    create: XOR<SpaceInviteCreateWithoutSpaceInput, SpaceInviteUncheckedCreateWithoutSpaceInput>
+  }
+
+  export type SpaceInviteCreateManySpaceInputEnvelope = {
+    data: SpaceInviteCreateManySpaceInput | SpaceInviteCreateManySpaceInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MapCreateWithoutSpacesInput = {
+    id?: string
+    width: number
+    height: number
+    name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
+    mapElements?: MapElementsCreateNestedManyWithoutMapInput
+  }
+
+  export type MapUncheckedCreateWithoutSpacesInput = {
+    id?: string
+    width: number
+    height: number
+    name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
+    mapElements?: MapElementsUncheckedCreateNestedManyWithoutMapInput
+  }
+
+  export type MapCreateOrConnectWithoutSpacesInput = {
+    where: MapWhereUniqueInput
+    create: XOR<MapCreateWithoutSpacesInput, MapUncheckedCreateWithoutSpacesInput>
+  }
+
   export type UserUpsertWithoutSpaceInput = {
     update: XOR<UserUpdateWithoutSpaceInput, UserUncheckedUpdateWithoutSpaceInput>
     create: XOR<UserCreateWithoutSpaceInput, UserUncheckedCreateWithoutSpaceInput>
@@ -10427,6 +12649,8 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     avatar?: AvatarUpdateOneWithoutUsersNestedInput
+    sentInvites?: SpaceInviteUpdateManyWithoutInviterNestedInput
+    receivedInvites?: SpaceInviteUpdateManyWithoutInviteeNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSpaceInput = {
@@ -10435,6 +12659,8 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     avatarId?: NullableStringFieldUpdateOperationsInput | string | null
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    sentInvites?: SpaceInviteUncheckedUpdateManyWithoutInviterNestedInput
+    receivedInvites?: SpaceInviteUncheckedUpdateManyWithoutInviteeNestedInput
   }
 
   export type spaceElementsUpsertWithWhereUniqueWithoutSpaceInput = {
@@ -10464,22 +12690,251 @@ export namespace Prisma {
     y?: IntFilter<"spaceElements"> | number
   }
 
+  export type SpaceInviteUpsertWithWhereUniqueWithoutSpaceInput = {
+    where: SpaceInviteWhereUniqueInput
+    update: XOR<SpaceInviteUpdateWithoutSpaceInput, SpaceInviteUncheckedUpdateWithoutSpaceInput>
+    create: XOR<SpaceInviteCreateWithoutSpaceInput, SpaceInviteUncheckedCreateWithoutSpaceInput>
+  }
+
+  export type SpaceInviteUpdateWithWhereUniqueWithoutSpaceInput = {
+    where: SpaceInviteWhereUniqueInput
+    data: XOR<SpaceInviteUpdateWithoutSpaceInput, SpaceInviteUncheckedUpdateWithoutSpaceInput>
+  }
+
+  export type SpaceInviteUpdateManyWithWhereWithoutSpaceInput = {
+    where: SpaceInviteScalarWhereInput
+    data: XOR<SpaceInviteUpdateManyMutationInput, SpaceInviteUncheckedUpdateManyWithoutSpaceInput>
+  }
+
+  export type MapUpsertWithoutSpacesInput = {
+    update: XOR<MapUpdateWithoutSpacesInput, MapUncheckedUpdateWithoutSpacesInput>
+    create: XOR<MapCreateWithoutSpacesInput, MapUncheckedCreateWithoutSpacesInput>
+    where?: MapWhereInput
+  }
+
+  export type MapUpdateToOneWithWhereWithoutSpacesInput = {
+    where?: MapWhereInput
+    data: XOR<MapUpdateWithoutSpacesInput, MapUncheckedUpdateWithoutSpacesInput>
+  }
+
+  export type MapUpdateWithoutSpacesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
+    mapElements?: MapElementsUpdateManyWithoutMapNestedInput
+  }
+
+  export type MapUncheckedUpdateWithoutSpacesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
+    mapElements?: MapElementsUncheckedUpdateManyWithoutMapNestedInput
+  }
+
+  export type SpaceCreateWithoutInvitesInput = {
+    id?: string
+    name: string
+    width: number
+    height: number
+    thumbnail?: string | null
+    creator: UserCreateNestedOneWithoutSpaceInput
+    elements?: spaceElementsCreateNestedManyWithoutSpaceInput
+    map?: MapCreateNestedOneWithoutSpacesInput
+  }
+
+  export type SpaceUncheckedCreateWithoutInvitesInput = {
+    id?: string
+    name: string
+    width: number
+    height: number
+    thumbnail?: string | null
+    creatorId: string
+    mapId?: string | null
+    elements?: spaceElementsUncheckedCreateNestedManyWithoutSpaceInput
+  }
+
+  export type SpaceCreateOrConnectWithoutInvitesInput = {
+    where: SpaceWhereUniqueInput
+    create: XOR<SpaceCreateWithoutInvitesInput, SpaceUncheckedCreateWithoutInvitesInput>
+  }
+
+  export type UserCreateWithoutSentInvitesInput = {
+    id?: string
+    username: string
+    password: string
+    role: $Enums.Role
+    Space?: SpaceCreateNestedManyWithoutCreatorInput
+    avatar?: AvatarCreateNestedOneWithoutUsersInput
+    receivedInvites?: SpaceInviteCreateNestedManyWithoutInviteeInput
+  }
+
+  export type UserUncheckedCreateWithoutSentInvitesInput = {
+    id?: string
+    username: string
+    password: string
+    avatarId?: string | null
+    role: $Enums.Role
+    Space?: SpaceUncheckedCreateNestedManyWithoutCreatorInput
+    receivedInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviteeInput
+  }
+
+  export type UserCreateOrConnectWithoutSentInvitesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutSentInvitesInput, UserUncheckedCreateWithoutSentInvitesInput>
+  }
+
+  export type UserCreateWithoutReceivedInvitesInput = {
+    id?: string
+    username: string
+    password: string
+    role: $Enums.Role
+    Space?: SpaceCreateNestedManyWithoutCreatorInput
+    avatar?: AvatarCreateNestedOneWithoutUsersInput
+    sentInvites?: SpaceInviteCreateNestedManyWithoutInviterInput
+  }
+
+  export type UserUncheckedCreateWithoutReceivedInvitesInput = {
+    id?: string
+    username: string
+    password: string
+    avatarId?: string | null
+    role: $Enums.Role
+    Space?: SpaceUncheckedCreateNestedManyWithoutCreatorInput
+    sentInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviterInput
+  }
+
+  export type UserCreateOrConnectWithoutReceivedInvitesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutReceivedInvitesInput, UserUncheckedCreateWithoutReceivedInvitesInput>
+  }
+
+  export type SpaceUpsertWithoutInvitesInput = {
+    update: XOR<SpaceUpdateWithoutInvitesInput, SpaceUncheckedUpdateWithoutInvitesInput>
+    create: XOR<SpaceCreateWithoutInvitesInput, SpaceUncheckedCreateWithoutInvitesInput>
+    where?: SpaceWhereInput
+  }
+
+  export type SpaceUpdateToOneWithWhereWithoutInvitesInput = {
+    where?: SpaceWhereInput
+    data: XOR<SpaceUpdateWithoutInvitesInput, SpaceUncheckedUpdateWithoutInvitesInput>
+  }
+
+  export type SpaceUpdateWithoutInvitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    creator?: UserUpdateOneRequiredWithoutSpaceNestedInput
+    elements?: spaceElementsUpdateManyWithoutSpaceNestedInput
+    map?: MapUpdateOneWithoutSpacesNestedInput
+  }
+
+  export type SpaceUncheckedUpdateWithoutInvitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    creatorId?: StringFieldUpdateOperationsInput | string
+    mapId?: NullableStringFieldUpdateOperationsInput | string | null
+    elements?: spaceElementsUncheckedUpdateManyWithoutSpaceNestedInput
+  }
+
+  export type UserUpsertWithoutSentInvitesInput = {
+    update: XOR<UserUpdateWithoutSentInvitesInput, UserUncheckedUpdateWithoutSentInvitesInput>
+    create: XOR<UserCreateWithoutSentInvitesInput, UserUncheckedCreateWithoutSentInvitesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutSentInvitesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutSentInvitesInput, UserUncheckedUpdateWithoutSentInvitesInput>
+  }
+
+  export type UserUpdateWithoutSentInvitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    Space?: SpaceUpdateManyWithoutCreatorNestedInput
+    avatar?: AvatarUpdateOneWithoutUsersNestedInput
+    receivedInvites?: SpaceInviteUpdateManyWithoutInviteeNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutSentInvitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    avatarId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    Space?: SpaceUncheckedUpdateManyWithoutCreatorNestedInput
+    receivedInvites?: SpaceInviteUncheckedUpdateManyWithoutInviteeNestedInput
+  }
+
+  export type UserUpsertWithoutReceivedInvitesInput = {
+    update: XOR<UserUpdateWithoutReceivedInvitesInput, UserUncheckedUpdateWithoutReceivedInvitesInput>
+    create: XOR<UserCreateWithoutReceivedInvitesInput, UserUncheckedCreateWithoutReceivedInvitesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutReceivedInvitesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutReceivedInvitesInput, UserUncheckedUpdateWithoutReceivedInvitesInput>
+  }
+
+  export type UserUpdateWithoutReceivedInvitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    Space?: SpaceUpdateManyWithoutCreatorNestedInput
+    avatar?: AvatarUpdateOneWithoutUsersNestedInput
+    sentInvites?: SpaceInviteUpdateManyWithoutInviterNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutReceivedInvitesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    username?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    avatarId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    Space?: SpaceUncheckedUpdateManyWithoutCreatorNestedInput
+    sentInvites?: SpaceInviteUncheckedUpdateManyWithoutInviterNestedInput
+  }
+
   export type SpaceCreateWithoutElementsInput = {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
     creator: UserCreateNestedOneWithoutSpaceInput
+    invites?: SpaceInviteCreateNestedManyWithoutSpaceInput
+    map?: MapCreateNestedOneWithoutSpacesInput
   }
 
   export type SpaceUncheckedCreateWithoutElementsInput = {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
     creatorId: string
+    mapId?: string | null
+    invites?: SpaceInviteUncheckedCreateNestedManyWithoutSpaceInput
   }
 
   export type SpaceCreateOrConnectWithoutElementsInput = {
@@ -10491,7 +12946,10 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
     mapElements?: MapElementsCreateNestedManyWithoutElementInput
   }
 
@@ -10499,7 +12957,10 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
     mapElements?: MapElementsUncheckedCreateNestedManyWithoutElementInput
   }
 
@@ -10523,18 +12984,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
     creator?: UserUpdateOneRequiredWithoutSpaceNestedInput
+    invites?: SpaceInviteUpdateManyWithoutSpaceNestedInput
+    map?: MapUpdateOneWithoutSpacesNestedInput
   }
 
   export type SpaceUncheckedUpdateWithoutElementsInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
     creatorId?: StringFieldUpdateOperationsInput | string
+    mapId?: NullableStringFieldUpdateOperationsInput | string | null
+    invites?: SpaceInviteUncheckedUpdateManyWithoutSpaceNestedInput
   }
 
   export type ElementUpsertWithoutSpacesInput = {
@@ -10552,7 +13017,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
     mapElements?: MapElementsUpdateManyWithoutElementNestedInput
   }
 
@@ -10560,7 +13028,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
     mapElements?: MapElementsUncheckedUpdateManyWithoutElementNestedInput
   }
 
@@ -10679,6 +13150,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SpaceCreateWithoutMapInput = {
+    id?: string
+    name: string
+    width: number
+    height: number
+    thumbnail?: string | null
+    creator: UserCreateNestedOneWithoutSpaceInput
+    elements?: spaceElementsCreateNestedManyWithoutSpaceInput
+    invites?: SpaceInviteCreateNestedManyWithoutSpaceInput
+  }
+
+  export type SpaceUncheckedCreateWithoutMapInput = {
+    id?: string
+    name: string
+    width: number
+    height: number
+    thumbnail?: string | null
+    creatorId: string
+    elements?: spaceElementsUncheckedCreateNestedManyWithoutSpaceInput
+    invites?: SpaceInviteUncheckedCreateNestedManyWithoutSpaceInput
+  }
+
+  export type SpaceCreateOrConnectWithoutMapInput = {
+    where: SpaceWhereUniqueInput
+    create: XOR<SpaceCreateWithoutMapInput, SpaceUncheckedCreateWithoutMapInput>
+  }
+
+  export type SpaceCreateManyMapInputEnvelope = {
+    data: SpaceCreateManyMapInput | SpaceCreateManyMapInput[]
+    skipDuplicates?: boolean
+  }
+
   export type MapElementsUpsertWithWhereUniqueWithoutMapInput = {
     where: MapElementsWhereUniqueInput
     update: XOR<MapElementsUpdateWithoutMapInput, MapElementsUncheckedUpdateWithoutMapInput>
@@ -10695,11 +13198,33 @@ export namespace Prisma {
     data: XOR<MapElementsUpdateManyMutationInput, MapElementsUncheckedUpdateManyWithoutMapInput>
   }
 
+  export type SpaceUpsertWithWhereUniqueWithoutMapInput = {
+    where: SpaceWhereUniqueInput
+    update: XOR<SpaceUpdateWithoutMapInput, SpaceUncheckedUpdateWithoutMapInput>
+    create: XOR<SpaceCreateWithoutMapInput, SpaceUncheckedCreateWithoutMapInput>
+  }
+
+  export type SpaceUpdateWithWhereUniqueWithoutMapInput = {
+    where: SpaceWhereUniqueInput
+    data: XOR<SpaceUpdateWithoutMapInput, SpaceUncheckedUpdateWithoutMapInput>
+  }
+
+  export type SpaceUpdateManyWithWhereWithoutMapInput = {
+    where: SpaceScalarWhereInput
+    data: XOR<SpaceUpdateManyMutationInput, SpaceUncheckedUpdateManyWithoutMapInput>
+  }
+
   export type MapCreateWithoutMapElementsInput = {
     id?: string
     width: number
     height: number
     name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
+    spaces?: SpaceCreateNestedManyWithoutMapInput
   }
 
   export type MapUncheckedCreateWithoutMapElementsInput = {
@@ -10707,6 +13232,12 @@ export namespace Prisma {
     width: number
     height: number
     name: string
+    thumbnail?: string | null
+    description?: string | null
+    isPublic?: boolean
+    creatorId?: string | null
+    tiledMapFile?: string | null
+    spaces?: SpaceUncheckedCreateNestedManyWithoutMapInput
   }
 
   export type MapCreateOrConnectWithoutMapElementsInput = {
@@ -10718,7 +13249,10 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
     spaces?: spaceElementsCreateNestedManyWithoutElementInput
   }
 
@@ -10726,7 +13260,10 @@ export namespace Prisma {
     id?: string
     width: number
     height: number
+    static: boolean
     imageUrl: string
+    collisionZone?: string
+    collisionMask?: string | null
     spaces?: spaceElementsUncheckedCreateNestedManyWithoutElementInput
   }
 
@@ -10751,6 +13288,12 @@ export namespace Prisma {
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
+    spaces?: SpaceUpdateManyWithoutMapNestedInput
   }
 
   export type MapUncheckedUpdateWithoutMapElementsInput = {
@@ -10758,6 +13301,12 @@ export namespace Prisma {
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    isPublic?: BoolFieldUpdateOperationsInput | boolean
+    creatorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tiledMapFile?: NullableStringFieldUpdateOperationsInput | string | null
+    spaces?: SpaceUncheckedUpdateManyWithoutMapNestedInput
   }
 
   export type ElementUpsertWithoutMapElementsInput = {
@@ -10775,7 +13324,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
     spaces?: spaceElementsUpdateManyWithoutElementNestedInput
   }
 
@@ -10783,7 +13335,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
     height?: IntFieldUpdateOperationsInput | number
+    static?: BoolFieldUpdateOperationsInput | boolean
     imageUrl?: StringFieldUpdateOperationsInput | string
+    collisionZone?: StringFieldUpdateOperationsInput | string
+    collisionMask?: NullableStringFieldUpdateOperationsInput | string | null
     spaces?: spaceElementsUncheckedUpdateManyWithoutElementNestedInput
   }
 
@@ -10793,6 +13348,8 @@ export namespace Prisma {
     password: string
     role: $Enums.Role
     Space?: SpaceCreateNestedManyWithoutCreatorInput
+    sentInvites?: SpaceInviteCreateNestedManyWithoutInviterInput
+    receivedInvites?: SpaceInviteCreateNestedManyWithoutInviteeInput
   }
 
   export type UserUncheckedCreateWithoutAvatarInput = {
@@ -10801,6 +13358,8 @@ export namespace Prisma {
     password: string
     role: $Enums.Role
     Space?: SpaceUncheckedCreateNestedManyWithoutCreatorInput
+    sentInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviterInput
+    receivedInvites?: SpaceInviteUncheckedCreateNestedManyWithoutInviteeInput
   }
 
   export type UserCreateOrConnectWithoutAvatarInput = {
@@ -10844,34 +13403,104 @@ export namespace Prisma {
     id?: string
     name: string
     width: number
-    height?: number | null
+    height: number
     thumbnail?: string | null
+    mapId?: string | null
+  }
+
+  export type SpaceInviteCreateManyInviterInput = {
+    id?: string
+    spaceId: string
+    inviteeId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
+  }
+
+  export type SpaceInviteCreateManyInviteeInput = {
+    id?: string
+    spaceId: string
+    inviterId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
   }
 
   export type SpaceUpdateWithoutCreatorInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
     elements?: spaceElementsUpdateManyWithoutSpaceNestedInput
+    invites?: SpaceInviteUpdateManyWithoutSpaceNestedInput
+    map?: MapUpdateOneWithoutSpacesNestedInput
   }
 
   export type SpaceUncheckedUpdateWithoutCreatorInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    mapId?: NullableStringFieldUpdateOperationsInput | string | null
     elements?: spaceElementsUncheckedUpdateManyWithoutSpaceNestedInput
+    invites?: SpaceInviteUncheckedUpdateManyWithoutSpaceNestedInput
   }
 
   export type SpaceUncheckedUpdateManyWithoutCreatorInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     width?: IntFieldUpdateOperationsInput | number
-    height?: NullableIntFieldUpdateOperationsInput | number | null
+    height?: IntFieldUpdateOperationsInput | number
     thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    mapId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type SpaceInviteUpdateWithoutInviterInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    space?: SpaceUpdateOneRequiredWithoutInvitesNestedInput
+    invitee?: UserUpdateOneRequiredWithoutReceivedInvitesNestedInput
+  }
+
+  export type SpaceInviteUncheckedUpdateWithoutInviterInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    spaceId?: StringFieldUpdateOperationsInput | string
+    inviteeId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SpaceInviteUncheckedUpdateManyWithoutInviterInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    spaceId?: StringFieldUpdateOperationsInput | string
+    inviteeId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SpaceInviteUpdateWithoutInviteeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    space?: SpaceUpdateOneRequiredWithoutInvitesNestedInput
+    inviter?: UserUpdateOneRequiredWithoutSentInvitesNestedInput
+  }
+
+  export type SpaceInviteUncheckedUpdateWithoutInviteeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    spaceId?: StringFieldUpdateOperationsInput | string
+    inviterId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SpaceInviteUncheckedUpdateManyWithoutInviteeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    spaceId?: StringFieldUpdateOperationsInput | string
+    inviterId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type spaceElementsCreateManySpaceInput = {
@@ -10879,6 +13508,14 @@ export namespace Prisma {
     elementId: string
     x: number
     y: number
+  }
+
+  export type SpaceInviteCreateManySpaceInput = {
+    id?: string
+    inviterId: string
+    inviteeId: string
+    status?: $Enums.InviteStatus
+    createdAt?: Date | string
   }
 
   export type spaceElementsUpdateWithoutSpaceInput = {
@@ -10900,6 +13537,30 @@ export namespace Prisma {
     elementId?: StringFieldUpdateOperationsInput | string
     x?: IntFieldUpdateOperationsInput | number
     y?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type SpaceInviteUpdateWithoutSpaceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    inviter?: UserUpdateOneRequiredWithoutSentInvitesNestedInput
+    invitee?: UserUpdateOneRequiredWithoutReceivedInvitesNestedInput
+  }
+
+  export type SpaceInviteUncheckedUpdateWithoutSpaceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    inviterId?: StringFieldUpdateOperationsInput | string
+    inviteeId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SpaceInviteUncheckedUpdateManyWithoutSpaceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    inviterId?: StringFieldUpdateOperationsInput | string
+    inviteeId?: StringFieldUpdateOperationsInput | string
+    status?: EnumInviteStatusFieldUpdateOperationsInput | $Enums.InviteStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type spaceElementsCreateManyElementInput = {
@@ -10965,6 +13626,15 @@ export namespace Prisma {
     y?: number | null
   }
 
+  export type SpaceCreateManyMapInput = {
+    id?: string
+    name: string
+    width: number
+    height: number
+    thumbnail?: string | null
+    creatorId: string
+  }
+
   export type MapElementsUpdateWithoutMapInput = {
     id?: StringFieldUpdateOperationsInput | string
     x?: NullableIntFieldUpdateOperationsInput | number | null
@@ -10986,6 +13656,37 @@ export namespace Prisma {
     y?: NullableIntFieldUpdateOperationsInput | number | null
   }
 
+  export type SpaceUpdateWithoutMapInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    creator?: UserUpdateOneRequiredWithoutSpaceNestedInput
+    elements?: spaceElementsUpdateManyWithoutSpaceNestedInput
+    invites?: SpaceInviteUpdateManyWithoutSpaceNestedInput
+  }
+
+  export type SpaceUncheckedUpdateWithoutMapInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    creatorId?: StringFieldUpdateOperationsInput | string
+    elements?: spaceElementsUncheckedUpdateManyWithoutSpaceNestedInput
+    invites?: SpaceInviteUncheckedUpdateManyWithoutSpaceNestedInput
+  }
+
+  export type SpaceUncheckedUpdateManyWithoutMapInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    thumbnail?: NullableStringFieldUpdateOperationsInput | string | null
+    creatorId?: StringFieldUpdateOperationsInput | string
+  }
+
   export type UserCreateManyAvatarInput = {
     id?: string
     username: string
@@ -10999,6 +13700,8 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     Space?: SpaceUpdateManyWithoutCreatorNestedInput
+    sentInvites?: SpaceInviteUpdateManyWithoutInviterNestedInput
+    receivedInvites?: SpaceInviteUpdateManyWithoutInviteeNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAvatarInput = {
@@ -11007,6 +13710,8 @@ export namespace Prisma {
     password?: StringFieldUpdateOperationsInput | string
     role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
     Space?: SpaceUncheckedUpdateManyWithoutCreatorNestedInput
+    sentInvites?: SpaceInviteUncheckedUpdateManyWithoutInviterNestedInput
+    receivedInvites?: SpaceInviteUncheckedUpdateManyWithoutInviteeNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutAvatarInput = {
@@ -11049,6 +13754,10 @@ export namespace Prisma {
      * @deprecated Use SpaceDefaultArgs instead
      */
     export type SpaceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SpaceDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use SpaceInviteDefaultArgs instead
+     */
+    export type SpaceInviteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = SpaceInviteDefaultArgs<ExtArgs>
     /**
      * @deprecated Use spaceElementsDefaultArgs instead
      */
