@@ -18,11 +18,8 @@ COPY . .
 # Generate Prisma client with correct binary targets
 RUN cd packages/db && npx prisma generate
 
-# Verify the generated client exists
-RUN ls -la packages/db/src/generated/prisma/
-
-# Build the WS service
-RUN pnpm --filter apps/ws... build
+# Build the HTTP API service
+RUN pnpm --filter apps/http... build
 
 # Copy Prisma client and engine binaries to expected locations
 RUN mkdir -p /app/.prisma/client
@@ -33,18 +30,18 @@ RUN mkdir -p /app/node_modules/.prisma/client
 RUN cp -r packages/db/src/generated/prisma/* /app/node_modules/.prisma/client/
 
 # Copy engine binaries to the apps directory for direct access
-RUN mkdir -p /app/apps/ws/.prisma/client
-RUN cp -r packages/db/src/generated/prisma/* /app/apps/ws/.prisma/client/
+RUN mkdir -p /app/apps/http/.prisma/client
+RUN cp -r packages/db/src/generated/prisma/* /app/apps/http/.prisma/client/
 
 # Set environment
 ENV NODE_ENV=production
 
 # Railway uses $PORT environment variable
-ENV PORT=4000
+ENV PORT=3000
 
-# Health check for WebSocket server
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:$PORT/health || exit 1
 
 EXPOSE $PORT
-CMD ["node", "apps/ws/dist/index.js"]
+CMD ["node", "apps/http/dist/index.js"] 

@@ -14,9 +14,14 @@ app.use(
 
 app.use(express.json()) //-> need to do this for (req.body) parse
 
+// Health check endpoint for Railway
+app.get("/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 app.use("/api/v1", router)
 
-
-app.listen(process.env.PORT || 3000, ()=> {
-    console.log("Listening on PORT 3000")
+const port = process.env.PORT || 3000;
+app.listen(port, ()=> {
+    console.log(`Listening on PORT ${port}`)
 })
