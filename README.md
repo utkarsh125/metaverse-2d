@@ -2,7 +2,7 @@
 <p align="center">
   <img src="https://i.ibb.co/ZpKCpB0b/orbitone.png" alt="My Image"/>
 </p>
-This is a simple attempt to recreate [Gather](https://gather.town) - a platform where you can connect with multiple people via `websockets` and communicate with each other. Although I want to continue my work on this project, I'm constrained by time and other projects and learning, so I cannot commit myself fully to this. 
+This is a simple attempt to recreate [Gather](https://www.gather.town/) - a platform where you can connect with multiple people via `websockets` and communicate with each other. Although I want to continue my work on this project, I'm constrained by time and other projects and learning, so I cannot commit myself fully to this. 
 
 Feel free to take a look at the code and contribute in any way you can. I would love to merge your PRs in this project. 
 
