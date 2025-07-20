@@ -4,7 +4,11 @@
 </p>
 This is a simple attempt to recreate Gather - a platform where you can connect with multiple people via `websockets` and communicate with each other. Although I want to continue my work on this project, I'm constrained by time and other projects and learning, so I cannot commit myself fully to this. 
 
+### Project Architecture
+<img width="2148" height="828" alt="Untitled (1)" src="https://github.com/user-attachments/assets/ed1b5a47-99e7-4aa9-a549-1a4ad56b276c" />
+
 Feel free to take a look at the code and contribute in any way you can. I would love to merge your PRs in this project. 
+**Note: I still have to host this project on EC2**
 
 #### What is working as of yet.
 - Creation of user and the ability to select avatar and map of choice
