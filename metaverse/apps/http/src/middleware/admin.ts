@@ -16,13 +16,10 @@ export const adminMiddleware = (req: Request, res: Response, next: NextFunction)
             message: "Unauthorized"
         })
         return
-
     }
 
     //if the user exists in the header
     //then verify the jwt
-
-    // console.log("[adminMiddleware", req.method, req.originalUrl, "auth:", req.headers.authorization);
 
     try {
         const decoded = jwt.verify(token, JWT_PASSWORD) as { role:string, userId: string}
@@ -38,7 +35,6 @@ export const adminMiddleware = (req: Request, res: Response, next: NextFunction)
 
         
     } catch (error) {
-        // console.log(" adminMiddleware threw:", error)
         res.status(401).json({
             message: "Unauthorized"
         })

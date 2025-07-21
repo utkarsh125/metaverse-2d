@@ -44,6 +44,7 @@ export default function AdminPage() {
     name: '',
     thumbnail: '',
     dimensions: '1024x768',
+    tiledMapFile: '',
     defaultElements: [] as Array<{ elementId: string; x: number; y: number }>
   });
 
@@ -169,6 +170,7 @@ export default function AdminPage() {
           name: '',
           thumbnail: '',
           dimensions: '1024x768',
+          tiledMapFile: '',
           defaultElements: []
         });
         fetchMaps();
@@ -331,6 +333,18 @@ export default function AdminPage() {
                   onChange={(e) => setMapForm(prev => ({ ...prev, dimensions: e.target.value }))}
                   className="w-full p-2 bg-gray-700 rounded border border-gray-600"
                   pattern="^[0-9]{1,4}x[0-9]{1,4}$"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Tiled Map File (.tmj)</label>
+                <input
+                  type="text"
+                  value={mapForm.tiledMapFile}
+                  onChange={(e) => setMapForm(prev => ({ ...prev, tiledMapFile: e.target.value }))}
+                  className="w-full p-2 bg-gray-700 rounded border border-gray-600"
+                  placeholder="e.g., meadow/map1.tmj"
                   required
                 />
               </div>

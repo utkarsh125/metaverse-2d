@@ -113,8 +113,6 @@ adminRouter.post("/map", async (req, res) => {
   try {
     const parsedData = CreateMapSchema.safeParse(req.body);
 
-    // console.log("True/False:", parsedData.success);
-
     if (!parsedData.success) {
       console.log("Admin Endpoint /map: ", parsedData);
       res.status(403).json({ message: "Validation failed" });
@@ -135,6 +133,7 @@ adminRouter.post("/map", async (req, res) => {
         width,
         height,
         thumbnail: parsedData.data.thumbnail,
+        tiledMapFile: parsedData.data.tiledMapFile,
         mapElements: {
           create: parsedData.data.defaultElements.map((e) => ({
             elementId: e.elementId,
