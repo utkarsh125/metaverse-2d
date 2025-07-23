@@ -13,6 +13,19 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: "connect-src 'self' https: wss: ws: https://api.orbitone.cloud wss://api.orbitone.cloud",
+          },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
