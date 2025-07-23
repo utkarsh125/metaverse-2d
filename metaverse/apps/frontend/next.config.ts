@@ -11,18 +11,20 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-    ],
+        ],
   },
-  async headers() {
+  async redirects() {
     return [
       {
-        source: '/(.*)',
-        headers: [
+        source: '/:path*',
+        has: [
           {
-            key: 'Content-Security-Policy',
-            value: "connect-src 'self' https: wss: ws: https://api.orbitone.cloud wss://api.orbitone.cloud",
+            type: 'host',
+            value: 'orbitone.cloud',
           },
         ],
+        destination: 'https://www.orbitone.cloud/:path*',
+        permanent: true,
       },
     ];
   },
