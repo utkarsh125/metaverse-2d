@@ -13,7 +13,7 @@ const CANVAS_WIDTH = TILE_SIZE * MAP_WIDTH;
 const CANVAS_HEIGHT = TILE_SIZE * MAP_HEIGHT;
 const PLAYER_SIZE = 64;
 const OBSTACLE_SIZE = 64;
-const WS_URL = 'ws://localhost:4000';
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000';
 
 // 8-bit style colors for obstacles
 const OBSTACLE_COLORS = [0x228B22, 0x8B4513, 0x4682B4, 0xFFD700];

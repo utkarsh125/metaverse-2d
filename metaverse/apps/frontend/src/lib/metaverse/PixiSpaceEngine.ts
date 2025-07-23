@@ -50,7 +50,7 @@ export class PixiSpaceEngine {
   }
 
   private setupWebSocket(spaceId: string) {
-    const wsUrl = 'ws://localhost:4000';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000';
     console.log('PixiSpaceEngine: Connecting to WebSocket:', wsUrl);
     
     this.ws = new WebSocket(wsUrl);

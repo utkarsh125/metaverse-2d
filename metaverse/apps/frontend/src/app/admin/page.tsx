@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CollisionZone } from '@/lib/types';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
@@ -69,7 +71,7 @@ export default function AdminPage() {
     if (!token) return;
     
     try {
-      const response = await fetch('http://localhost:3000/api/v1/elements', {
+      const response = await fetch(`${API_BASE_URL}/elements`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -87,7 +89,7 @@ export default function AdminPage() {
     if (!token) return;
     
     try {
-      const response = await fetch('http://localhost:3000/api/v1/maps', {
+      const response = await fetch(`${API_BASE_URL}/maps`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -123,7 +125,7 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/admin/element', {
+      const response = await fetch(`${API_BASE_URL}/admin/element`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +156,7 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const response = await fetch('http://localhost:3000/api/v1/admin/map', {
+      const response = await fetch(`${API_BASE_URL}/admin/map`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

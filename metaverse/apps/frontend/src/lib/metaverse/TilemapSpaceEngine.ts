@@ -138,7 +138,7 @@ export class TilemapSpaceEngine {
   }
 
   private setupWebSocket(spaceId: string): void {
-    const wsUrl = 'ws://localhost:4000';
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:4000';
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {

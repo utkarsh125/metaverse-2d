@@ -8,7 +8,10 @@ const app = express();
 //TODO: Remove this later
 app.use(
     cors({
-        origin: 'http://localhost:3001'
+        origin: [
+            'http://localhost:3001',
+            'https://your-vercel-app.vercel.app' // Replace with your actual Vercel URL
+        ]
     })
 )
 
