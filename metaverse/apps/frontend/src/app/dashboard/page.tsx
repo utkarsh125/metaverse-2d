@@ -46,6 +46,11 @@ export default function DashboardPage() {
   const [spaceToDelete, setSpaceToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Connect to space modal state
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [connectSpaceId, setConnectSpaceId] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+
   // GSAP animations
   useEffect(() => {
     if (modalRef.current && !onboarded) {
@@ -261,6 +266,39 @@ export default function DashboardPage() {
   const handleLogout = () => {
     sessionStorage.removeItem("token");
     router.push("/signin");
+  };
+
+  const handleConnectToSpace = async () => {
+    if (!connectSpaceId.trim()) {
+      showError("Invalid Space ID", "Please enter a valid space ID.");
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      // Validate the space ID format (basic check)
+      if (connectSpaceId.length < 3) {
+        throw new Error("Space ID is too short");
+      }
+
+      // Navigate to the space
+      router.push(`/space/${connectSpaceId.trim()}`);
+    } catch (error) {
+      console.error("Failed to connect to space:", error);
+      showError("Connection Failed", "Unable to connect to the specified space. Please check the space ID and try again.");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleOpenConnectModal = () => {
+    setConnectSpaceId("");
+    setShowConnectModal(true);
+  };
+
+  const handleCloseConnectModal = () => {
+    setShowConnectModal(false);
+    setConnectSpaceId("");
   };
 
   if (loading) {
@@ -642,26 +680,47 @@ export default function DashboardPage() {
                   Manage and explore your virtual environments
                 </p>
               </div>
-              <button
-                onClick={handleCreateNewSpace}
-                className="bg-gradient-to-r from-green-200 to-emerald-200 hover:from-green-300 hover:to-emerald-300 text-green-900 hover:text-green-950 font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-300/25 flex items-center space-x-3"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={handleOpenConnectModal}
+                  className="bg-gradient-to-r from-purple-200 to-pink-200 hover:from-purple-300 hover:to-pink-300 text-purple-900 hover:text-purple-950 font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-300/25 flex items-center space-x-3"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                  <span>Connect to Space</span>
+                </button>
+                <button
+                  onClick={handleCreateNewSpace}
+                  className="bg-gradient-to-r from-green-200 to-emerald-200 hover:from-green-300 hover:to-emerald-300 text-green-900 hover:text-green-950 font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-300/25 flex items-center space-x-3"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
                   />
                 </svg>
                 <span>Create New Space</span>
               </button>
             </div>
+          </div>
 
             {spaces.length > 0 ? (
               <div
@@ -795,13 +854,109 @@ export default function DashboardPage() {
         onInviteSent={handleInviteSent}
       />
 
-              <DeleteSpaceModal
-          isOpen={deleteModalOpen}
-          onCancel={handleDeleteSpaceCancel}
-          onConfirm={handleDeleteSpaceConfirm}
-          isLoading={isDeleting}
-          spaceName={spaceToDelete?.name || ""}
-        />
+      {/* Connect to Space Modal */}
+      {showConnectModal && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-gray-900/95 backdrop-blur-xl rounded-3xl border border-gray-700/30 shadow-2xl shadow-black/50 w-full max-w-md">
+            <div className="p-8">
+              <div className="text-center space-y-6">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-4 shadow-lg shadow-purple-500/25">
+                  <svg
+                    className="w-10 h-10 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                  Connect to Space
+                </h2>
+                <p className="text-gray-400 text-lg">
+                  Enter a space ID to join an existing virtual space
+                </p>
+              </div>
+
+              <div className="mt-8 space-y-6">
+                <div>
+                  <label
+                    htmlFor="connectSpaceId"
+                    className="block text-white font-semibold mb-3 text-lg"
+                  >
+                    Space ID
+                  </label>
+                  <input
+                    id="connectSpaceId"
+                    type="text"
+                    value={connectSpaceId}
+                    onChange={(e) => setConnectSpaceId(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handleConnectToSpace();
+                      }
+                    }}
+                    className="w-full px-4 py-3 bg-gray-800/50 backdrop-blur-sm border border-gray-600/30 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400/50 focus:bg-gray-700/60 transition-all duration-200 shadow-lg"
+                    placeholder="Enter space ID (e.g., abc123)"
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex gap-4">
+                  <button
+                    onClick={handleCloseConnectModal}
+                    className="flex-1 px-6 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConnectToSpace}
+                    disabled={!connectSpaceId.trim() || isConnecting}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-200 to-pink-200 hover:from-purple-300 hover:to-pink-300 disabled:from-gray-600 disabled:to-gray-600 text-purple-900 hover:text-purple-950 disabled:text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
+                  >
+                    {isConnecting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-purple-900/30 border-t-purple-900 rounded-full animate-spin"></div>
+                        <span>Connecting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                          />
+                        </svg>
+                        <span>Connect</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DeleteSpaceModal
+        isOpen={deleteModalOpen}
+        onCancel={handleDeleteSpaceCancel}
+        onConfirm={handleDeleteSpaceConfirm}
+        isLoading={isDeleting}
+        spaceName={spaceToDelete?.name || ""}
+      />
     </div>
   );
 }

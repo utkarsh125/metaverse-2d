@@ -74,11 +74,11 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section ref={heroRef} className="pt-32 pb-20 px-4 sm:px-6 bg-gradient-to-b from-purple-50 to-white">
+    <section ref={heroRef} className="pt-32 pb-20 px-4 sm:px-6 bg-gradient-to-b from-purple-50 to-white" aria-labelledby="hero-title">
       <div className="max-w-6xl mx-auto text-center">
         {/* Hero Text */}
         <div className="mb-8">
-          <h1 ref={titleRef} className="font-pixelify text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-purple-900 leading-tight mb-6">
+          <h1 id="hero-title" ref={titleRef} className="font-pixelify text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-purple-900 leading-tight mb-6">
             Create, Explore and Connect
             <br />
             <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">in a 2D Space</span>

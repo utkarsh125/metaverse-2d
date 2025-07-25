@@ -82,14 +82,14 @@ const FAQSection = () => {
   }, []);
 
   return (
-    <section id="faq" className="py-24 bg-white">
+    <section id="faq" className="py-24 bg-white" aria-labelledby="faq-title">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <header className="text-center mb-16">
           <span className="font-inter text-xs tracking-widest text-purple-500 mb-4 block">
             FAQ
           </span>
-          <h2 className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-purple-900 mb-6 leading-tight">
+          <h2 id="faq-title" className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-purple-900 mb-6 leading-tight">
             Frequently Asked
             <br />
             <span className="text-purple-600">Questions</span>
@@ -97,7 +97,7 @@ const FAQSection = () => {
           <p className="font-inter text-lg sm:text-xl text-purple-700 max-w-2xl mx-auto px-4">
             Everything you need to know about orbitone.cloud
           </p>
-        </div>
+        </header>
 
         {/* FAQ List */}
         <div className="space-y-4">

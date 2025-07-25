@@ -6,10 +6,12 @@ import { useParams, useRouter } from 'next/navigation';
 import MetaverseSpace from '../../../components/MetaverseSpace';
 import { Space, User } from '../../../lib/types';
 import Link from 'next/link';
+import { useToast } from '../../../components/ToastContainer';
 
 export default function SpacePage() {
   const params = useParams();
   const router = useRouter();
+  const { showSuccess } = useToast();
   const spaceId = params.spaceId as string;
   
   const [space, setSpace] = useState<Space | null>(null);
@@ -107,6 +109,23 @@ export default function SpacePage() {
   const handleLogout = () => {
     sessionStorage.removeItem('token');
     router.push('/signin');
+  };
+
+  const handleCopySpaceId = async () => {
+    try {
+      await navigator.clipboard.writeText(spaceId);
+      showSuccess('Space ID Copied', `Space ID "${spaceId}" has been copied to your clipboard. Share this with friends to invite them!`);
+    } catch (err) {
+      console.error('Failed to copy space ID:', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = spaceId;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showSuccess('Space ID Copied', `Space ID "${spaceId}" has been copied to your clipboard. Share this with friends to invite them!`);
+    }
   };
 
   if (loading) {
@@ -272,6 +291,16 @@ export default function SpacePage() {
             
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center gap-3">
+              <button
+                onClick={handleCopySpaceId}
+                className="font-inter font-semibold bg-purple-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-purple-600/80 transition-all duration-200 border border-purple-400/30 text-sm flex items-center gap-2"
+                title="Copy Space ID to invite friends"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Copy ID
+              </button>
               <Link
                 href="/dashboard"
                 className="font-inter font-semibold bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 text-sm"
@@ -320,6 +349,18 @@ export default function SpacePage() {
                           {currentUser.username}
                         </p>
                       </div>
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleCopySpaceId();
+                        }}
+                        className="block w-full text-left font-inter font-medium text-white hover:bg-white/10 px-4 py-3 transition-colors duration-200 text-sm flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy Space ID
+                      </button>
                       <Link
                         href="/dashboard"
                         onClick={() => setMobileMenuOpen(false)}

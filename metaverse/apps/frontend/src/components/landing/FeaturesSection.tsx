@@ -145,14 +145,15 @@ const FeaturesSection = () => {
     <section
       id="features"
       className="py-24 bg-gradient-to-b from-white to-purple-50"
+      aria-labelledby="features-title"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="text-center mb-20">
+        <header className="text-center mb-20">
           <span className="font-inter text-xs tracking-widest text-purple-500 mb-4 block">
             FEATURES
           </span>
-          <h2 className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-purple-900 mb-6 leading-tight">
+          <h2 id="features-title" className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-purple-900 mb-6 leading-tight">
             Everything you need to build
             <br />
             <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
@@ -163,7 +164,7 @@ const FeaturesSection = () => {
             Powerful tools and features designed to make virtual collaboration
             seamless and engaging.
           </p>
-        </div>
+        </header>
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
