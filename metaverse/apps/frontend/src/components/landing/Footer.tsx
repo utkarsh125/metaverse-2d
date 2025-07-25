@@ -1,57 +1,67 @@
+import Link from 'next/link';
 import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-black py-16 rounded-t-3xl sm:rounded-t-6xl">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-          {/* Company Info */}
-          <div className="sm:col-span-2">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex items-center gap-3 text-white px-4 py-2.5 rounded-full">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 200 200"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <g clipPath="url(#clip0_104_157)">
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M100 200C155.228 200 200 155.228 200 100C200 44.7715 155.228 0 100 0C44.7715 0 0 44.7715 0 100C0 155.228 44.7715 200 100 200ZM100 143.75C124.162 143.75 143.75 124.162 143.75 100C143.75 75.8375 124.162 56.25 100 56.25C75.8375 56.25 56.25 75.8375 56.25 100C56.25 124.162 75.8375 143.75 100 143.75Z"
-                      fill="url(#paint0_linear_104_157)"
-                    />
-                  </g>
-                  <defs>
-                    <linearGradient
-                      id="paint0_linear_104_157"
-                      x1="100"
-                      y1="0"
-                      x2="100"
-                      y2="200"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop stopColor="#CFFFE2" />
-                      <stop offset="1" stopColor="#F6F6F6" />
-                    </linearGradient>
-                    <clipPath id="clip0_104_157">
-                      <rect width="200" height="200" fill="white" />
-                    </clipPath>
-                  </defs>
-                </svg>
-                <span className="font-raleway font-bold text-lg">orbit.space</span>
-              </div>
-            </div>
-            <p className="font-raleway text-gray-200 mb-6 max-w-md leading-relaxed text-sm sm:text-base">
-              Creating the future of virtual collaboration with immersive 2D spaces that bring teams together from anywhere in the world.
+    <footer className="bg-gray-50 border-t border-gray-100">
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          {/* Logo and Description */}
+          <div className="col-span-1 md:col-span-2">
+            <Link href="/" className="flex items-center space-x-2 mb-4">
+              <span className="font-pixelify text-xl font-bold text-gray-900">orbitone.cloud</span>
+            </Link>
+            <p className="font-inter text-gray-600 text-sm leading-relaxed max-w-md">
+              A virtual world platform where you can build interactive spaces, meet friends, and collaborate—all in your browser.
             </p>
           </div>
 
+          {/* Quick Links */}
+          <div>
+            <h3 className="font-pixelify text-sm font-bold text-gray-900 uppercase mb-4">Quick Links</h3>
+            <ul className="space-y-3">
+              <li>
+                <a href="#how-it-works" className="font-inter text-gray-600 hover:text-gray-900 text-sm">
+                  How it Works
+                </a>
+              </li>
+              <li>
+                <a href="#about" className="font-inter text-gray-600 hover:text-gray-900 text-sm">
+                  About
+                </a>
+              </li>
+              <li>
+                <a href="#faq" className="font-inter text-gray-600 hover:text-gray-900 text-sm">
+                  FAQ
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Get Started */}
+          <div>
+            <h3 className="font-pixelify text-sm font-bold text-gray-900 uppercase mb-4">Get Started</h3>
+            <ul className="space-y-3">
+              <li>
+                <Link href="/signup" className="font-inter text-gray-600 hover:text-gray-900 text-sm">
+                  Sign Up
+                </Link>
+              </li>
+              <li>
+                <Link href="/signin" className="font-inter text-gray-600 hover:text-gray-900 text-sm">
+                  Sign In
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
 
+        {/* Bottom Section */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <p className="font-inter text-gray-500 text-sm text-center">
+            © {new Date().getFullYear()} orbitone.cloud. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -1,7 +1,22 @@
+"use client"
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 const HeroSection = () => {
+  const router = useRouter();
+
+  const handleGetStarted = () => {
+    router.push('/signup');
+  };
+
+  const handleHowItWorks = () => {
+    const element = document.querySelector('#how-it-works');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section className="pt-32 pb-20 px-4 sm:px-6 bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-6xl mx-auto text-center">
@@ -18,14 +33,23 @@ const HeroSection = () => {
           <p className="font-inter text-lg sm:text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
             A virtual world platform where you can build interactive spaces, meet friends, and collaborate—all in your browser.
           </p>
+          <p className="font-inter text-base sm:text-lg text-purple-600 mt-4">
+            Currently optimized for desktop and tablet devices
+          </p>
         </div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mb-16 px-4">
-          <button className="font-inter font-medium bg-gradient-to-r from-gray-900 to-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300 text-base sm:text-lg w-full sm:w-auto">
+          <button 
+            onClick={handleGetStarted}
+            className="font-inter font-medium bg-gradient-to-r from-gray-900 to-black text-white px-6 sm:px-8 py-3 sm:py-4 rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300 text-base sm:text-lg w-full sm:w-auto"
+          >
             Get Started — it&apos;s free
           </button>
-          <button className="font-inter font-medium rounded-full border border-gray-300 px-6 sm:px-8 py-3 sm:py-4 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-base sm:text-lg w-full sm:w-auto">
+          <button 
+            onClick={handleHowItWorks}
+            className="font-inter font-medium rounded-full border border-gray-300 px-6 sm:px-8 py-3 sm:py-4 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-base sm:text-lg w-full sm:w-auto"
+          >
             How it works
           </button>
         </div>
