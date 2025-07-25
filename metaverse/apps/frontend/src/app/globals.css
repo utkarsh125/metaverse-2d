@@ -49,6 +49,34 @@ html, body {
   background: #555;
 }
 
+/* Custom slider styles */
+.slider {
+  background: linear-gradient(to right, #4F46E5 0%, #4F46E5 50%, #374151 50%, #374151 100%);
+  outline: none;
+  border-radius: 8px;
+}
+
+.slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8B5CF6;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid #ffffff;
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #8B5CF6;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 /* Custom animations */
 @keyframes fade-in {
   from {

@@ -403,4 +403,32 @@ export class PixiSpaceEngine {
       }));
     }
   }
+
+  public setZoomLevel(zoom: number): void {
+    // For PixiSpaceEngine, we can implement zoom by scaling the container
+    if (this.container) {
+      this.container.scale.set(zoom);
+    }
+  }
+
+  public getZoomLevel(): number {
+    return this.container ? this.container.scale.x : 1;
+  }
+
+  public zoomIn(): void {
+    const currentZoom = this.getZoomLevel();
+    this.setZoomLevel(currentZoom * 1.2);
+  }
+
+  public zoomOut(): void {
+    const currentZoom = this.getZoomLevel();
+    this.setZoomLevel(currentZoom / 1.2);
+  }
+
+  public resetZoomAndPan(): void {
+    this.setZoomLevel(1.5); // Default 150%
+    if (this.container) {
+      this.container.position.set(0, 0);
+    }
+  }
 } 

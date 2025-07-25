@@ -83,7 +83,7 @@ export class TilemapSpaceEngine {
   private username: string;
   
   // Zoom and Pan functionality
-  private zoomLevel = 1;
+  private zoomLevel = 1.5; // Default 150%
   private minZoom = 0.5;
   private maxZoom = 3;
   private isDragging = false;
@@ -779,6 +779,14 @@ export class TilemapSpaceEngine {
 
   public getZoomLevel(): number {
     return this.zoomLevel;
+  }
+
+  public setZoomLevel(zoom: number): void {
+    const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, zoom));
+    if (newZoom !== this.zoomLevel) {
+      this.zoomLevel = newZoom;
+      this.updateTransform();
+    }
   }
 
   public movePlayer(dx: number, dy: number): void {

@@ -31,7 +31,6 @@ export default function DashboardPage() {
 
   // derived flags
   const [hasAvatar, setHasAvatar] = useState(false);
-  const [hasSpaces, setHasSpaces] = useState(false);
 
   // control
   const [onboarded, setOnboarded] = useState(false);
@@ -104,7 +103,6 @@ export default function DashboardPage() {
     API.get<{ spaces: Space[] }>("/api/v1/space/all")
       .then((res) => {
         setSpaces(res.data.spaces);
-        setHasSpaces(res.data.spaces.length > 0);
       })
       .catch(console.error);
 
@@ -115,14 +113,12 @@ export default function DashboardPage() {
 
   // determine onboarding state
   useEffect(() => {
-    if (hasAvatar && hasSpaces) {
+    if (hasAvatar) {
       setOnboarded(true);
-    } else if (hasAvatar) {
-      setStep(2);
     } else {
       setStep(1);
     }
-  }, [hasAvatar, hasSpaces]);
+  }, [hasAvatar]);
 
   // save selected avatar
   const saveAvatar = async (): Promise<void> => {
@@ -132,6 +128,7 @@ export default function DashboardPage() {
     try {
       await API.post("/api/v1/user/metadata", { avatarId: selectedAvatar });
       setHasAvatar(true);
+      setOnboarded(true); // Complete onboarding after avatar selection
     } catch (e: unknown) {
       const errorMessage =
         e &&
@@ -168,7 +165,6 @@ export default function DashboardPage() {
       console.log(`created space with mapId: ${selectedMap}`);
       await API.get<{ spaces: Space[] }>("/api/v1/space/all").then((res) => {
         setSpaces(res.data.spaces);
-        setHasSpaces(res.data.spaces.length > 0);
       });
       setOnboarded(true);
       setSpaceName("");
@@ -286,7 +282,7 @@ export default function DashboardPage() {
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
             <div
               ref={modalRef}
-              className="bg-gray-900/95 backdrop-blur-xl rounded-3xl border border-gray-700/30 shadow-2xl shadow-black/50 w-full max-w-2xl"
+              className="bg-gray-900/95 backdrop-blur-xl rounded-3xl border border-gray-700/30 shadow-2xl shadow-black/50 w-full max-w-2xl max-h-[90vh] overflow-y-auto"
             >
               <div className="p-8">
                 {step === 1 && (
@@ -315,17 +311,17 @@ export default function DashboardPage() {
                       </p>
                       <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm">
                         <span className="w-8 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent"></span>
-                        <span>Step 1 of 2</span>
+                        <span>Get Started</span>
                         <span className="w-8 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent"></span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 animate-fade-in">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 animate-fade-in">
                       {avatars.map((avatar) => (
                         <div
                           key={avatar.id}
                           onClick={() => setSelectedAvatar(avatar.id)}
-                          className={`group cursor-pointer p-6 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 transform ${
+                          className={`group cursor-pointer p-4 sm:p-6 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 transform ${
                             selectedAvatar === avatar.id
                               ? "bg-gradient-to-br from-purple-500/30 to-pink-500/30 ring-2 ring-purple-400/60 shadow-xl shadow-purple-500/40 border border-purple-400/30"
                               : "bg-gray-800/40 hover:bg-gray-700/60 border border-gray-600/30 hover:border-gray-500/50 shadow-lg hover:shadow-xl"
@@ -397,7 +393,7 @@ export default function DashboardPage() {
                           <span>Saving Avatar...</span>
                         </>
                       ) : (
-                        <span>Continue with Avatar</span>
+                        <span>Get Started</span>
                       )}
                     </button>
                   </div>

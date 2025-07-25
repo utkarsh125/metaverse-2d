@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useDeviceType } from '../lib/useDeviceType';
 import VirtualControls from './VirtualControls';
 import ModernChatSidebar from './ModernChatSidebar';
@@ -22,6 +22,7 @@ interface EngineWithMovement {
   zoomIn?: () => void;
   zoomOut?: () => void;
   resetZoomAndPan?: () => void;
+  setZoomLevel?: (zoom: number) => void;
   destroy: () => void;
   sendChatMessage?: (msg: string) => void;
   setupChatHandler?: (handler: (message: ChatMessage) => void) => void;
@@ -29,14 +30,14 @@ interface EngineWithMovement {
 
 export default function MetaverseSpace({ space, userId, username, mapFile }: MetaverseSpaceProps) {
   const deviceType = useDeviceType();
-  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<((PixiSpaceEngine | TilemapSpaceEngine) & EngineWithMovement) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [lastInitializedSpaceId, setLastInitializedSpaceId] = useState<string>('');
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(1.5); // Default zoom to 150%
+  const [isChatCollapsed, setIsChatCollapsed] = useState(false);
 
   // Get spaceId from props or fallback to URL
   const spaceId = space.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '');
@@ -52,18 +53,20 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
       message: message,
       timestamp: new Date()
     };
-    setChatMessages(prev => [...prev, ownMessage]);
     
-    // Send message to server
-    if (engineRef.current) {
-      if (engineRef.current.sendChatMessage) {
-        console.log('MetaverseSpace: Calling engine.sendChatMessage');
-        engineRef.current.sendChatMessage(message);
-      } else {
-        console.error('MetaverseSpace: engine.sendChatMessage not available');
-      }
+    console.log('MetaverseSpace: Adding own message to chat:', ownMessage);
+    setChatMessages(prev => {
+      const newMessages = [...prev, ownMessage];
+      console.log('MetaverseSpace: New chat messages after adding own:', newMessages);
+      return newMessages;
+    });
+    
+    // Send to engine which will broadcast to server
+    if (engineRef.current?.sendChatMessage) {
+      console.log('MetaverseSpace: Sending to engine');
+      engineRef.current.sendChatMessage(message);
     } else {
-      console.error('MetaverseSpace: engineRef.current is null');
+      console.log('MetaverseSpace: Engine not available for sending chat');
     }
   };
 
@@ -85,27 +88,56 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
   };
 
   // Zoom controls
-  const handleZoomIn = () => {
-    if (engineRef.current?.zoomIn) {
-      engineRef.current.zoomIn();
+  const handleZoomChange = useCallback((newZoom: number) => {
+    if (engineRef.current?.setZoomLevel) {
+      engineRef.current.setZoomLevel(newZoom);
+    } else if (engineRef.current) {
+      // Fallback for engines without setZoomLevel
       const currentZoom = engineRef.current.getZoomLevel?.() || 1;
-      setZoomLevel(currentZoom);
+      const zoomDiff = newZoom / currentZoom;
+      
+      if (zoomDiff > 1) {
+        // Zoom in
+        for (let i = 0; i < Math.ceil(Math.log(zoomDiff) / Math.log(1.2)); i++) {
+          engineRef.current.zoomIn?.();
+        }
+      } else if (zoomDiff < 1) {
+        // Zoom out
+        for (let i = 0; i < Math.ceil(Math.log(1/zoomDiff) / Math.log(1.2)); i++) {
+          engineRef.current.zoomOut?.();
+        }
+      }
     }
-  };
+    setZoomLevel(newZoom);
+  }, []);
 
-  const handleZoomOut = () => {
-    if (engineRef.current?.zoomOut) {
-      engineRef.current.zoomOut();
-      const currentZoom = engineRef.current.getZoomLevel?.() || 1;
-      setZoomLevel(currentZoom);
-    }
-  };
+
 
   const handleResetZoom = () => {
     if (engineRef.current?.resetZoomAndPan) {
       engineRef.current.resetZoomAndPan();
-      setZoomLevel(1);
+      setZoomLevel(1.5); // Reset to default 150%
     }
+  };
+
+  // Movement controls for virtual buttons
+  const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const directionMap = {
+      up: { dx: 0, dy: -1 },
+      down: { dx: 0, dy: 1 },
+      left: { dx: -1, dy: 0 },
+      right: { dx: 1, dy: 0 }
+    };
+    
+    const { dx, dy } = directionMap[direction];
+    if (engineRef.current?.movePlayer) {
+      engineRef.current.movePlayer(dx, dy);
+    }
+  };
+
+  const handleDirectionRelease = () => {
+    // For now, we don't need to handle release since we're doing discrete movements
+    // In the future, this could be used for continuous movement
   };
 
   // Update zoom level periodically
@@ -119,6 +151,62 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
 
     return () => clearInterval(interval);
   }, []);
+
+  // Add pinch-to-zoom support for tablets
+  useEffect(() => {
+    if (deviceType !== 'tablet' || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    let initialDistance = 0;
+    let initialZoom = 1;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        initialDistance = Math.sqrt(
+          Math.pow(touch1.clientX - touch2.clientX, 2) + 
+          Math.pow(touch1.clientY - touch2.clientY, 2)
+        );
+        initialZoom = zoomLevel;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = Math.sqrt(
+          Math.pow(touch1.clientX - touch2.clientX, 2) + 
+          Math.pow(touch1.clientY - touch2.clientY, 2)
+        );
+        
+        if (initialDistance > 0) {
+          const scale = currentDistance / initialDistance;
+          const newZoom = Math.max(0.5, Math.min(3, initialZoom * scale));
+          handleZoomChange(newZoom);
+        }
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        initialDistance = 0;
+      }
+    };
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart);
+      canvas.removeEventListener('touchmove', handleTouchMove);
+      canvas.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [deviceType, zoomLevel, handleZoomChange]);
 
   useEffect(() => {
     console.log("MetaverseSpace useEffect running - spaceId:", spaceId, "loading:", isLoading);
@@ -321,82 +409,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
     };
   }, [userId, username, mapFile, spaceId]);
 
-  // Handle virtual controls
-  const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
-    const keyMap = {
-      up: 'ArrowUp',
-      down: 'ArrowDown',
-      left: 'ArrowLeft',
-      right: 'ArrowRight'
-    };
-    const key = keyMap[direction];
-    setPressedKeys(prev => new Set([...prev, key]));
-  };
 
-  const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
-    const keyMap = {
-      up: 'ArrowUp',
-      down: 'ArrowDown',
-      left: 'ArrowLeft',
-      right: 'ArrowRight'
-    };
-    const key = keyMap[direction];
-    setPressedKeys(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(key);
-      return newSet;
-    });
-  };
-
-  // Update movement based on pressed keys
-  useEffect(() => {
-    if (!engineRef.current) return;
-
-    const movePlayer = () => {
-      const speed = 5;
-      let dx = 0;
-      let dy = 0;
-
-      if (pressedKeys.has('ArrowUp') || pressedKeys.has('w')) dy -= speed;
-      if (pressedKeys.has('ArrowDown') || pressedKeys.has('s')) dy += speed;
-      if (pressedKeys.has('ArrowLeft') || pressedKeys.has('a')) dx -= speed;
-      if (pressedKeys.has('ArrowRight') || pressedKeys.has('d')) dx += speed;
-
-      if (dx !== 0 || dy !== 0) {
-        engineRef.current?.movePlayer(dx, dy);
-      }
-    };
-
-    const interval = setInterval(movePlayer, 1000 / 60); // 60 FPS
-    return () => clearInterval(interval);
-  }, [pressedKeys]);
-
-  // Handle keyboard events
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key;
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(key)) {
-        setPressedKeys(prev => new Set([...prev, key]));
-      }
-    };
-
-    const handleKeyUp = (e: KeyboardEvent) => {
-      const key = e.key;
-      setPressedKeys(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(key);
-        return newSet;
-      });
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
 
 
   if (!spaceId) {
@@ -495,31 +508,30 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
               </div>
             </div>
 
-            {/* Zoom controls */}
-            <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-sm text-white p-3 rounded-lg shadow-xl border border-white/20">
-              <h3 className="font-inter font-bold mb-2 text-sm">ZOOM</h3>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={handleZoomIn}
-                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
-                >
-                  Zoom In
-                </button>
-                <button
-                  onClick={handleZoomOut}
-                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
-                >
-                  Zoom Out
-                </button>
+            {/* Horizontal Zoom Control - Bottom Right */}
+            <div className="absolute bottom-6 right-6 bg-black/60 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl border border-white/20 min-w-[200px]">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-gray-300 min-w-[35px]">
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <div className="flex-1 relative">
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="3"
+                    step="0.1"
+                    value={zoomLevel}
+                    onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                  />
+                </div>
                 <button
                   onClick={handleResetZoom}
-                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+                  className="px-2 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+                  title="Reset zoom to 150%"
                 >
                   Reset
                 </button>
-                <div className="text-xs text-gray-300 text-center mt-1">
-                  {Math.round(zoomLevel * 100)}%
-                </div>
               </div>
             </div>
 
@@ -536,12 +548,32 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
 
       {/* Chat Sidebar - Only show on non-mobile */}
       {deviceType !== 'mobile' && (
-        <ModernChatSidebar
-          onSendMessage={handleSendMessage}
-          messages={chatMessages}
-          currentUsername={username}
-          isMobile={false}
-        />
+        <div className={`relative transition-all duration-300 ${deviceType === 'tablet' && isChatCollapsed ? 'w-12' : 'w-96'}`}>
+          {deviceType === 'tablet' && (
+            <button
+              onClick={() => setIsChatCollapsed(!isChatCollapsed)}
+              className="absolute top-4 -left-3 z-10 bg-black/60 backdrop-blur-sm text-white p-2 rounded-full border border-white/20 hover:bg-black/80 transition-colors"
+              title={isChatCollapsed ? 'Expand Chat' : 'Collapse Chat'}
+            >
+              <svg 
+                className={`w-4 h-4 transition-transform ${isChatCollapsed ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+          {!isChatCollapsed && (
+            <ModernChatSidebar
+              onSendMessage={handleSendMessage}
+              messages={chatMessages}
+              currentUsername={username}
+              isMobile={false}
+            />
+          )}
+        </div>
       )}
     </div>
   );
