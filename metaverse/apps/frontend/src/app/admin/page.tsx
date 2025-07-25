@@ -104,7 +104,7 @@ export default function AdminPage() {
   }, [token]);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = sessionStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
     } else {

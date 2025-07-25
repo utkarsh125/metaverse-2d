@@ -18,16 +18,39 @@ export default function SpacePage() {
   const [error, setError] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Check authentication on component mount
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      router.push('/signin');
+    }
+  }, [router]);
+
   useEffect(() => {
     const fetchData = async () => {
+      // Check if user is authenticated
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+        // No token found, redirect to signin
+        router.push('/signin');
+        return;
+      }
+
       try {
         // Fetch current user
         const userResponse = await fetch('/api/v1/user/me', {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         });
+        
         if (!userResponse.ok) {
+          // Authentication failed, remove invalid token and redirect
+          if (userResponse.status === 401 || userResponse.status === 403) {
+            sessionStorage.removeItem('token');
+            router.push('/signin');
+            return;
+          }
           throw new Error('Failed to fetch user data');
         }
         const userData = await userResponse.json();
@@ -36,10 +59,17 @@ export default function SpacePage() {
         // Fetch space data
         const spaceResponse = await fetch(`/api/v1/space/${spaceId}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           }
         });
+        
         if (!spaceResponse.ok) {
+          // Authentication failed for space access
+          if (spaceResponse.status === 401 || spaceResponse.status === 403) {
+            sessionStorage.removeItem('token');
+            router.push('/signin');
+            return;
+          }
           throw new Error('Failed to fetch space data');
         }
         const spaceData = await spaceResponse.json();
@@ -55,7 +85,7 @@ export default function SpacePage() {
     if (spaceId) {
       fetchData();
     }
-  }, [spaceId]);
+  }, [spaceId, router]);
 
   // Handle mobile menu closing
   useEffect(() => {
@@ -75,7 +105,7 @@ export default function SpacePage() {
   }, [mobileMenuOpen]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     router.push('/signin');
   };
 

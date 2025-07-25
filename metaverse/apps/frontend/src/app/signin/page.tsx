@@ -26,7 +26,7 @@ export default function SigninPage() {
     try {
       const response = await API.post("/api/v1/signin", { username, password });
       const data = response.data;
-      localStorage.setItem("token", data.token);
+              sessionStorage.setItem("token", data.token);
       router.push("/dashboard");
     } catch (err: unknown) {
       let message = "Signin failed.";

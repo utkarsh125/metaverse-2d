@@ -66,7 +66,7 @@ export class PixiSpaceEngine {
           username: this.currentUser!.username,
           x: this.currentUser!.x,
           y: this.currentUser!.y,
-          token: localStorage.getItem('token')
+          token: sessionStorage.getItem('token')
         }
       });
     };

@@ -8,9 +8,12 @@ import { API } from "@/lib/api";
 import { gsap } from "gsap";
 import { useRouter } from "next/navigation";
 import TeamInviteModal from "../../components/TeamInviteModal";
+import DeleteSpaceModal from "../../components/DeleteSpaceModal";
+import { useToast } from "../../components/ToastContainer";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
   const modalRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const spacesGridRef = useRef<HTMLDivElement>(null);
@@ -37,6 +40,11 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [spaceToDelete, setSpaceToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // GSAP animations
   useEffect(() => {
@@ -80,7 +88,7 @@ export default function DashboardPage() {
 
   // initial data & profile fetch
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) {
       router.push("/signin");
       return;
@@ -166,6 +174,7 @@ export default function DashboardPage() {
       await API.get<{ spaces: Space[] }>("/api/v1/space/all").then((res) => {
         setSpaces(res.data.spaces);
       });
+      showSuccess("Space Created", `"${spaceName.trim()}" has been created successfully`);
       setOnboarded(true);
       setSpaceName("");
       setSelectedMap("");
@@ -189,6 +198,50 @@ export default function DashboardPage() {
     }
   };
 
+  // delete a space
+  const deleteSpace = async (spaceId: string, spaceName: string): Promise<void> => {
+    setSpaceToDelete({ id: spaceId, name: spaceName });
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteSpaceConfirm = async () => {
+    if (!spaceToDelete) return;
+    setIsDeleting(true);
+    try {
+      await API.delete(`/api/v1/space/${spaceToDelete.id}`);
+      
+      // Refresh the spaces list
+      const response = await API.get<{ spaces: Space[] }>("/api/v1/space/all");
+      setSpaces(response.data.spaces);
+      
+              showSuccess("Space Deleted", `"${spaceToDelete.name}" has been deleted successfully`);
+    } catch (e: unknown) {
+      console.error("DeleteSpace error:", e);
+      const errorMessage =
+        e &&
+        typeof e === "object" &&
+        "response" in e &&
+        e.response &&
+        typeof e.response === "object" &&
+        "data" in e.response &&
+        e.response.data &&
+        typeof e.response.data === "object" &&
+        "message" in e.response.data
+          ? String(e.response.data.message)
+          : "Failed to delete space";
+              showError("Delete Failed", errorMessage);
+    } finally {
+      setIsDeleting(false);
+      setDeleteModalOpen(false);
+      setSpaceToDelete(null);
+    }
+  };
+
+  const handleDeleteSpaceCancel = () => {
+    setDeleteModalOpen(false);
+    setSpaceToDelete(null);
+  };
+
   const handleSpaceClick = (spaceId: string): void => {
     router.push(`/space/${spaceId}`);
   };
@@ -206,7 +259,7 @@ export default function DashboardPage() {
 
   // Logout button handler
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     router.push("/signin");
   };
 
@@ -385,11 +438,11 @@ export default function DashboardPage() {
                     <button
                       onClick={saveAvatar}
                       disabled={!selectedAvatar || loading}
-                      className="w-full h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
+                      className="w-full h-14 bg-gradient-to-r from-purple-200 to-pink-200 hover:from-purple-300 hover:to-pink-300 disabled:from-gray-600 disabled:to-gray-600 text-purple-900 hover:text-purple-950 disabled:text-white font-semibold rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-purple-300/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
                     >
                       {loading ? (
                         <>
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <div className="w-5 h-5 border-2 border-purple-900/30 border-t-purple-900 rounded-full animate-spin"></div>
                           <span>Saving Avatar...</span>
                         </>
                       ) : (
@@ -559,11 +612,11 @@ export default function DashboardPage() {
                     <button
                       onClick={createSpace}
                       disabled={!spaceName.trim() || !selectedMap || loading}
-                      className="w-full h-14 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
+                      className="w-full h-14 bg-gradient-to-r from-blue-200 to-cyan-200 hover:from-blue-300 hover:to-cyan-300 disabled:from-gray-600 disabled:to-gray-600 text-blue-900 hover:text-blue-950 disabled:text-white font-semibold rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-300/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
                     >
                       {loading ? (
                         <>
-                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <div className="w-5 h-5 border-2 border-blue-900/30 border-t-blue-900 rounded-full animate-spin"></div>
                           <span>Creating Space...</span>
                         </>
                       ) : (
@@ -591,7 +644,7 @@ export default function DashboardPage() {
               </div>
               <button
                 onClick={handleCreateNewSpace}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-500/25 flex items-center space-x-3"
+                className="bg-gradient-to-r from-green-200 to-emerald-200 hover:from-green-300 hover:to-emerald-300 text-green-900 hover:text-green-950 font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-green-300/25 flex items-center space-x-3"
               >
                 <svg
                   className="w-6 h-6"
@@ -651,6 +704,32 @@ export default function DashboardPage() {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                                              {/* Delete button overlay */}
+                        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSpace(space.id, space.name);
+                            }}
+                            className="p-2 bg-red-200/90 hover:bg-red-300 text-red-900 rounded-full backdrop-blur-sm transition-all duration-200 hover:scale-110"
+                            title="Delete Space"
+                          >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                     <div className="p-6">
                       <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-purple-300 transition-colors duration-300">
@@ -686,7 +765,7 @@ export default function DashboardPage() {
                 </p>
                 <button
                   onClick={handleCreateNewSpace}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/25 inline-flex items-center space-x-3"
+                  className="bg-gradient-to-r from-purple-200 to-pink-200 hover:from-purple-300 hover:to-pink-300 text-purple-900 hover:text-purple-950 font-semibold px-8 py-4 rounded-xl transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-300/25 inline-flex items-center space-x-3"
                 >
                   <svg
                     className="w-6 h-6"
@@ -715,6 +794,14 @@ export default function DashboardPage() {
         onClose={() => setShowInviteModal(false)}
         onInviteSent={handleInviteSent}
       />
+
+              <DeleteSpaceModal
+          isOpen={deleteModalOpen}
+          onCancel={handleDeleteSpaceCancel}
+          onConfirm={handleDeleteSpaceConfirm}
+          isLoading={isDeleting}
+          spaceName={spaceToDelete?.name || ""}
+        />
     </div>
   );
 }

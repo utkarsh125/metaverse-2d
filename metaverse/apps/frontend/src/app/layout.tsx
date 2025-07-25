@@ -4,6 +4,7 @@ import "@fontsource/pixelify-sans/400.css";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/700.css";
 import "./globals.css";
+import { ToastProvider } from "../components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "orbit.space | metaverse",
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-inter antialiased relative min-h-screen bg-white overflow-x-hidden">
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );
