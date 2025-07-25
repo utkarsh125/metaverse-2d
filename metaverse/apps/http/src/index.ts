@@ -10,7 +10,8 @@ app.use(
     cors({
         origin: [
             'http://localhost:3001',
-            'https://your-vercel-app.vercel.app' // Replace with your actual Vercel URL
+            //Add more according to your needs
+            //ultimately it should be the same as the frontend url
         ]
     })
 )
