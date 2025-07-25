@@ -4,6 +4,7 @@ import { OutgoingMessage } from "./types";
 import { RoomManager } from "./RoomManager";
 import { WebSocket } from "ws";
 import client from "@metaverse/db/client";
+import { checkWebSocketConnection, removeWebSocketConnection, listCurrentConnections } from "./rateLimit";
 
 function getRandomString(length: number) {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -18,6 +19,8 @@ export class User {
     public id: string;
     public userId?: string;
     public username: string;  // Make username required
+    public avatarId?: string;
+    public avatarImageUrl?: string;
     private spaceId?: string;
     private x: number;
     private y: number;
@@ -46,6 +49,8 @@ export class User {
                         
                         let userId: string;
                         
+                        let userData: any = null;
+                        
                         if (token) {
                             // Normal authentication flow
                             const decoded = (jwt.verify(token, JWT_PASSWORD) as JwtPayload).userId;
@@ -55,11 +60,16 @@ export class User {
                             }
                             userId = decoded;
                             
-                            // Get username from database
-                            const user = await client.user.findUnique({
-                                where: { id: userId }
+                            // Get username and avatar from database
+                            userData = await client.user.findUnique({
+                                where: { id: userId },
+                                include: {
+                                    avatar: true
+                                }
                             });
-                            this.username = user?.username || providedUsername || this.username;
+                            this.username = userData?.username || providedUsername || this.username;
+                            this.avatarId = userData?.avatarId;
+                            this.avatarImageUrl = userData?.avatar?.imageUrl;
                         } else {
                             // Test mode - use provided username and test user ID
                             console.log("No token provided, using test mode");
@@ -79,6 +89,22 @@ export class User {
                             return;
                         }
 
+                        // Check if user is already connected to this space
+                        console.log(`[User] Checking connection for user ${userId} to space ${spaceId}`);
+                        const canConnect = await checkWebSocketConnection(userId, spaceId);
+                        if (!canConnect) {
+                            console.log(`[User] Connection denied for user ${userId} to space ${spaceId} - already connected`);
+                            this.send({
+                                type: "error",
+                                payload: {
+                                    message: "You are already connected to this space from another session."
+                                }
+                            });
+                            this.ws.close();
+                            return;
+                        }
+                        console.log(`[User] Connection allowed for user ${userId} to space ${spaceId}`);
+
                         this.spaceId = spaceId;
                         this.x = parsedData.payload.x || Math.floor(Math.random() * space.width);
                         this.y = parsedData.payload.y || Math.floor(Math.random() * space.height);
@@ -96,21 +122,27 @@ export class User {
                                         userId: u.userId,
                                         username: u.username,
                                         x: u.x,
-                                        y: u.y
+                                        y: u.y,
+                                        avatarId: u.avatarId,
+                                        avatarImageUrl: u.avatarImageUrl
                                     })) ?? []
                             }
                         });
 
                         // Notify others about new user
-                        RoomManager.getInstance().broadcast({
-                            type: "user-joined",
-                            payload: {
-                                userId: this.userId,
-                                username: this.username,
-                                x: this.x,
-                                y: this.y
-                            }
-                        }, this, this.spaceId);
+                        if (this.spaceId) {
+                            RoomManager.getInstance().broadcast({
+                                type: "user-joined",
+                                payload: {
+                                    userId: this.userId,
+                                    username: this.username,
+                                    x: this.x,
+                                    y: this.y,
+                                    avatarId: this.avatarId,
+                                    avatarImageUrl: this.avatarImageUrl
+                                }
+                            }, this, this.spaceId);
+                        }
                         break;
 
                     case "movement":
@@ -175,7 +207,12 @@ export class User {
     }
 
     destroy() {
-        if (this.spaceId) {
+        if (this.spaceId && this.userId) {
+            console.log(`[User] Destroying user ${this.userId} from space ${this.spaceId}`);
+            
+            // Remove WebSocket connection tracking
+            removeWebSocketConnection(this.userId, this.spaceId);
+            
             RoomManager.getInstance().broadcast({
                 type: "user-left",
                 payload: {
@@ -183,6 +220,9 @@ export class User {
                 }
             }, this, this.spaceId);
             RoomManager.getInstance().removeUser(this, this.spaceId);
+            
+            // Debug: list current connections
+            listCurrentConnections();
         }
     }
 

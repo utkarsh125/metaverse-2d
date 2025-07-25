@@ -18,6 +18,8 @@ export default function SpacePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Check authentication on component mount
@@ -25,57 +27,61 @@ export default function SpacePage() {
     const token = sessionStorage.getItem('token');
     if (!token) {
       router.push('/signin');
+      return;
     }
-  }, [router]);
 
-  useEffect(() => {
     const fetchData = async () => {
-      // Check if user is authenticated
-      const token = sessionStorage.getItem('token');
-      if (!token) {
-        // No token found, redirect to signin
-        router.push('/signin');
-        return;
-      }
-
       try {
         // Fetch current user
-        const userResponse = await fetch('/api/v1/user/me', {
+        const userResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/user/me`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
         if (!userResponse.ok) {
-          // Authentication failed, remove invalid token and redirect
+          // Only redirect for clear authentication failures
           if (userResponse.status === 401 || userResponse.status === 403) {
+            console.log('Authentication failed, redirecting to signin');
             sessionStorage.removeItem('token');
             router.push('/signin');
             return;
           }
-          throw new Error('Failed to fetch user data');
-        }
-        const userData = await userResponse.json();
-        setCurrentUser(userData);
+          // For other errors, continue and let WebSocket handle the connection
+          console.log('User API failed but continuing:', userResponse.status);
+          // Set a minimal user object to allow WebSocket connection
+          setCurrentUser({
+            id: 'temp-user',
+            username: 'User',
+            role: 'User'
+          });
+                  } else {
+            const userData = await userResponse.json();
+            setCurrentUser(userData);
+          }
 
         // Fetch space data
-        const spaceResponse = await fetch(`/api/v1/space/${spaceId}`, {
+        const spaceResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/v1/space/${spaceId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
         if (!spaceResponse.ok) {
-          // Authentication failed for space access
+          // Only redirect for clear authentication failures
           if (spaceResponse.status === 401 || spaceResponse.status === 403) {
+            console.log('Space API authentication failed, redirecting to signin');
             sessionStorage.removeItem('token');
             router.push('/signin');
             return;
           }
-          throw new Error('Failed to fetch space data');
+          // For other errors, continue and let WebSocket handle the connection
+          console.log('Space API failed but continuing:', spaceResponse.status);
+          // Don't set space data, let WebSocket handle connection
+        } else {
+          const spaceData = await spaceResponse.json();
+          setSpace(spaceData);
         }
-        const spaceData = await spaceResponse.json();
-        setSpace(spaceData);
 
         setLoading(false);
       } catch (err) {
@@ -88,6 +94,23 @@ export default function SpacePage() {
       fetchData();
     }
   }, [spaceId, router]);
+
+  // Listen for WebSocket connection errors and delay authentication redirect
+  useEffect(() => {
+    const handleWebSocketError = (event: CustomEvent) => {
+      if (event.detail?.message && event.detail.message.includes('already connected')) {
+        // Don't redirect to signin for "already connected" errors
+        setConnectionError(event.detail.message);
+        return;
+      }
+    };
+
+    window.addEventListener('websocket-error', handleWebSocketError as EventListener);
+    
+    return () => {
+      window.removeEventListener('websocket-error', handleWebSocketError as EventListener);
+    };
+  }, []);
 
   // Handle mobile menu closing
   useEffect(() => {
@@ -157,7 +180,9 @@ export default function SpacePage() {
             <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
               Loading Space
             </h2>
-            <p className="text-gray-400 text-lg">Preparing your virtual world...</p>
+            <p className="text-gray-400 text-lg">
+              {wsConnected ? 'Connecting to virtual world...' : 'Preparing your virtual world...'}
+            </p>
           </div>
         </div>
       </div>
@@ -386,6 +411,37 @@ export default function SpacePage() {
         </div>
       </div>
 
+      {/* Connection Error Overlay */}
+      {connectionError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
+                <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Already Connected</h3>
+              <p className="text-gray-600 mb-6">{connectionError}</p>
+              <div className="flex gap-3 justify-center">
+                <button
+                  onClick={() => setConnectionError(null)}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  Dismiss
+                </button>
+                <Link
+                  href="/dashboard"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+                >
+                  Go to Dashboard
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="relative z-20 pt-20">
         <MetaverseSpace
@@ -393,6 +449,8 @@ export default function SpacePage() {
           userId={currentUser.id}
           username={currentUser.username}
           mapFile={getTiledMapFile(space.map) || 'meadow/map1.tmj'}
+          onConnectionError={setConnectionError}
+          onWebSocketConnected={() => setWsConnected(true)}
         />
       </div>
     </div>

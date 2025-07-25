@@ -69,6 +69,11 @@ export class PixiSpaceEngine {
           token: sessionStorage.getItem('token')
         }
       });
+      
+      // Dispatch connection event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('websocket-connected'));
+      }
     };
 
     this.ws.onmessage = (event) => {
@@ -146,6 +151,20 @@ export class PixiSpaceEngine {
           console.error('PixiSpaceEngine: Invalid chat message payload:', message.payload);
         }
         break;
+
+      case 'error':
+        console.error('PixiSpaceEngine: Server error:', message.payload?.message);
+        // Show error to user
+        if (message.payload?.message) {
+          // Dispatch a custom event that the parent can listen to
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('websocket-error', {
+              detail: { message: message.payload.message }
+            }));
+          }
+        }
+        break;
+
       default:
         console.log('PixiSpaceEngine: Unhandled message type:', message.type);
     }

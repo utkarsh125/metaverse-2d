@@ -13,6 +13,8 @@ interface MetaverseSpaceProps {
   userId: string;
   username: string;
   mapFile: string;
+  onConnectionError?: (error: string) => void;
+  onWebSocketConnected?: () => void;
 }
 
 // Extend the engine types to include movePlayer and zoom
@@ -28,7 +30,7 @@ interface EngineWithMovement {
   setupChatHandler?: (handler: (message: ChatMessage) => void) => void;
 }
 
-export default function MetaverseSpace({ space, userId, username, mapFile }: MetaverseSpaceProps) {
+export default function MetaverseSpace({ space, userId, username, mapFile, onConnectionError, onWebSocketConnected }: MetaverseSpaceProps) {
   const deviceType = useDeviceType();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<((PixiSpaceEngine | TilemapSpaceEngine) & EngineWithMovement) | null>(null);
@@ -41,6 +43,29 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
 
   // Get spaceId from props or fallback to URL
   const spaceId = space.id || (typeof window !== 'undefined' ? window.location.pathname.split('/').pop() : '');
+
+  // Listen for WebSocket events
+  useEffect(() => {
+    const handleWebSocketError = (event: CustomEvent) => {
+      if (onConnectionError && event.detail?.message) {
+        onConnectionError(event.detail.message);
+      }
+    };
+
+    const handleWebSocketConnected = () => {
+      if (onWebSocketConnected) {
+        onWebSocketConnected();
+      }
+    };
+
+    window.addEventListener('websocket-error', handleWebSocketError as EventListener);
+    window.addEventListener('websocket-connected', handleWebSocketConnected);
+    
+    return () => {
+      window.removeEventListener('websocket-error', handleWebSocketError as EventListener);
+      window.removeEventListener('websocket-connected', handleWebSocketConnected);
+    };
+  }, [onConnectionError, onWebSocketConnected]);
 
   // Chat functionality
   const handleSendMessage = (message: string) => {

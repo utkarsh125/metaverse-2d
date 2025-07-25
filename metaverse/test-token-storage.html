@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Storage Test</title>
+</head>
+<body>
+    <h1>Token Storage Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        // Test 1: Check if token exists
+        const token = sessionStorage.getItem('token');
+        log('Token exists: ' + (token ? 'Yes' : 'No'));
+        if (token) {
+            log('Token: ' + token.substring(0, 50) + '...');
+        }
+        
+        // Test 2: Try to sign in
+        async function testSignin() {
+            try {
+                const response = await fetch('http://localhost:3000/api/v1/signin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'testuser',
+                        password: 'testpass'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log('Signin successful, token: ' + data.token.substring(0, 50) + '...');
+                    
+                    // Store token
+                    sessionStorage.setItem('token', data.token);
+                    log('Token stored in sessionStorage');
+                    
+                    // Test 3: Try user/me endpoint
+                    const userResponse = await fetch('http://localhost:3000/api/v1/user/me', {
+                        headers: {
+                            'Authorization': `Bearer ${data.token}`
+                        }
+                    });
+                    
+                    if (userResponse.ok) {
+                        const userData = await userResponse.json();
+                        log('User/me successful: ' + JSON.stringify(userData));
+                    } else {
+                        log('User/me failed: ' + userResponse.status);
+                    }
+                    
+                    // Test 4: Try space endpoint
+                    const spaceResponse = await fetch('http://localhost:3000/api/v1/space/cmdj419p50002a8bp0i41xxvd', {
+                        headers: {
+                            'Authorization': `Bearer ${data.token}`
+                        }
+                    });
+                    
+                    if (spaceResponse.ok) {
+                        const spaceData = await spaceResponse.json();
+                        log('Space endpoint successful: ' + JSON.stringify(spaceData));
+                    } else {
+                        log('Space endpoint failed: ' + spaceResponse.status);
+                    }
+                    
+                } else {
+                    log('Signin failed: ' + response.status);
+                }
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        }
+        
+        testSignin();
+    </script>
+</body>
+</html> 

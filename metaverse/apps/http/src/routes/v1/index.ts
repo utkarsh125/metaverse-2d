@@ -12,12 +12,13 @@ import jwt from "jsonwebtoken";
 import { spaceRouter } from "./space";
 import { userMiddleware } from "../../middleware/user";
 import { userRouter } from "./user";
+import { apiRateLimiter, loginRateLimiter } from "../../middleware/rateLimit";
 
 //any time a request comes to "/api/v1" it will be handled by this router
 
 export const router = Router();
 
-router.post("/signup", async(req, res) => {
+router.post("/signup", apiRateLimiter, async(req, res) => {
     //check the user
     const parseData = SignupSchema.safeParse(req.body)
 
@@ -55,7 +56,7 @@ router.post("/signup", async(req, res) => {
 
 })
 
-router.post("/signin", async(req, res) => {
+router.post("/signin", loginRateLimiter, async(req, res) => {
 
     const parseData = SigninSchema.safeParse(req.body);
 
@@ -107,7 +108,7 @@ router.post("/signin", async(req, res) => {
 })
 
 
-router.get("/elements", async (req, res) => {
+router.get("/elements", apiRateLimiter, async (req, res) => {
     const elements = await client.element.findMany()
     res.json({elements: elements.map(e => ({
         id: e.id,
@@ -118,7 +119,7 @@ router.get("/elements", async (req, res) => {
     }))})
 })
 
-router.get("/avatars", async(req, res) => {
+router.get("/avatars", apiRateLimiter, async(req, res) => {
     const avatars = await client.avatar.findMany()
     res.json({avatars: avatars.map(x => ({
         id: x.id,
@@ -129,6 +130,7 @@ router.get("/avatars", async(req, res) => {
 
 
 router.get("/maps",
+    apiRateLimiter,
     //TODO: userMiddleware, 
     async(req, res) => {
     const maps = await client.map.findMany({

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error Handling Test</title>
+</head>
+<body>
+    <h1>Error Handling Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        // Test WebSocket error handling
+        async function testErrorHandling() {
+            log('Testing WebSocket error handling...');
+            
+            // Create a WebSocket connection
+            const ws = new WebSocket('ws://localhost:4000');
+            
+            ws.onopen = () => {
+                log('✅ WebSocket connected');
+                
+                // Try to join the same space twice to trigger the error
+                const joinMessage = {
+                    type: 'join',
+                    payload: {
+                        spaceId: 'test-space',
+                        token: null,
+                        username: 'testuser'
+                    }
+                };
+                
+                log('Sending first join message...');
+                ws.send(JSON.stringify(joinMessage));
+                
+                // Send second join message after a short delay
+                setTimeout(() => {
+                    log('Sending second join message (should trigger error)...');
+                    ws.send(JSON.stringify(joinMessage));
+                }, 1000);
+            };
+            
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log('📨 Received message: ' + JSON.stringify(message));
+                
+                if (message.type === 'error') {
+                    log('✅ Error message received: ' + message.payload.message);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                log('❌ WebSocket error: ' + error);
+            };
+            
+            ws.onclose = () => {
+                log('🔌 WebSocket closed');
+            };
+        }
+        
+        testErrorHandling();
+    </script>
+</body>
+</html> 

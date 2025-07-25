@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Connection Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        // Test WebSocket connection
+        async function testWebSocketConnection() {
+            log('Testing WebSocket connection...');
+            
+            const token = sessionStorage.getItem('token');
+            log('Token exists: ' + (token ? 'Yes' : 'No'));
+            
+            if (!token) {
+                log('No token found, cannot test WebSocket');
+                return;
+            }
+            
+            // Create WebSocket connection
+            const ws = new WebSocket('ws://localhost:4000');
+            
+            ws.onopen = () => {
+                log('✅ WebSocket connected');
+                
+                // Try to join space
+                const joinMessage = {
+                    type: 'join',
+                    payload: {
+                        spaceId: 'cmdj419p50002a8bp0i41xxvd',
+                        token: token,
+                        username: 'testuser'
+                    }
+                };
+                
+                log('Sending join message...');
+                ws.send(JSON.stringify(joinMessage));
+            };
+            
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log('📨 Received: ' + JSON.stringify(message));
+                
+                if (message.type === 'error') {
+                    log('❌ Error: ' + message.payload.message);
+                } else if (message.type === 'space-joined') {
+                    log('✅ Successfully joined space');
+                }
+            };
+            
+            ws.onerror = (error) => {
+                log('❌ WebSocket error: ' + error);
+            };
+            
+            ws.onclose = () => {
+                log('🔌 WebSocket closed');
+            };
+        }
+        
+        testWebSocketConnection();
+    </script>
+</body>
+</html> 

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Debug Test</title>
+</head>
+<body>
+    <h1>Auth Debug Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        // Test authentication flow
+        async function testAuthFlow() {
+            log('Testing authentication flow...');
+            
+            // Check if token exists
+            const token = sessionStorage.getItem('token');
+            log('Token exists: ' + (token ? 'Yes' : 'No'));
+            
+            if (token) {
+                log('Token: ' + token.substring(0, 50) + '...');
+                
+                // Test user/me endpoint
+                try {
+                    const response = await fetch('http://localhost:3000/api/v1/user/me', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    log('User/me response status: ' + response.status);
+                    
+                    if (response.ok) {
+                        const userData = await response.json();
+                        log('User data: ' + JSON.stringify(userData));
+                    } else {
+                        const errorText = await response.text();
+                        log('User/me error: ' + errorText);
+                    }
+                } catch (error) {
+                    log('User/me fetch error: ' + error.message);
+                }
+                
+                // Test space endpoint
+                try {
+                    const spaceResponse = await fetch('http://localhost:3000/api/v1/space/cmdj419p50002a8bp0i41xxvd', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    log('Space response status: ' + spaceResponse.status);
+                    
+                    if (spaceResponse.ok) {
+                        const spaceData = await spaceResponse.json();
+                        log('Space data: ' + JSON.stringify(spaceData));
+                    } else {
+                        const errorText = await spaceResponse.text();
+                        log('Space error: ' + errorText);
+                    }
+                } catch (error) {
+                    log('Space fetch error: ' + error.message);
+                }
+            }
+        }
+        
+        testAuthFlow();
+    </script>
+</body>
+</html> 

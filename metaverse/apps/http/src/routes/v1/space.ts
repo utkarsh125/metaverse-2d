@@ -4,12 +4,13 @@ import { Router } from "express";
 import client from "@metaverse/db/client"
 import { userMiddleware } from "../../middleware/user";
 import { z } from "zod";
+import { spaceCreationLimiter, checkSpaceLimit } from "../../middleware/rateLimit";
 
 export const spaceRouter = Router();
 
 // the index.ts file handles /api/v1
 // and /space is handled by routes/v1
-spaceRouter.post("/", userMiddleware, async(req, res) => {
+spaceRouter.post("/", userMiddleware, spaceCreationLimiter, checkSpaceLimit, async(req, res) => {
 
     console.log("[DEBUG] userId:", req.userId);
     console.log("[DEBUG] req.body:", req.body);

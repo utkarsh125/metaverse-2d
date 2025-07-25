@@ -68,6 +68,11 @@ For detailed Docker documentation, see [README-Docker.md](README-Docker.md).
 - Team invites and collaboration
 - Custom elements and collision detection
 - Responsive frontend with Pixi.js rendering
+- **Rate limiting and abuse prevention**
+  - HTTP API rate limiting (100 requests/15min per IP)
+  - Login rate limiting (5 attempts/15min per IP)
+  - Space creation limits (5 max per user)
+  - WebSocket connection limits (prevent multiple joins)
 
 ## 🔮 Upcoming Features
 

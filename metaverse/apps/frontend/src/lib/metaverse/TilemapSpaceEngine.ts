@@ -25,6 +25,8 @@ interface WSMessage {
     y?: number;
     spaceId?: string;
     message?: string;
+    avatarId?: string;
+    avatarImageUrl?: string;
   };
 }
 
@@ -45,6 +47,8 @@ interface User {
   username: string;
   x: number;
   y: number;
+  avatarId?: string;
+  avatarImageUrl?: string;
 }
 
 interface WebSocketError extends Error {
@@ -153,6 +157,11 @@ export class TilemapSpaceEngine {
           y: this.playerTilePos.y
         }
       });
+      
+      // Dispatch connection event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('websocket-connected'));
+      }
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
@@ -452,12 +461,29 @@ export class TilemapSpaceEngine {
     }
   };
 
-  private async createPlayerSprite(userId: string, username: string, x: number, y: number): Promise<PIXI.Container> {
+  private async createPlayerSprite(userId: string, username: string, x: number, y: number, avatarImageUrl?: string): Promise<PIXI.Container> {
     const playerContainer = new PIXI.Container();
     
     // Load and create player sprite
-    const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
-    const sprite = new PIXI.Sprite(heroTexture);
+    let sprite: PIXI.Sprite;
+    
+    if (avatarImageUrl) {
+      try {
+        // Try to load the custom avatar
+        const avatarTexture = await PIXI.Assets.load(avatarImageUrl);
+        sprite = new PIXI.Sprite(avatarTexture);
+      } catch (error) {
+        console.warn('Failed to load custom avatar, falling back to hero.png:', error);
+        // Fallback to hero.png if avatar loading fails
+        const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
+        sprite = new PIXI.Sprite(heroTexture);
+      }
+    } else {
+      // Use default hero.png if no avatar is specified
+      const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
+      sprite = new PIXI.Sprite(heroTexture);
+    }
+    
     sprite.anchor.set(0.5, 0.5);
     sprite.width = this.playerSize;
     sprite.height = this.playerSize;
@@ -499,7 +525,8 @@ export class TilemapSpaceEngine {
                   user.userId,
                   user.username,
                   user.x,
-                  user.y
+                  user.y,
+                  user.avatarImageUrl
                 );
                 this.otherPlayers.set(user.userId, playerContainer);
                 this.container.addChild(playerContainer);
@@ -515,7 +542,9 @@ export class TilemapSpaceEngine {
               userId: message.payload.userId,
               username: message.payload.username,
               x: message.payload.x,
-              y: message.payload.y
+              y: message.payload.y,
+              avatarId: message.payload.avatarId,
+              avatarImageUrl: message.payload.avatarImageUrl
             };
             
             if (joinedUser.userId !== this.userId) {
@@ -524,7 +553,8 @@ export class TilemapSpaceEngine {
                 joinedUser.userId,
                 joinedUser.username,
                 joinedUser.x,
-                joinedUser.y
+                joinedUser.y,
+                joinedUser.avatarImageUrl
               );
               this.otherPlayers.set(joinedUser.userId, playerContainer);
               this.container.addChild(playerContainer);
@@ -601,6 +631,19 @@ export class TilemapSpaceEngine {
             }
           } else {
             console.error('TilemapSpaceEngine: Invalid chat message payload:', message.payload);
+          }
+          break;
+
+        case 'error':
+          console.error('TilemapSpaceEngine: Server error:', message.payload.message);
+          // Show error to user
+          if (message.payload.message) {
+            // Dispatch a custom event that the parent can listen to
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('websocket-error', {
+                detail: { message: message.payload.message }
+              }));
+            }
           }
           break;
       }
@@ -689,7 +732,8 @@ export class TilemapSpaceEngine {
           y: Math.floor((mapData.height) / 2),
         };
         
-        // Load player sprite
+        // Load player sprite - we'll need to fetch user's avatar from the server
+        // For now, use the default hero sprite
         const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
         this.playerSprite = new PIXI.Sprite(heroTexture);
         this.playerSprite.anchor.set(0.5, 0.5);
