@@ -781,6 +781,40 @@ export class TilemapSpaceEngine {
     return this.zoomLevel;
   }
 
+  public movePlayer(dx: number, dy: number): void {
+    if (!this.playerSprite || !this.tilemapRenderer || this.isMoving) return;
+
+    const newX = this.playerTilePos.x + dx;
+    const newY = this.playerTilePos.y + dy;
+
+    const mapWidth = this.tilemapRenderer['mapData']?.width || 0;
+    const mapHeight = this.tilemapRenderer['mapData']?.height || 0;
+
+    if (newX >= 0 && newY >= 0 && newX < mapWidth && newY < mapHeight) {
+      const tileWidth = this.tilemapRenderer['mapData']?.tilewidth || 32;
+      const tileHeight = this.tilemapRenderer['mapData']?.tileheight || 32;
+      const px = newX * tileWidth;
+      const py = newY * tileHeight;
+
+      if (!this.tilemapRenderer.isColliding(px, py, tileWidth, tileHeight)) {
+        this.playerTilePos.x = newX;
+        this.playerTilePos.y = newY;
+        this.isMoving = true;
+        this.updatePlayerSpritePosition();
+
+        // Add movement to batch instead of sending immediately
+        this.addToBatch({
+          type: 'movement',
+          payload: {
+            x: newX,
+            y: newY
+          },
+          timestamp: Date.now()
+        });
+      }
+    }
+  }
+
   public destroy(): void {
     // Clean up timers
     if (this.batchTimer) {

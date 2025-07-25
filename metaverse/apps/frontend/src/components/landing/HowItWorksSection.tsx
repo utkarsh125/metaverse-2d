@@ -91,10 +91,10 @@ const HowItWorksSection = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
         <div ref={headerRef} className="text-center mb-16">
-          <span className="font-inter text-xs tracking-widest text-purple-600 mb-4 block font-semibold">
+          <span className="font-inter text-xs tracking-widest text-purple-500 mb-4 block font-semibold">
             HOW IT WORKS
           </span>
-          <h2 className="font-pixelify text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-8">
+          <h2 className="font-pixelify text-2xl sm:text-3xl lg:text-4xl font-bold text-purple-900 mb-8">
             Three easy steps to get started
           </h2>
         </div>
@@ -107,16 +107,16 @@ const HowItWorksSection = () => {
               {steps.map((step, idx) => (
                 <div
                   key={idx}
-                  className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-start gap-4 border border-purple-100 hover:border-purple-200 transition-all duration-300 hover:shadow-lg"
+                  className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-start gap-4 border border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg"
                 >
-                  <div className="font-inter font-bold text-xl sm:text-2xl text-purple-600 min-w-0 sm:min-w-[2.5rem] text-center sm:text-left">
+                  <div className="font-inter font-bold text-xl sm:text-2xl text-purple-500 min-w-0 sm:min-w-[2.5rem] text-center sm:text-left">
                     {String(idx + 1).padStart(2, "0")}
                   </div>
                   <div className="text-center sm:text-left">
-                    <h3 className="font-pixelify text-lg sm:text-xl font-bold text-gray-900 mb-2">
+                    <h3 className="font-pixelify text-lg sm:text-xl font-bold text-purple-900 mb-2">
                       {step.title}
                     </h3>
-                    <p className="font-inter text-gray-600 text-sm sm:text-base lg:text-lg leading-relaxed">
+                    <p className="font-inter text-purple-700 text-sm sm:text-base lg:text-lg leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -128,7 +128,7 @@ const HowItWorksSection = () => {
           {/* Right: Video and Images */}
           <div ref={mediaRef} className="order-1 lg:order-2">
             {/* YouTube Video */}
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl mb-8 border border-gray-200">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl mb-8 border border-purple-200">
               <iframe
                 className="absolute inset-0 w-full h-full"
                 src="https://www.youtube.com/embed/dQw4w9WgXcQ"
@@ -140,7 +140,7 @@ const HowItWorksSection = () => {
 
             {/* Images */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg border border-purple-200">
                 <Image
                   src="/how-it-works.png"
                   alt="How it works"
@@ -149,7 +149,7 @@ const HowItWorksSection = () => {
                   priority
                 />
               </div>
-              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg border border-gray-200">
+              <div className="relative aspect-square rounded-2xl overflow-hidden shadow-lg border border-purple-200">
                 <Image
                   src="/celebrating.png"
                   alt="Celebrating"

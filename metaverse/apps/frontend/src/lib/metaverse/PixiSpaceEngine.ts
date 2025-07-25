@@ -384,4 +384,23 @@ export class PixiSpaceEngine {
     this.chatMessageHandler = handler;
     console.log('PixiSpaceEngine: Chat handler set successfully');
   }
+
+  public movePlayer(dx: number, dy: number): void {
+    if (!this.currentUser) return;
+
+    // Apply movement with speed
+    this.currentUser.x += dx * this.moveSpeed;
+    this.currentUser.y += dy * this.moveSpeed;
+
+    // Send movement update to server
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'movement',
+        payload: {
+          x: this.currentUser.x,
+          y: this.currentUser.y
+        }
+      }));
+    }
+  }
 } 

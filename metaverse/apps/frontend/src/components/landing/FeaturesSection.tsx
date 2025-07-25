@@ -34,8 +34,8 @@ const features = [
             gradientUnits="userSpaceOnUse"
           >
             {" "}
-            <stop stopColor="#B8DBFC" />{" "}
-            <stop offset="1" stopColor="#F8FBFE" />{" "}
+            <stop stopColor="#C4B5FD" />{" "}
+            <stop offset="1" stopColor="#F3F4F6" />{" "}
           </linearGradient>{" "}
           <clipPath id="clip0_231_648">
             {" "}
@@ -44,10 +44,10 @@ const features = [
         </defs>{" "}
       </svg>
     ),
-    gradient: "from-blue-500 to-cyan-500",
-    bgGradient: "from-blue-50 to-cyan-50",
-    borderColor: "border-blue-200",
-    hoverBorder: "hover:border-blue-300",
+    gradient: "from-purple-400 to-purple-500",
+    bgGradient: "from-purple-50 to-purple-100",
+    borderColor: "border-purple-200",
+    hoverBorder: "hover:border-purple-300",
   },
   {
     title: "Avatar System",
@@ -79,16 +79,16 @@ const features = [
             gradientUnits="userSpaceOnUse"
           >
             {" "}
-            <stop stopColor="#B8DBFC" />{" "}
-            <stop offset="1" stopColor="#F8FBFE" />{" "}
+            <stop stopColor="#C4B5FD" />{" "}
+            <stop offset="1" stopColor="#F3F4F6" />{" "}
           </linearGradient>{" "}
         </defs>{" "}
       </svg>
     ),
-    gradient: "from-green-500 to-emerald-500",
-    bgGradient: "from-green-50 to-emerald-50",
-    borderColor: "border-green-200",
-    hoverBorder: "hover:border-green-300",
+    gradient: "from-purple-400 to-purple-500",
+    bgGradient: "from-purple-50 to-purple-100",
+    borderColor: "border-purple-200",
+    hoverBorder: "hover:border-purple-300",
   },
   {
     title: "Interactive Maps",
@@ -123,8 +123,8 @@ const features = [
             gradientUnits="userSpaceOnUse"
           >
             {" "}
-            <stop stopColor="#B8DBFC" />{" "}
-            <stop offset="1" stopColor="#F8FBFE" />{" "}
+            <stop stopColor="#C4B5FD" />{" "}
+            <stop offset="1" stopColor="#F3F4F6" />{" "}
           </linearGradient>{" "}
           <clipPath id="clip0_105_699">
             {" "}
@@ -133,10 +133,10 @@ const features = [
         </defs>{" "}
       </svg>
     ),
-    gradient: "from-orange-500 to-red-500",
-    bgGradient: "from-orange-50 to-red-50",
-    borderColor: "border-orange-200",
-    hoverBorder: "hover:border-orange-300",
+    gradient: "from-purple-400 to-purple-500",
+    bgGradient: "from-purple-50 to-purple-100",
+    borderColor: "border-purple-200",
+    hoverBorder: "hover:border-purple-300",
   },
 ];
 
@@ -144,22 +144,22 @@ const FeaturesSection = () => {
   return (
     <section
       id="features"
-      className="py-24 bg-gradient-to-b from-white to-gray-50"
+      className="py-24 bg-gradient-to-b from-white to-purple-50"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <span className="font-inter text-xs tracking-widest text-gray-500 mb-4 block">
+          <span className="font-inter text-xs tracking-widest text-purple-500 mb-4 block">
             FEATURES
           </span>
-          <h2 className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+          <h2 className="font-pixelify text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-purple-900 mb-6 leading-tight">
             Everything you need to build
             <br />
-            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
               amazing virtual experiences
             </span>
           </h2>
-          <p className="font-inter text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto px-4">
+          <p className="font-inter text-lg sm:text-xl text-purple-700 max-w-3xl mx-auto px-4">
             Powerful tools and features designed to make virtual collaboration
             seamless and engaging.
           </p>
@@ -191,10 +191,10 @@ const FeaturesSection = () => {
 
               {/* Content */}
               <div className="relative">
-                <h3 className="font-pixelify text-xl sm:text-2xl font-bold mb-4 text-gray-900 group-hover:text-gray-800 transition-colors duration-300">
+                <h3 className="font-pixelify text-xl sm:text-2xl font-bold mb-4 text-purple-900 group-hover:text-purple-800 transition-colors duration-300">
                   {feature.title}
                 </h3>
-                <p className="font-inter text-gray-600 leading-relaxed text-sm sm:text-base group-hover:text-gray-700 transition-colors duration-300">
+                <p className="font-inter text-purple-700 leading-relaxed text-sm sm:text-base group-hover:text-purple-800 transition-colors duration-300">
                   {feature.description}
                 </p>
               </div>
@@ -214,8 +214,8 @@ const FeaturesSection = () => {
 
         {/* Decorative Elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-purple-200 rounded-full opacity-20 blur-3xl"></div>
-          <div className="absolute bottom-20 right-10 w-40 h-40 bg-blue-200 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute top-20 left-10 w-32 h-32 bg-purple-300 rounded-full opacity-20 blur-3xl"></div>
+          <div className="absolute bottom-20 right-10 w-40 h-40 bg-purple-200 rounded-full opacity-20 blur-3xl"></div>
         </div>
       </div>
     </section>
