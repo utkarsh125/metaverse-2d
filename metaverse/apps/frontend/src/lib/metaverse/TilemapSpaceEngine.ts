@@ -27,6 +27,7 @@ interface WSMessage {
     message?: string;
     avatarId?: string;
     avatarImageUrl?: string;
+    token?: string;
   };
 }
 
@@ -151,7 +152,7 @@ export class TilemapSpaceEngine {
         type: 'join',
         payload: {
           spaceId,
-          userId: this.userId,
+          token: sessionStorage.getItem('token') || undefined,
           username: this.username,
           x: this.playerTilePos.x,
           y: this.playerTilePos.y

@@ -99,9 +99,16 @@ export default function SpacePage() {
   useEffect(() => {
     const handleWebSocketError = (event: CustomEvent) => {
       if (event.detail?.message && event.detail.message.includes('already connected')) {
-        // Don't redirect to signin for "already connected" errors
-        setConnectionError(event.detail.message);
+        // Automatically redirect to dashboard for "already connected" errors
+        console.log('User already connected, redirecting to dashboard');
+        showSuccess('Already Connected', 'You are already connected to this space from another session. Redirecting to dashboard.');
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000); // Give user 2 seconds to see the message
         return;
+      } else if (event.detail?.message) {
+        // Set connection error for other types of errors
+        setConnectionError(event.detail.message);
       }
     };
 
@@ -411,8 +418,8 @@ export default function SpacePage() {
         </div>
       </div>
 
-      {/* Connection Error Overlay */}
-      {connectionError && (
+      {/* Connection Error Overlay - Only for non-redirect errors */}
+      {connectionError && !connectionError.includes('already connected') && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <div className="bg-white rounded-2xl p-8 max-w-md mx-4 shadow-2xl">
             <div className="text-center">
@@ -421,7 +428,7 @@ export default function SpacePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Already Connected</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Connection Error</h3>
               <p className="text-gray-600 mb-6">{connectionError}</p>
               <div className="flex gap-3 justify-center">
                 <button

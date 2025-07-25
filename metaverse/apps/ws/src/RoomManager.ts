@@ -24,7 +24,7 @@ export class RoomManager{
         if (!this.rooms.has(spaceId)) {
             return;
         }
-        this.rooms.set(spaceId, (this.rooms.get(spaceId)?.filter((u) => u.id !== user.id) ?? []));
+        this.rooms.set(spaceId, (this.rooms.get(spaceId)?.filter((u) => u.userId !== user.userId) ?? []));
     }
 
     public addUser(spaceId: string, user: User){
@@ -34,7 +34,15 @@ export class RoomManager{
             return;
         }
 
-        this.rooms.set(spaceId, [...(this.rooms.get(spaceId) ?? []), user])
+        // Check if user is already in the room (by userId, not connection id)
+        const existingUsers = this.rooms.get(spaceId) ?? [];
+        const userExists = existingUsers.some(u => u.userId === user.userId);
+        
+        if (!userExists) {
+            this.rooms.set(spaceId, [...existingUsers, user]);
+        } else {
+            console.log(`[RoomManager] User ${user.userId} already exists in space ${spaceId}, not adding duplicate`);
+        }
     }
 
     public broadcast(message: OutgoingMessage, user: User, roomId: String){
@@ -44,7 +52,7 @@ export class RoomManager{
         }
 
         this.rooms.get(roomId)?.forEach((u) => {
-            if( u.id !==user.id){
+            if( u.userId !== user.userId){
                 u.send(message);
             }
         })

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auto-Redirect Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+        .info { background-color: #d1ecf1; }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Auto-Redirect Test for Duplicate Connections</h1>
+    
+    <div class="test-section info">
+        <h3>Test Instructions</h3>
+        <p>This test simulates what happens when a user tries to connect to the same space from multiple browser tabs/windows.</p>
+        <ol>
+            <li>Click "Start First Connection" to simulate the first connection</li>
+            <li>Click "Start Second Connection" to simulate a duplicate connection</li>
+            <li>Observe the auto-redirect behavior</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h3>Connection Tests</h3>
+        <button id="testFirst" class="btn-primary">Start First Connection</button>
+        <button id="testSecond" class="btn-danger">Start Second Connection</button>
+        <button id="testDifferent" class="btn-success">Test Different User</button>
+        <button id="clearOutput" class="btn-primary">Clear Output</button>
+    </div>
+    
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        let ws1 = null;
+        let ws2 = null;
+        let ws3 = null;
+        
+        function log(message) {
+            output.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput() {
+            output.textContent = '';
+        }
+        
+        // Simulate the auto-redirect behavior
+        function simulateAutoRedirect() {
+            log('🔄 Simulating auto-redirect to dashboard...');
+            log('📱 In the real app, this would redirect to /dashboard');
+            log('⏰ Auto-redirect happens after 2 seconds with success message');
+            
+            // Simulate the success toast and redirect
+            setTimeout(() => {
+                log('✅ Success toast: "Already Connected - You are already connected to this space from another session. Redirecting to dashboard."');
+            }, 500);
+            
+            setTimeout(() => {
+                log('🚀 Redirecting to dashboard...');
+                log('📍 Would navigate to: /dashboard');
+            }, 2000);
+        }
+        
+        document.getElementById('testFirst').onclick = async () => {
+            log('🧪 Test 1: First Connection');
+            
+            ws1 = new WebSocket('ws://localhost:4000');
+            
+            ws1.onopen = () => {
+                log('✅ WebSocket 1 connected');
+                ws1.send(JSON.stringify({
+                    type: 'join',
+                    payload: {
+                        spaceId: 'test-space-auto-redirect',
+                        token: null,
+                        username: 'testuser'
+                    }
+                }));
+            };
+            
+            ws1.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log('📨 WS1 received: ' + message.type);
+                
+                if (message.type === 'space-joined') {
+                    log('✅ WS1 successfully joined space');
+                } else if (message.type === 'error') {
+                    log('❌ WS1 error: ' + message.payload.message);
+                }
+            };
+            
+            ws1.onerror = (error) => {
+                log('❌ WebSocket 1 error: ' + error);
+            };
+        };
+        
+        document.getElementById('testSecond').onclick = async () => {
+            log('🧪 Test 2: Second Connection (Should Trigger Auto-Redirect)');
+            
+            ws2 = new WebSocket('ws://localhost:4000');
+            
+            ws2.onopen = () => {
+                log('✅ WebSocket 2 connected');
+                ws2.send(JSON.stringify({
+                    type: 'join',
+                    payload: {
+                        spaceId: 'test-space-auto-redirect',
+                        token: null,
+                        username: 'testuser'
+                    }
+                }));
+            };
+            
+            ws2.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log('📨 WS2 received: ' + message.type);
+                
+                if (message.type === 'error') {
+                    log('✅ WS2 correctly blocked with error: ' + message.payload.message);
+                    if (message.payload.message.includes('already connected')) {
+                        log('🎯 This would trigger auto-redirect in the frontend');
+                        simulateAutoRedirect();
+                    }
+                } else if (message.type === 'space-joined') {
+                    log('❌ WS2 should have been blocked but was allowed');
+                }
+            };
+            
+            ws2.onerror = (error) => {
+                log('❌ WebSocket 2 error: ' + error);
+            };
+        };
+        
+        document.getElementById('testDifferent').onclick = async () => {
+            log('🧪 Test 3: Different User Connection');
+            
+            ws3 = new WebSocket('ws://localhost:4000');
+            
+            ws3.onopen = () => {
+                log('✅ WebSocket 3 connected');
+                ws3.send(JSON.stringify({
+                    type: 'join',
+                    payload: {
+                        spaceId: 'test-space-auto-redirect',
+                        token: null,
+                        username: 'differentuser'
+                    }
+                }));
+            };
+            
+            ws3.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                log('📨 WS3 received: ' + message.type);
+                
+                if (message.type === 'space-joined') {
+                    log('✅ WS3 successfully joined space (different user)');
+                } else if (message.type === 'error') {
+                    log('❌ WS3 error: ' + message.payload.message);
+                }
+            };
+            
+            ws3.onerror = (error) => {
+                log('❌ WebSocket 3 error: ' + error);
+            };
+        };
+        
+        document.getElementById('clearOutput').onclick = clearOutput;
+        
+        // Initial log
+        log('🚀 Auto-redirect test page loaded');
+        log('📋 This simulates the frontend behavior when duplicate connections are detected');
+    </script>
+</body>
+</html> 

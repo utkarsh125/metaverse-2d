@@ -28,6 +28,7 @@ interface WebSocketData {
     username?: string;
     peerId?: string;
     spaceId?: string;
+    token?: string;
   };
 }
 
@@ -287,12 +288,10 @@ export class SpaceEngine {
         type: 'join',
         payload: {
           spaceId: this.spaceId,
-          userId: this.currentUser.id,
-          name: this.currentUser.username,
-          position: {
-            x: this.currentUser.x,
-            y: this.currentUser.y
-          }
+          token: sessionStorage.getItem('token') || undefined,
+          username: this.currentUser.username,
+          x: this.currentUser.x,
+          y: this.currentUser.y
         }
       });
     };

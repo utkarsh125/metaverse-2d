@@ -360,7 +360,7 @@ export default function VirtualSpaceCanvas() {
         type: 'join',
         payload: {
           spaceId: spaceId,
-          token: null // or get from localStorage if you have authentication
+          token: sessionStorage.getItem('token') || null
         }
       }));
     };

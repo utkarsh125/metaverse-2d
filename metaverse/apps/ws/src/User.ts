@@ -71,10 +71,12 @@ export class User {
                             this.avatarId = userData?.avatarId;
                             this.avatarImageUrl = userData?.avatar?.imageUrl;
                         } else {
-                            // Test mode - use provided username and test user ID
+                            // Test mode - use provided username and consistent test user ID
                             console.log("No token provided, using test mode");
-                            userId = "test-user-" + this.id;
-                            this.username = providedUsername || "Test User " + this.id;
+                            // Use username as the basis for user ID to prevent multiple connections
+                            const testUsername = providedUsername || "Test User";
+                            userId = "test-user-" + testUsername.toLowerCase().replace(/\s+/g, '-');
+                            this.username = testUsername;
                         }
                         
                         this.userId = userId;
@@ -104,12 +106,15 @@ export class User {
                             return;
                         }
                         console.log(`[User] Connection allowed for user ${userId} to space ${spaceId}`);
+                        
+                        // Debug: log current connections
+                        listCurrentConnections();
 
                         this.spaceId = spaceId;
                         this.x = parsedData.payload.x || Math.floor(Math.random() * space.width);
                         this.y = parsedData.payload.y || Math.floor(Math.random() * space.height);
                         
-                        // Add user to room
+                        // Add user to room (RoomManager will check for duplicates)
                         RoomManager.getInstance().addUser(spaceId, this);
 
                         // Send current state to joining user
@@ -117,7 +122,7 @@ export class User {
                             type: "space-joined",
                             payload: {
                                 users: RoomManager.getInstance().rooms.get(spaceId)
-                                    ?.filter(u => u.id !== this.id)
+                                    ?.filter(u => u.userId !== this.userId)
                                     ?.map(u => ({
                                         userId: u.userId,
                                         username: u.username,
