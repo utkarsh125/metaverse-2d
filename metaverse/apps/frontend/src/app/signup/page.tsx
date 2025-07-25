@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { API } from '@/lib/api';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import Link from 'next/link';
+import { API } from "@/lib/api";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import Link from "next/link";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,26 +17,28 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await API.post('/api/v1/signup', {
+      const res = await API.post("/api/v1/signup", {
         username,
         password,
-        type: 'user',
+        type: "user",
       });
       if (res.status === 200) {
-        router.push('/signin');
+        router.push("/signin");
       } else {
-        setError('Unexpected response status: ' + res.status);
+        setError("Unexpected response status: " + res.status);
       }
     } catch (err: unknown) {
-      if (err && typeof err === 'object' && 'response' in err) {
+      if (err && typeof err === "object" && "response" in err) {
         const axiosError = err as { response?: { status?: number } };
         if (axiosError.response?.status === 400) {
-          setError('Signup failed: username may already exist or invalid input.');
+          setError(
+            "Signup failed: username may already exist or invalid input."
+          );
         } else {
-          setError('Network or server error');
+          setError("Network or server error");
         }
       } else {
-        setError('Network or server error');
+        setError("Network or server error");
       }
     } finally {
       setLoading(false);
@@ -50,7 +52,7 @@ export default function SignupPage() {
         src="/bg-2k.png"
         alt="Metaverse background"
         className="fixed inset-0 w-full h-full object-cover z-0"
-        style={{ pointerEvents: 'none' }}
+        style={{ pointerEvents: "none" }}
         draggable={false}
       />
       {/* Overlay for readability */}
@@ -58,40 +60,55 @@ export default function SignupPage() {
       {/* Content */}
       <div className="relative z-20 w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-3 bg-gradient-to-r from-gray-900 to-black text-white px-4 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-3 bg-gradient-to-r from-gray-900 to-black text-white px-4 py-2.5 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 mb-6"
+          >
             <svg
-              width="20"
-              height="20"
+              width="30"
+              height="30"
               viewBox="0 0 200 200"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <g clipPath="url(#clip0_104_157)">
+              {" "}
+              <g clipPath="url(#clip0_235_973)">
+                {" "}
                 <path
                   fillRule="evenodd"
                   clipRule="evenodd"
-                  d="M100 200C155.228 200 200 155.228 200 100C200 44.7715 155.228 0 100 0C44.7715 0 0 44.7715 0 100C0 155.228 44.7715 200 100 200ZM100 143.75C124.162 143.75 143.75 124.162 143.75 100C143.75 75.8375 124.162 56.25 100 56.25C75.8375 56.25 56.25 75.8375 56.25 100C56.25 124.162 75.8375 143.75 100 143.75Z"
-                  fill="url(#paint0_linear_104_157)"
-                />
-              </g>
+                  d="M100 -4.37114e-06C155.228 -6.78525e-06 200 44.7715 200 100C200 155.228 155.228 200 100 200C44.7715 200 5.67237e-06 155.228 3.25826e-06 100C8.44143e-07 44.7715 44.7715 -1.95703e-06 100 -4.37114e-06ZM100 -4.37114e-06C138.108 -6.03688e-06 169 30.8923 169 69C169 107.108 138.108 138 100 138C61.8924 138 31 107.108 31 69C31 30.8923 61.8924 -2.7054e-06 100 -4.37114e-06ZM132 69C132 51.3269 117.673 37 100 37C82.3269 37 68 51.3269 68 69C68 86.6731 82.3269 101 100 101C117.673 101 132 86.6731 132 69Z"
+                  fill="url(#paint0_linear_235_973)"
+                />{" "}
+              </g>{" "}
               <defs>
+                {" "}
                 <linearGradient
-                  id="paint0_linear_104_157"
-                  x1="100"
-                  y1="0"
-                  x2="100"
-                  y2="200"
+                  id="paint0_linear_235_973"
+                  x1="-9.344e-06"
+                  y1="23"
+                  x2="152.5"
+                  y2="160.5"
                   gradientUnits="userSpaceOnUse"
                 >
-                  <stop stopColor="#CFFFE2" />
-                  <stop offset="1" stopColor="#F6F6F6" />
-                </linearGradient>
-                <clipPath id="clip0_104_157">
-                  <rect width="200" height="200" fill="white" />
-                </clipPath>
-              </defs>
+                  {" "}
+                  <stop stopColor="#B0B9FF" />{" "}
+                  <stop offset="1" stopColor="#E7E9FF" />{" "}
+                </linearGradient>{" "}
+                <clipPath id="clip0_235_973">
+                  {" "}
+                  <rect
+                    width="200"
+                    height="200"
+                    fill="white"
+                    transform="translate(7.62939e-06 200) rotate(-90)"
+                  />{" "}
+                </clipPath>{" "}
+              </defs>{" "}
             </svg>
-            <span className="font-raleway font-bold text-lg">orbit.space</span>
+            <span className="font-raleway font-bold text-lg">
+              orbitone.cloud
+            </span>
           </Link>
           <h2 className="font-pixelify text-3xl sm:text-4xl font-bold text-gray-100 mb-2">
             Join orbit.space
@@ -106,8 +123,16 @@ export default function SignupPage() {
               <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    <svg
+                      className="h-5 w-5 text-red-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div className="ml-3">
@@ -117,7 +142,10 @@ export default function SignupPage() {
               </div>
             )}
             <div>
-              <label htmlFor="username" className="font-inter block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="username"
+                className="font-inter block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Username
               </label>
               <input
@@ -132,7 +160,10 @@ export default function SignupPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="font-inter block text-sm font-semibold text-gray-700 mb-2">
+              <label
+                htmlFor="password"
+                className="font-inter block text-sm font-semibold text-gray-700 mb-2"
+              >
                 Password
               </label>
               <input
@@ -153,21 +184,40 @@ export default function SignupPage() {
             >
               {loading ? (
                 <div className="flex items-center gap-2">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                   Creating account...
                 </div>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </form>
           <div className="mt-8 text-center">
             <p className="font-inter text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link href="/signin" className="font-semibold text-purple-600 hover:text-purple-700 transition-colors duration-200">
+              Already have an account?{" "}
+              <Link
+                href="/signin"
+                className="font-semibold text-purple-600 hover:text-purple-700 transition-colors duration-200"
+              >
                 Sign in
               </Link>
             </p>
