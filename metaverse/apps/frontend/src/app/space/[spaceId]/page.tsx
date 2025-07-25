@@ -16,6 +16,7 @@ export default function SpacePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,6 +56,23 @@ export default function SpacePage() {
       fetchData();
     }
   }, [spaceId]);
+
+  // Handle mobile menu closing
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (mobileMenuOpen && !(event.target as Element).closest('.mobile-menu-container')) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    if (mobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -167,65 +185,132 @@ export default function SpacePage() {
       
       {/* Top Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-30 bg-black/40 backdrop-blur-sm border-b border-white/20">
-        <div className="flex justify-between items-center px-6 py-4">
-          {/* Space Info */}
-          <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 200 200"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <g clipPath="url(#clip0_104_157)">
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M100 200C155.228 200 200 155.228 200 100C200 44.7715 155.228 0 100 0C44.7715 0 0 44.7715 0 100C0 155.228 44.7715 200 100 200ZM100 143.75C124.162 143.75 143.75 124.162 143.75 100C143.75 75.8375 124.162 56.25 100 56.25C75.8375 56.25 56.25 75.8375 56.25 100C56.25 124.162 75.8375 143.75 100 143.75Z"
-                    fill="url(#paint0_linear_104_157)"
-                  />
-                </g>
-                <defs>
-                  <linearGradient
-                    id="paint0_linear_104_157"
-                    x1="100"
-                    y1="0"
-                    x2="100"
-                    y2="200"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="#CFFFE2" />
-                    <stop offset="1" stopColor="#F6F6F6" />
-                  </linearGradient>
-                  <clipPath id="clip0_104_157">
-                    <rect width="200" height="200" fill="white" />
-                  </clipPath>
-                </defs>
-              </svg>
-              <span className="font-raleway font-bold text-white text-lg">orbit.space</span>
-            </Link>
-            <div className="h-6 w-px bg-white/30"></div>
-            <div>
-              <h1 className="font-pixelify text-lg font-bold text-white">{space.name}</h1>
-              <p className="font-inter text-xs text-gray-300">Welcome, {currentUser.username}</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 sm:h-20">
+            {/* Space Info */}
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                <svg
+                  width="20"
+                  height="20"
+                  className="sm:w-6 sm:h-6"
+                  viewBox="0 0 200 200"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <g clipPath="url(#clip0_104_157)">
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M100 200C155.228 200 200 155.228 200 100C200 44.7715 155.228 0 100 0C44.7715 0 0 44.7715 0 100C0 155.228 44.7715 200 100 200ZM100 143.75C124.162 143.75 143.75 124.162 143.75 100C143.75 75.8375 124.162 56.25 100 56.25C75.8375 56.25 56.25 75.8375 56.25 100C56.25 124.162 75.8375 143.75 100 143.75Z"
+                      fill="url(#paint0_linear_104_157)"
+                    />
+                  </g>
+                  <defs>
+                    <linearGradient
+                      id="paint0_linear_104_157"
+                      x1="100"
+                      y1="0"
+                      x2="100"
+                      y2="200"
+                      gradientUnits="userSpaceOnUse"
+                    >
+                      <stop stopColor="#CFFFE2" />
+                      <stop offset="1" stopColor="#F6F6F6" />
+                    </linearGradient>
+                    <clipPath id="clip0_104_157">
+                      <rect width="200" height="200" fill="white" />
+                    </clipPath>
+                  </defs>
+                </svg>
+                <span className="font-pixelify font-bold text-white text-sm sm:text-base lg:text-lg">
+                  orbitone.cloud
+                </span>
+              </Link>
+              
+              <div className="h-4 sm:h-6 w-px bg-white/30 hidden sm:block"></div>
+              
+              <div className="min-w-0 flex-1">
+                <h1 className="font-pixelify text-sm sm:text-base lg:text-lg font-bold text-white truncate">
+                  {space.name}
+                </h1>
+                <p className="font-inter text-xs text-gray-300 truncate hidden sm:block">
+                  Welcome, {currentUser.username}
+                </p>
+              </div>
             </div>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <Link
-              href="/dashboard"
-              className="font-inter font-semibold bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30"
-            >
-              Dashboard
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="font-inter font-semibold bg-gradient-to-r from-gray-100 to-gray-200 hover:cursor-pointer text-black px-4 py-2 rounded-full shadow-lg hover:from-gray-200 hover:to-gray-300 transition-all duration-200"
-            >
-              Logout
-            </button>
+            
+            {/* Action Buttons - Desktop */}
+            <div className="hidden md:flex items-center gap-3">
+              <Link
+                href="/dashboard"
+                className="font-inter font-semibold bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full hover:bg-white/30 transition-all duration-200 border border-white/30 text-sm"
+              >
+                Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="font-inter font-semibold bg-gradient-to-r from-gray-100 to-gray-200 hover:cursor-pointer text-black px-4 py-2 rounded-full shadow-lg hover:from-gray-200 hover:to-gray-300 transition-all duration-200 text-sm"
+              >
+                Logout
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <div className="relative mobile-menu-container">
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="p-2 text-white hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black/40 rounded-md"
+                  aria-label="Toggle menu"
+                >
+                  <svg
+                    className="h-6 w-6"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    {mobileMenuOpen ? (
+                      <path d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                      <path d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                  </svg>
+                </button>
+
+                {/* Mobile Dropdown Menu */}
+                {mobileMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-black/90 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg overflow-hidden z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-3 border-b border-white/10">
+                        <p className="font-inter text-xs text-gray-300">
+                          {currentUser.username}
+                        </p>
+                      </div>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block font-inter font-medium text-white hover:bg-white/10 px-4 py-3 transition-colors duration-200 text-sm"
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          handleLogout();
+                        }}
+                        className="block w-full text-left font-inter font-medium text-white hover:bg-white/10 px-4 py-3 transition-colors duration-200 text-sm"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

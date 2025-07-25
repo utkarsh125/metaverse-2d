@@ -12,7 +12,7 @@ const Page = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col overflow-x-hidden">
       <DeviceNotice />
-      <div className="pt-8"> {/* Add padding to account for the notice */}
+      <div className="pt-12"> {/* Adjust padding for dismissible banner */}
         <Navbar />
       </div>
       <HeroSection />

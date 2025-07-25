@@ -7,12 +7,14 @@ interface ModernChatSidebarProps {
   onSendMessage: (message: string) => void;
   messages: ChatMessage[];
   currentUsername: string;
+  isMobile?: boolean;
 }
 
 export default function ModernChatSidebar({ 
   onSendMessage, 
   messages, 
-  currentUsername 
+  currentUsername,
+  isMobile = false
 }: ModernChatSidebarProps) {
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -44,7 +46,7 @@ export default function ModernChatSidebar({
   };
 
   return (
-    <div className="w-96 h-full bg-black/40 backdrop-blur-md border-l border-white/20 flex flex-col">
+    <div className={`${isMobile ? 'w-full' : 'w-96'} h-full bg-black/40 backdrop-blur-md ${isMobile ? '' : 'border-l border-white/20'} flex flex-col`}>
       {/* Chat Header */}
       <div className="bg-black/60 backdrop-blur-sm border-b border-white/20 p-4 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -78,7 +80,7 @@ export default function ModernChatSidebar({
                 }`}
               >
                 <div
-                  className={`max-w-xs px-4 py-3 rounded-xl relative backdrop-blur-sm border ${
+                  className={`${isMobile ? 'max-w-[85%]' : 'max-w-xs'} px-4 py-3 rounded-xl relative backdrop-blur-sm border ${
                     message.username === currentUsername
                       ? 'bg-purple-600/80 text-white border-purple-400/30'
                       : 'bg-white/20 text-white border-white/20'
@@ -92,7 +94,7 @@ export default function ModernChatSidebar({
                       {formatTime(message.timestamp)}
                     </span>
                   </div>
-                  <p className="font-inter text-sm leading-relaxed">{message.message}</p>
+                  <p className="font-inter text-sm leading-relaxed break-words">{message.message}</p>
                   
                   {/* Message tail */}
                   <div 
@@ -119,7 +121,7 @@ export default function ModernChatSidebar({
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="Type your message..."
-              className="font-inter w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all"
+              className="font-inter w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/30 rounded-xl text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all text-base"
               maxLength={200}
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-white/50">

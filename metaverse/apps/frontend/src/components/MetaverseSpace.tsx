@@ -1,13 +1,23 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Space, ChatMessage } from '../lib/types';
+import React, { useRef, useState, useEffect } from 'react';
+import { useDeviceType } from '../lib/useDeviceType';
+import VirtualControls from './VirtualControls';
+import ModernChatSidebar from './ModernChatSidebar';
+import type { ChatMessage, Space } from '../lib/types';
 import type { PixiSpaceEngine } from '../lib/metaverse/PixiSpaceEngine';
 import type { TilemapSpaceEngine } from '../lib/metaverse/TilemapSpaceEngine';
-import ModernChatSidebar from './ModernChatSidebar';
 
-// Type for engines with zoom capabilities
-interface EngineWithZoom {
+interface MetaverseSpaceProps {
+  space: Space;
+  userId: string;
+  username: string;
+  mapFile: string;
+}
+
+// Extend the engine types to include movePlayer and zoom
+interface EngineWithMovement {
+  movePlayer: (dx: number, dy: number) => void;
   getZoomLevel?: () => number;
   zoomIn?: () => void;
   zoomOut?: () => void;
@@ -17,17 +27,11 @@ interface EngineWithZoom {
   setupChatHandler?: (handler: (message: ChatMessage) => void) => void;
 }
 
-interface MetaverseSpaceProps {
-  space: Space;
-  userId: string;
-  username: string;
-  mapFile?: string | null;
-}
-
 export default function MetaverseSpace({ space, userId, username, mapFile }: MetaverseSpaceProps) {
-  console.log("MetaverseSpace props", { space, userId, username, mapFile });
+  const deviceType = useDeviceType();
+  const [pressedKeys, setPressedKeys] = useState<Set<string>>(new Set());
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const engineRef = useRef<(PixiSpaceEngine | TilemapSpaceEngine) & EngineWithZoom | null>(null);
+  const engineRef = useRef<((PixiSpaceEngine | TilemapSpaceEngine) & EngineWithMovement) | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -82,24 +86,24 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
 
   // Zoom controls
   const handleZoomIn = () => {
-    if (engineRef.current) {
-      engineRef.current.zoomIn?.();
+    if (engineRef.current?.zoomIn) {
+      engineRef.current.zoomIn();
       const currentZoom = engineRef.current.getZoomLevel?.() || 1;
       setZoomLevel(currentZoom);
     }
   };
 
   const handleZoomOut = () => {
-    if (engineRef.current) {
-      engineRef.current.zoomOut?.();
+    if (engineRef.current?.zoomOut) {
+      engineRef.current.zoomOut();
       const currentZoom = engineRef.current.getZoomLevel?.() || 1;
       setZoomLevel(currentZoom);
     }
   };
 
   const handleResetZoom = () => {
-    if (engineRef.current) {
-      engineRef.current.resetZoomAndPan?.();
+    if (engineRef.current?.resetZoomAndPan) {
+      engineRef.current.resetZoomAndPan();
       setZoomLevel(1);
     }
   };
@@ -107,8 +111,8 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
   // Update zoom level periodically
   useEffect(() => {
     const interval = setInterval(() => {
-      if (engineRef.current) {
-        const currentZoom = engineRef.current.getZoomLevel?.() || 1;
+      if (engineRef.current?.getZoomLevel) {
+        const currentZoom = engineRef.current.getZoomLevel() || 1;
         setZoomLevel(currentZoom);
       }
     }, 100);
@@ -317,6 +321,82 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
     };
   }, [userId, username, mapFile, spaceId]);
 
+  // Handle virtual controls
+  const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const keyMap = {
+      up: 'ArrowUp',
+      down: 'ArrowDown',
+      left: 'ArrowLeft',
+      right: 'ArrowRight'
+    };
+    const key = keyMap[direction];
+    setPressedKeys(prev => new Set([...prev, key]));
+  };
+
+  const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const keyMap = {
+      up: 'ArrowUp',
+      down: 'ArrowDown',
+      left: 'ArrowLeft',
+      right: 'ArrowRight'
+    };
+    const key = keyMap[direction];
+    setPressedKeys(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(key);
+      return newSet;
+    });
+  };
+
+  // Update movement based on pressed keys
+  useEffect(() => {
+    if (!engineRef.current) return;
+
+    const movePlayer = () => {
+      const speed = 5;
+      let dx = 0;
+      let dy = 0;
+
+      if (pressedKeys.has('ArrowUp') || pressedKeys.has('w')) dy -= speed;
+      if (pressedKeys.has('ArrowDown') || pressedKeys.has('s')) dy += speed;
+      if (pressedKeys.has('ArrowLeft') || pressedKeys.has('a')) dx -= speed;
+      if (pressedKeys.has('ArrowRight') || pressedKeys.has('d')) dx += speed;
+
+      if (dx !== 0 || dy !== 0) {
+        engineRef.current?.movePlayer(dx, dy);
+      }
+    };
+
+    const interval = setInterval(movePlayer, 1000 / 60); // 60 FPS
+    return () => clearInterval(interval);
+  }, [pressedKeys]);
+
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key;
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(key)) {
+        setPressedKeys(prev => new Set([...prev, key]));
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key;
+      setPressedKeys(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(key);
+        return newSet;
+      });
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
 
   if (!spaceId) {
@@ -341,93 +421,128 @@ export default function MetaverseSpace({ space, userId, username, mapFile }: Met
     <div className="flex h-[calc(100vh-5rem)]">
       {/* Game Canvas Area */}
       <div className="flex-1 relative">
-        <div 
-          className="w-full h-full flex items-center justify-center p-4"
-          style={{ 
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          <canvas
-            ref={canvasRef}
-            className="w-full h-full max-w-full max-h-full rounded-lg shadow-2xl"
+        {deviceType === 'mobile' ? (
+          <div className="w-full h-full flex flex-col">
+            {/* Mobile Notice Banner */}
+            <div className="bg-purple-600/90 backdrop-blur-sm text-white p-4 shadow-lg">
+              <div className="max-w-lg mx-auto text-center">
+                <p className="font-inter text-sm">
+                  <span className="font-semibold">Mobile View Limited:</span>
+                  {" "}Virtual space is optimized for desktop/tablet, but you can still chat!
+                </p>
+              </div>
+            </div>
+            
+            {/* Chat Container - Takes up full height */}
+            <div className="flex-1 bg-black/60 backdrop-blur-sm">
+              <ModernChatSidebar
+                onSendMessage={handleSendMessage}
+                messages={chatMessages}
+                currentUsername={username}
+                isMobile={true}
+              />
+            </div>
+          </div>
+        ) : (
+          <div 
+            className="w-full h-full flex items-center justify-center p-4"
             style={{ 
-              display: 'block',
-              imageRendering: 'pixelated' // Use pixelated rendering for crisp pixels
+              position: 'relative',
+              overflow: 'hidden'
             }}
-          />
-          
-          {/* Loading overlay */}
-          {isLoading && (
-            <div className="absolute inset-4 bg-black/60 backdrop-blur-sm flex items-center justify-center rounded-lg">
-              <div className="text-center bg-gray-800/95 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-gray-700/50">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r rounded-full mb-4 shadow-lg shadow-purple-500/25">
-                  <svg className="w-8 h-8 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
+          >
+            <canvas
+              ref={canvasRef}
+              className="w-full h-full max-w-full max-h-full rounded-lg shadow-2xl"
+              style={{ 
+                display: 'block',
+                imageRendering: 'pixelated'
+              }}
+            />
+            
+            {/* Loading overlay */}
+            {isLoading && (
+              <div className="absolute inset-4 bg-black/60 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                <div className="text-center bg-gray-800/95 backdrop-blur-md p-8 rounded-xl shadow-2xl border border-gray-700/50">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r rounded-full mb-4 shadow-lg shadow-purple-500/25">
+                    <svg className="w-8 h-8 text-white animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                  </div>
+                  <p className="font-inter font-semibold text-white">Loading space...</p>
                 </div>
-                <p className="font-inter font-semibold text-white">Loading space...</p>
+              </div>
+            )}
+            
+            {/* Controls overlay */}
+            <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl border border-white/20">
+              <h3 className="font-inter font-bold mb-2 text-sm">CONTROLS</h3>
+              <div className="flex items-center gap-2 text-xs text-gray-300 mb-3">
+                <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">WASD</kbd>
+                <span>or</span>
+                <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">↑↓←→</kbd>
+                <span>to move</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-300">
+                <span>Scroll wheel: zoom</span>
+                <span>•</span>
+                <span>Click + drag: pan</span>
               </div>
             </div>
-          )}
-          
-          {/* Controls overlay */}
-          <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-sm text-white p-4 rounded-lg shadow-xl border border-white/20">
-            <h3 className="font-inter font-bold mb-2 text-sm">CONTROLS</h3>
-            <div className="flex items-center gap-2 text-xs text-gray-300 mb-3">
-              <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">WASD</kbd>
-              <span>or</span>
-              <kbd className="px-2 py-1 bg-black/40 rounded text-xs border border-white/20">↑↓←→</kbd>
-              <span>to move</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-300">
-              <span>Scroll wheel: zoom</span>
-              <span>•</span>
-              <span>Click + drag: pan</span>
-            </div>
-          </div>
 
-          {/* Zoom controls */}
-          <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-sm text-white p-3 rounded-lg shadow-xl border border-white/20">
-            <h3 className="font-inter font-bold mb-2 text-sm">ZOOM</h3>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={handleZoomIn}
-                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
-              >
-                Zoom In
-              </button>
-              <button
-                onClick={handleZoomOut}
-                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
-              >
-                Zoom Out
-              </button>
-              <button
-                onClick={handleResetZoom}
-                className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
-              >
-                Reset
-              </button>
-              <div className="text-xs text-gray-300 text-center mt-1">
-                {Math.round(zoomLevel * 100)}%
+            {/* Zoom controls */}
+            <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-sm text-white p-3 rounded-lg shadow-xl border border-white/20">
+              <h3 className="font-inter font-bold mb-2 text-sm">ZOOM</h3>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={handleZoomIn}
+                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+                >
+                  Zoom In
+                </button>
+                <button
+                  onClick={handleZoomOut}
+                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+                >
+                  Zoom Out
+                </button>
+                <button
+                  onClick={handleResetZoom}
+                  className="px-3 py-1 bg-white/20 hover:bg-white/30 rounded text-xs border border-white/20 transition-colors"
+                >
+                  Reset
+                </button>
+                <div className="text-xs text-gray-300 text-center mt-1">
+                  {Math.round(zoomLevel * 100)}%
+                </div>
               </div>
             </div>
+
+            {/* Virtual Controls for Tablet */}
+            {deviceType === 'tablet' && (
+              <VirtualControls
+                onDirectionPress={handleDirectionPress}
+                onDirectionRelease={handleDirectionRelease}
+              />
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Chat Sidebar */}
-      <ModernChatSidebar
-        onSendMessage={handleSendMessage}
-        messages={chatMessages}
-        currentUsername={username}
-      />
+      {/* Chat Sidebar - Only show on non-mobile */}
+      {deviceType !== 'mobile' && (
+        <ModernChatSidebar
+          onSendMessage={handleSendMessage}
+          messages={chatMessages}
+          currentUsername={username}
+          isMobile={false}
+        />
+      )}
     </div>
   );
 } 
