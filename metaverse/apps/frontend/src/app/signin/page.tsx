@@ -98,7 +98,7 @@ export default function SigninPage() {
                 >
                   {" "}
                   <stop stopColor="#B0B9FF" />{" "}
-                  <stop offset="1" stop-color="#E7E9FF" />{" "}
+                  <stop offset="1" stopColor="#E7E9FF" />{" "}
                 </linearGradient>{" "}
                 <clipPath id="clip0_235_973">
                   {" "}

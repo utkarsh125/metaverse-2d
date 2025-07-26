@@ -463,6 +463,13 @@ export class TilemapSpaceEngine {
   };
 
   private async createPlayerSprite(userId: string, username: string, x: number, y: number, avatarImageUrl?: string): Promise<PIXI.Container> {
+    console.log(`[DEBUG] Creating player sprite for:`, {
+      userId,
+      username,
+      avatarImageUrl,
+      timestamp: new Date().toISOString()
+    });
+    
     const playerContainer = new PIXI.Container();
     
     // Load and create player sprite
@@ -470,16 +477,19 @@ export class TilemapSpaceEngine {
     
     if (avatarImageUrl) {
       try {
+        console.log(`[DEBUG] Attempting to load avatar: ${avatarImageUrl} for user: ${username}`);
         // Try to load the custom avatar
         const avatarTexture = await PIXI.Assets.load(avatarImageUrl);
         sprite = new PIXI.Sprite(avatarTexture);
+        console.log(`[DEBUG] Successfully loaded avatar: ${avatarImageUrl} for user: ${username}`);
       } catch (error) {
-        console.warn('Failed to load custom avatar, falling back to hero.png:', error);
+        console.warn(`[DEBUG] Failed to load custom avatar for ${username}, falling back to hero.png:`, error);
         // Fallback to hero.png if avatar loading fails
         const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
         sprite = new PIXI.Sprite(heroTexture);
       }
     } else {
+      console.log(`[DEBUG] No avatar URL provided for ${username}, using hero.png`);
       // Use default hero.png if no avatar is specified
       const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
       sprite = new PIXI.Sprite(heroTexture);
@@ -509,6 +519,8 @@ export class TilemapSpaceEngine {
       (y + 0.5) * this.playerSize
     );
     
+    console.log(`[DEBUG] Player sprite created for ${username} with avatar: ${avatarImageUrl || 'hero.png'}`);
+    
     return playerContainer;
   }
 
@@ -516,12 +528,19 @@ export class TilemapSpaceEngine {
     try {
       switch (message.type) {
         case 'space-joined':
-          console.log('Successfully joined space:', message.payload);
+          console.log('[DEBUG] Successfully joined space:', message.payload);
           // Handle initial state of other players if provided
           const users = message.payload.users;
           if (users) {
+            console.log('[DEBUG] Received users in space:', users.map(u => ({
+              userId: u.userId,
+              username: u.username,
+              avatarId: u.avatarId,
+              avatarImageUrl: u.avatarImageUrl
+            })));
             for (const user of users) {
               if (user.userId !== this.userId) {
+                console.log(`[DEBUG] Creating sprite for existing user: ${user.username} with avatar: ${user.avatarImageUrl}`);
                 const playerContainer = await this.createPlayerSprite(
                   user.userId,
                   user.username,
@@ -548,8 +567,16 @@ export class TilemapSpaceEngine {
               avatarImageUrl: message.payload.avatarImageUrl
             };
             
+            console.log(`[DEBUG] User joined:`, {
+              userId: joinedUser.userId,
+              username: joinedUser.username,
+              avatarId: joinedUser.avatarId,
+              avatarImageUrl: joinedUser.avatarImageUrl,
+              isCurrentUser: joinedUser.userId === this.userId
+            });
+            
             if (joinedUser.userId !== this.userId) {
-              console.log('New user joined:', joinedUser);
+              console.log(`[DEBUG] Creating sprite for new user: ${joinedUser.username} with avatar: ${joinedUser.avatarImageUrl}`);
               const playerContainer = await this.createPlayerSprite(
                 joinedUser.userId,
                 joinedUser.username,
@@ -559,6 +586,33 @@ export class TilemapSpaceEngine {
               );
               this.otherPlayers.set(joinedUser.userId, playerContainer);
               this.container.addChild(playerContainer);
+            }
+          }
+          break;
+
+        case 'user-avatar-update':
+          // Handle avatar update for the current user
+          if (message.payload.userId === this.userId) {
+            console.log('[DEBUG] Received avatar update for local player:', message.payload);
+            
+            // Update the local player sprite with the new avatar
+            if (this.playerSprite && message.payload.avatarImageUrl) {
+              try {
+                console.log(`[DEBUG] Updating local player sprite with avatar: ${message.payload.avatarImageUrl}`);
+                const avatarTexture = await PIXI.Assets.load(message.payload.avatarImageUrl);
+                this.playerSprite.texture = avatarTexture;
+                console.log('[DEBUG] Local player avatar updated successfully');
+              } catch (error) {
+                console.error('[DEBUG] Failed to update local player avatar:', error);
+                // Fallback to hero.png if avatar loading fails
+                try {
+                  const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
+                  this.playerSprite.texture = heroTexture;
+                  console.log('[DEBUG] Fallback to hero.png for local player');
+                } catch (fallbackError) {
+                  console.error('[DEBUG] Failed to load fallback hero.png:', fallbackError);
+                }
+              }
             }
           }
           break;
@@ -735,6 +789,7 @@ export class TilemapSpaceEngine {
         
         // Load player sprite - we'll need to fetch user's avatar from the server
         // For now, use the default hero sprite
+        console.log('[DEBUG] Creating local player sprite with default hero.png');
         const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
         this.playerSprite = new PIXI.Sprite(heroTexture);
         this.playerSprite.anchor.set(0.5, 0.5);
@@ -742,6 +797,7 @@ export class TilemapSpaceEngine {
         this.playerSprite.height = tileHeight;
         this.container.addChild(this.playerSprite);
         this.updatePlayerSpritePosition();
+        console.log('[DEBUG] Local player sprite created with hero.png (will be updated when avatar info is received)');
         
         // Log state after loading
         console.log('Map loaded:', {

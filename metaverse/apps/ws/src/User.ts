@@ -70,6 +70,11 @@ export class User {
                             this.username = userData?.username || providedUsername || this.username;
                             this.avatarId = userData?.avatarId;
                             this.avatarImageUrl = userData?.avatar?.imageUrl;
+                            
+                            console.log(`[DEBUG] User ${this.username} (${userId}) avatar info:`, {
+                                avatarId: this.avatarId,
+                                avatarImageUrl: this.avatarImageUrl
+                            });
                         } else {
                             // Test mode - use provided username and consistent test user ID
                             console.log("No token provided, using test mode");
@@ -134,8 +139,29 @@ export class User {
                             }
                         });
 
+                        // Send the user's own avatar information to themselves
+                        console.log(`[DEBUG] Sending user-avatar-update to ${this.username}:`, {
+                            userId: this.userId,
+                            avatarId: this.avatarId,
+                            avatarImageUrl: this.avatarImageUrl
+                        });
+                        this.send({
+                            type: "user-avatar-update",
+                            payload: {
+                                userId: this.userId,
+                                avatarId: this.avatarId,
+                                avatarImageUrl: this.avatarImageUrl
+                            }
+                        });
+
                         // Notify others about new user
                         if (this.spaceId) {
+                            console.log(`[DEBUG] Broadcasting user-joined for ${this.username}:`, {
+                                userId: this.userId,
+                                username: this.username,
+                                avatarId: this.avatarId,
+                                avatarImageUrl: this.avatarImageUrl
+                            });
                             RoomManager.getInstance().broadcast({
                                 type: "user-joined",
                                 payload: {
