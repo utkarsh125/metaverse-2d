@@ -283,7 +283,7 @@ export class SpaceEngine {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('Connected to space server');
+      // console.log('Connected to space server');
       this.sendWebSocketMessage({
         type: 'join',
         payload: {
@@ -302,7 +302,7 @@ export class SpaceEngine {
     };
 
     this.ws.onclose = () => {
-      console.log('Disconnected from space server');
+      // console.log('Disconnected from space server');
     };
   }
 

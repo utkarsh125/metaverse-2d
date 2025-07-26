@@ -69,7 +69,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
 
   // Chat functionality
   const handleSendMessage = (message: string) => {
-    console.log('MetaverseSpace: Attempting to send message:', message);
+    // console.log('MetaverseSpace: Attempting to send message:', message);
     
     // Add our own message immediately to the chat
     const ownMessage: ChatMessage = {
@@ -79,37 +79,38 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
       timestamp: new Date()
     };
     
-    console.log('MetaverseSpace: Adding own message to chat:', ownMessage);
+    // console.log('MetaverseSpace: Adding own message to chat:', ownMessage);
     setChatMessages(prev => {
       const newMessages = [...prev, ownMessage];
-      console.log('MetaverseSpace: New chat messages after adding own:', newMessages);
+      // console.log('MetaverseSpace: New chat messages after adding own:', newMessages);
       return newMessages;
     });
     
     // Send to engine which will broadcast to server
     if (engineRef.current?.sendChatMessage) {
-      console.log('MetaverseSpace: Sending to engine');
+      // console.log('MetaverseSpace: Sending to engine');
       engineRef.current.sendChatMessage(message);
     } else {
-      console.log('MetaverseSpace: Engine not available for sending chat');
+      // console.log('MetaverseSpace: Engine not available for sending chat');
     }
   };
 
   const handleChatMessage = (message: ChatMessage) => {
-    console.log('MetaverseSpace: handleChatMessage called with:', message);
-    console.log('MetaverseSpace: Current user ID:', userId);
+    // console.log('MetaverseSpace: handleChatMessage called with:', message);
+    // console.log('MetaverseSpace: Current user ID:', userId);
     
-    // Only add messages from other users (we already added our own)
-    if (message.userId !== userId) {
-      console.log('MetaverseSpace: Adding message from other user');
-      setChatMessages(prev => {
-        const newMessages = [...prev, message];
-        console.log('MetaverseSpace: New chat messages after update:', newMessages);
-        return newMessages;
-      });
-    } else {
-      console.log('MetaverseSpace: Ignoring own message (already added)');
+    // Don't add our own messages twice (they're already added in handleSendMessage)
+    if (message.userId === userId) {
+      // console.log('MetaverseSpace: Ignoring own message (already added)');
+      return;
     }
+    
+    // console.log('MetaverseSpace: Adding message from other user');
+    setChatMessages(prev => {
+      const newMessages = [...prev, message];
+      // console.log('MetaverseSpace: New chat messages after update:', newMessages);
+      return newMessages;
+    });
   };
 
   // Zoom controls
@@ -234,17 +235,17 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
   }, [deviceType, zoomLevel, handleZoomChange]);
 
   useEffect(() => {
-    console.log("MetaverseSpace useEffect running - spaceId:", spaceId, "loading:", isLoading);
-    console.log("Dependencies changed:", { space: space.id, userId, username, mapFile, spaceId });
+    // console.log("MetaverseSpace useEffect running - spaceId:", spaceId, "loading:", isLoading);
+    // console.log("Dependencies changed:", { space: space.id, userId, username, mapFile, spaceId });
     let mounted = true;  // Add mounted flag for cleanup
 
     async function init() {
-      const initStartTime = Date.now();
-      console.log("Starting initialization at:", initStartTime);
+      // const initStartTime = Date.now();
+      // console.log("Starting initialization at:", initStartTime);
       
       // Add timeout for initialization
       const initTimeout = setTimeout(() => {
-        console.error("Initialization timeout after 10 seconds");
+        // console.error("Initialization timeout after 10 seconds");
         if (mounted) {
           setError("Loading timeout - please refresh the page");
           setIsLoading(false);
@@ -253,14 +254,14 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
       
       try {
         if (!canvasRef.current || !mounted || !spaceId) {
-          console.log("No canvasRef.current, component unmounted, or invalid spaceId");
+          // console.log("No canvasRef.current, component unmounted, or invalid spaceId");
           clearTimeout(initTimeout);
           return;
         }
 
         // Check if we've already initialized this space
         if (lastInitializedSpaceId === spaceId && engineRef.current) {
-          console.log("Space already initialized, skipping re-initialization");
+          // console.log("Space already initialized, skipping re-initialization");
           clearTimeout(initTimeout);
           setIsLoading(false);
           return;
@@ -268,23 +269,23 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
 
         // If spaceId changed, clean up previous engine
         if (lastInitializedSpaceId && lastInitializedSpaceId !== spaceId && engineRef.current) {
-          console.log("Different space detected, cleaning up previous engine");
+          // console.log("Different space detected, cleaning up previous engine");
           engineRef.current.destroy();
           engineRef.current = null;
         }
 
-        console.log("Step A: Ready for PIXI initialization");
+        // console.log("Step A: Ready for PIXI initialization");
 
         // Create PIXI Application
-        console.log("Step B: Importing PIXI Application");
+        // console.log("Step B: Importing PIXI Application");
         const { Application } = await import('pixi.js');
-        console.log("Step C: Creating PIXI Application instance");
+        // console.log("Step C: Creating PIXI Application instance");
         const app = new Application();
         
         // Initialize with canvas
-        console.log("Step D: Initializing PIXI Application with canvas");
-        console.log("Canvas element:", canvasRef.current);
-        console.log("Canvas parent:", canvasRef.current?.parentElement);
+        // console.log("Step D: Initializing PIXI Application with canvas");
+        // console.log("Canvas element:", canvasRef.current);
+        // console.log("Canvas parent:", canvasRef.current?.parentElement);
         
         try {
           // Add a timeout to the app.init() call
@@ -303,9 +304,9 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
               setTimeout(() => reject(new Error('PIXI init timeout')), 5000)
             )
           ]);
-          console.log("Step E: PIXI Application initialized successfully");
-        } catch (initError) {
-          console.warn("WebGL init failed, trying without preferences:", initError);
+          // console.log("Step E: PIXI Application initialized successfully");
+        } catch {
+          // console.warn("WebGL init failed, trying without preferences:", initError);
           // Try without specific preferences (let PIXI choose)
           await app.init({
             width: 1024,
@@ -315,10 +316,10 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
             autoDensity: false, // Disable auto density
             view: canvasRef.current
           });
-          console.log("Step E: PIXI Application initialized with fallback settings");
+          // console.log("Step E: PIXI Application initialized with fallback settings");
         }
 
-        console.log("Trying to load mapFile", mapFile);
+        // console.log("Trying to load mapFile", mapFile);
         if (mapFile) {
           // Use TilemapSpaceEngine for Tiled maps
           const { TilemapSpaceEngine } = await import('../lib/metaverse/TilemapSpaceEngine');
@@ -333,20 +334,20 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
           
           engineRef.current = engine;  // Set ref after successful initialization
           
-          console.log("Loading tilemap from", `/map/${mapFile}`);
+          // console.log("Loading tilemap from", `/map/${mapFile}`);
           try {
-            console.log("Step F: About to call engine.loadTilemap");
+            // console.log("Step F: About to call engine.loadTilemap");
             await engine.loadTilemap(`/map/${mapFile}`);
-            console.log("Step G: Tilemap loaded successfully");
+            // console.log("Step G: Tilemap loaded successfully");
           } catch (tilemapError) {
-            console.error("Step G FAILED - Failed to load tilemap:", tilemapError);
+            // console.error("Step G FAILED - Failed to load tilemap:", tilemapError);
             throw new Error(`Failed to load tilemap: ${tilemapError instanceof Error ? tilemapError.message : 'Unknown error'}`);
           }
           
           // Initialize WebSocket connection after map loads
-          console.log("Initializing WebSocket connection");
+          // console.log("Initializing WebSocket connection");
           engine.init(spaceId);
-          console.log("WebSocket connection initialized");
+          // console.log("WebSocket connection initialized");
           
           // Set up chat message handler
           if (engineRef.current.setupChatHandler) {
@@ -358,7 +359,7 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
             return;
           }
 
-          console.log("TilemapSpaceEngine initialized and map loaded");
+          // console.log("TilemapSpaceEngine initialized and map loaded");
         } else {
           // Use PixiSpaceEngine for legacy/element-based maps
           const { PixiSpaceEngine } = await import('../lib/metaverse/PixiSpaceEngine');
@@ -389,28 +390,28 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
             engineRef.current.setupChatHandler(handleChatMessage);
           }
           
-          console.log("PixiSpaceEngine initialized and elements added");
+          // console.log("PixiSpaceEngine initialized and elements added");
         }
         if (mounted) {
-          console.log("Setting isLoading to false - engine initialized successfully");
-          console.log("Total initialization time:", Date.now() - initStartTime, "ms");
+          // console.log("Setting isLoading to false - engine initialized successfully");
+          // console.log("Total initialization time:", Date.now() - initStartTime, "ms");
           clearTimeout(initTimeout);
           setLastInitializedSpaceId(spaceId);
           setIsLoading(false);
         } else {
-          console.log("Component unmounted, not setting isLoading to false");
+          // console.log("Component unmounted, not setting isLoading to false");
           clearTimeout(initTimeout);
         }
       } catch (err) {
-        console.error("Error in MetaverseSpace init:", err);
+        // console.error("Error in MetaverseSpace init:", err);
         if (mounted) {
-          console.log("Setting error and isLoading to false due to error");
-          console.log("Failed initialization time:", Date.now() - initStartTime, "ms");
+          // console.log("Setting error and isLoading to false due to error");
+          // console.log("Failed initialization time:", Date.now() - initStartTime, "ms");
           clearTimeout(initTimeout);
           setError(err instanceof Error ? err.message : 'Failed to initialize space');
           setIsLoading(false);
         } else {
-          console.log("Component unmounted during error, not setting states");
+          // console.log("Component unmounted during error, not setting states");
           clearTimeout(initTimeout);
         }
       }
@@ -420,10 +421,10 @@ export default function MetaverseSpace({ space, userId, username, mapFile, onCon
 
     // Cleanup function
     return () => {
-      console.log("MetaverseSpace cleanup function called - spaceId:", spaceId);
+      // console.log("MetaverseSpace cleanup function called - spaceId:", spaceId);
       mounted = false;  // Set mounted to false
       if (engineRef.current) {
-        console.log("Cleaning up engine");
+        // console.log("Cleaning up engine");
         engineRef.current.destroy();
         engineRef.current = null;
       }

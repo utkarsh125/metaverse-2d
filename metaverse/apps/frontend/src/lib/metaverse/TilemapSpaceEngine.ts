@@ -111,11 +111,12 @@ export class TilemapSpaceEngine {
     this.initPromise = Promise.resolve();
     
     // Log initial state
-    console.log('TilemapSpaceEngine constructor:', {
-      appStage: this.app.stage ? 'exists' : 'none',
-      containerAdded: this.container.parent ? 'yes' : 'no',
-      containerVisible: this.container.visible
-    });
+    // console.log('TilemapSpaceEngine constructor:', {
+    //   appStage: this.app.stage ? 'exists' : 'none',
+    //   containerAdded: this.container.parent ? 'yes' : 'no',
+    //   containerVisible: this.container.visible,
+    //   userAvatarImageUrl: this.userAvatarImageUrl
+    // });
   }
 
   public init(spaceId: string): void {
@@ -147,7 +148,7 @@ export class TilemapSpaceEngine {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('Connected to WebSocket server');
+      // console.log('Connected to WebSocket server');
       this.sendMessage({
         type: 'join',
         payload: {
@@ -167,9 +168,9 @@ export class TilemapSpaceEngine {
 
     this.ws.onmessage = (event: MessageEvent) => {
       try {
-        console.log('TilemapSpaceEngine: Raw WebSocket message received:', event.data);
+        // console.log('TilemapSpaceEngine: Raw WebSocket message received:', event.data);
         const message = JSON.parse(event.data) as WSMessage;
-        console.log('TilemapSpaceEngine: Parsed WebSocket message:', message);
+        // console.log('TilemapSpaceEngine: Parsed WebSocket message:', message);
         void this.handleWebSocketMessage(message).catch((error: Error) => {
           console.error('TilemapSpaceEngine: Error handling WebSocket message:', error);
         });
@@ -179,8 +180,8 @@ export class TilemapSpaceEngine {
       }
     };
 
-    this.ws.onclose = (event: CloseEvent) => {
-      console.log('Disconnected from WebSocket server:', event.code, event.reason);
+    this.ws.onclose = () => {
+      // console.log('Disconnected from WebSocket server:', event.code, event.reason);
     };
 
     this.ws.onerror = (event: Event) => {
@@ -190,9 +191,9 @@ export class TilemapSpaceEngine {
   }
 
   private sendMessage(message: WSMessage): void {
-    console.log('TilemapSpaceEngine: sendMessage called with:', message);
+    // console.log('TilemapSpaceEngine: sendMessage called with:', message);
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('TilemapSpaceEngine: WebSocket is open, sending message');
+      // console.log('TilemapSpaceEngine: WebSocket is open, sending message');
       this.ws.send(JSON.stringify(message));
     } else {
       console.error('TilemapSpaceEngine: WebSocket not open. State:', this.ws?.readyState);
@@ -403,36 +404,33 @@ export class TilemapSpaceEngine {
 
   private flushUpdateBatch(): void {
     if (this.updateBatch.length === 0) return;
-
-    // Send batched updates
+    
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      const batchSize = this.updateBatch.length;
-      console.log(`📦 Sending batch of ${batchSize} updates (optimization: ${batchSize} messages → 1 batch)`);
+      // console.log(`📦 Sending batch of ${batchSize} updates (optimization: ${batchSize} messages → 1 batch)`);
       
       // Send each update in the batch
       for (const update of this.updateBatch) {
-        this.ws.send(JSON.stringify({
-          type: update.type,
-          payload: update.payload
-        }));
-        this.performanceStats.updatesSent++;
+        this.ws.send(JSON.stringify(update));
       }
       
       // Clear the batch
       this.updateBatch = [];
       
-      // Log performance stats every 10 seconds
-      const now = Date.now();
-      if (now - this.performanceStats.lastStatsTime > 10000) {
-        console.log('🚀 Performance Stats (last 10s):', {
-          'Updates sent': this.performanceStats.updatesSent,
-          'Updates queued': this.performanceStats.updatesQueued,
-          'Sprite pool size': this.spritePool.length,
-          'WebSocket frequency': '2 updates/sec (was 8/sec)',
-          'Viewport culling': this.tilemapRenderer ? 'enabled' : 'disabled'
-        });
-        this.performanceStats.lastStatsTime = now;
-      }
+      // Update performance stats
+      this.performanceStats.updatesSent += this.updateBatch.length;
+    }
+    
+    // Log performance stats every 10 seconds
+    const now = Date.now();
+    if (now - this.performanceStats.lastStatsTime > 10000) {
+      // console.log('🚀 Performance Stats (last 10s):', {
+      //   'Updates sent': this.performanceStats.updatesSent,
+      //   'Updates queued': this.performanceStats.updatesQueued,
+      //   'Sprite pool size': this.spritePool.length,
+      //   'WebSocket frequency': '2 updates/sec (was 8/sec)',
+      //   'Viewport culling': this.tilemapRenderer ? 'enabled' : 'disabled'
+      // });
+      this.performanceStats.lastStatsTime = now;
     }
   }
 
@@ -463,12 +461,12 @@ export class TilemapSpaceEngine {
   };
 
   private async createPlayerSprite(userId: string, username: string, x: number, y: number, avatarImageUrl?: string): Promise<PIXI.Container> {
-    console.log(`[DEBUG] Creating player sprite for:`, {
-      userId,
-      username,
-      avatarImageUrl,
-      timestamp: new Date().toISOString()
-    });
+    // console.log(`[DEBUG] Creating player sprite for:`, {
+    //   userId,
+    //   username,
+    //   avatarImageUrl,
+    //   timestamp: new Date().toISOString()
+    // });
     
     const playerContainer = new PIXI.Container();
     
@@ -477,11 +475,11 @@ export class TilemapSpaceEngine {
     
     if (avatarImageUrl) {
       try {
-        console.log(`[DEBUG] Attempting to load avatar: ${avatarImageUrl} for user: ${username}`);
+        // console.log(`[DEBUG] Attempting to load avatar: ${avatarImageUrl} for user: ${username}`);
         // Try to load the custom avatar
         const avatarTexture = await PIXI.Assets.load(avatarImageUrl);
         sprite = new PIXI.Sprite(avatarTexture);
-        console.log(`[DEBUG] Successfully loaded avatar: ${avatarImageUrl} for user: ${username}`);
+        // console.log(`[DEBUG] Successfully loaded avatar: ${avatarImageUrl} for user: ${username}`);
       } catch (error) {
         console.warn(`[DEBUG] Failed to load custom avatar for ${username}, falling back to hero.png:`, error);
         // Fallback to hero.png if avatar loading fails
@@ -489,7 +487,7 @@ export class TilemapSpaceEngine {
         sprite = new PIXI.Sprite(heroTexture);
       }
     } else {
-      console.log(`[DEBUG] No avatar URL provided for ${username}, using hero.png`);
+      // console.log(`[DEBUG] No avatar URL provided for ${username}, using hero.png`);
       // Use default hero.png if no avatar is specified
       const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
       sprite = new PIXI.Sprite(heroTexture);
@@ -519,7 +517,7 @@ export class TilemapSpaceEngine {
       (y + 0.5) * this.playerSize
     );
     
-    console.log(`[DEBUG] Player sprite created for ${username} with avatar: ${avatarImageUrl || 'hero.png'}`);
+    // console.log(`[DEBUG] Player sprite created for ${username} with avatar: ${avatarImageUrl || 'hero.png'}`);
     
     return playerContainer;
   }
@@ -528,19 +526,19 @@ export class TilemapSpaceEngine {
     try {
       switch (message.type) {
         case 'space-joined':
-          console.log('[DEBUG] Successfully joined space:', message.payload);
+          // console.log('[DEBUG] Successfully joined space:', message.payload);
           // Handle initial state of other players if provided
           const users = message.payload.users;
           if (users) {
-            console.log('[DEBUG] Received users in space:', users.map(u => ({
-              userId: u.userId,
-              username: u.username,
-              avatarId: u.avatarId,
-              avatarImageUrl: u.avatarImageUrl
-            })));
+            // console.log('[DEBUG] Received users in space:', users.map(u => ({
+            //   userId: u.userId,
+            //   username: u.username,
+            //   avatarId: u.avatarId,
+            //   avatarImageUrl: u.avatarImageUrl
+            // })));
             for (const user of users) {
               if (user.userId !== this.userId) {
-                console.log(`[DEBUG] Creating sprite for existing user: ${user.username} with avatar: ${user.avatarImageUrl}`);
+                // console.log(`[DEBUG] Creating sprite for existing user: ${user.username} with avatar: ${user.avatarImageUrl}`);
                 const playerContainer = await this.createPlayerSprite(
                   user.userId,
                   user.username,
@@ -567,16 +565,16 @@ export class TilemapSpaceEngine {
               avatarImageUrl: message.payload.avatarImageUrl
             };
             
-            console.log(`[DEBUG] User joined:`, {
-              userId: joinedUser.userId,
-              username: joinedUser.username,
-              avatarId: joinedUser.avatarId,
-              avatarImageUrl: joinedUser.avatarImageUrl,
-              isCurrentUser: joinedUser.userId === this.userId
-            });
+            // console.log(`[DEBUG] User joined:`, {
+            //   userId: joinedUser.userId,
+            //   username: joinedUser.username,
+            //   avatarId: joinedUser.avatarId,
+            //   avatarImageUrl: joinedUser.avatarImageUrl,
+            //   isCurrentUser: joinedUser.userId === this.userId
+            // });
             
             if (joinedUser.userId !== this.userId) {
-              console.log(`[DEBUG] Creating sprite for new user: ${joinedUser.username} with avatar: ${joinedUser.avatarImageUrl}`);
+              // console.log(`[DEBUG] Creating sprite for new user: ${joinedUser.username} with avatar: ${joinedUser.avatarImageUrl}`);
               const playerContainer = await this.createPlayerSprite(
                 joinedUser.userId,
                 joinedUser.username,
@@ -593,22 +591,22 @@ export class TilemapSpaceEngine {
         case 'user-avatar-update':
           // Handle avatar update for the current user
           if (message.payload.userId === this.userId) {
-            console.log('[DEBUG] Received avatar update for local player:', message.payload);
+            // console.log('[DEBUG] Received avatar update for local player:', message.payload);
             
             // Update the local player sprite with the new avatar
             if (this.playerSprite && message.payload.avatarImageUrl) {
               try {
-                console.log(`[DEBUG] Updating local player sprite with avatar: ${message.payload.avatarImageUrl}`);
+                // console.log(`[DEBUG] Updating local player sprite with avatar: ${message.payload.avatarImageUrl}`);
                 const avatarTexture = await PIXI.Assets.load(message.payload.avatarImageUrl);
                 this.playerSprite.texture = avatarTexture;
-                console.log('[DEBUG] Local player avatar updated successfully');
+                // console.log('[DEBUG] Local player avatar updated successfully');
               } catch (error) {
                 console.error('[DEBUG] Failed to update local player avatar:', error);
                 // Fallback to hero.png if avatar loading fails
                 try {
                   const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
                   this.playerSprite.texture = heroTexture;
-                  console.log('[DEBUG] Fallback to hero.png for local player');
+                  // console.log('[DEBUG] Fallback to hero.png for local player');
                 } catch (fallbackError) {
                   console.error('[DEBUG] Failed to load fallback hero.png:', fallbackError);
                 }
@@ -622,7 +620,7 @@ export class TilemapSpaceEngine {
           if (leftUserId) {
             const leftPlayer = this.otherPlayers.get(leftUserId);
             if (leftPlayer) {
-              console.log('User left:', leftUserId);
+              // console.log('User left:', leftUserId);
               this.container.removeChild(leftPlayer);
               leftPlayer.destroy();
               this.otherPlayers.delete(leftUserId);
@@ -668,8 +666,8 @@ export class TilemapSpaceEngine {
           break;
 
         case 'chat':
-          console.log('TilemapSpaceEngine: Processing chat message. Payload:', message.payload);
-          console.log('TilemapSpaceEngine: Chat handler available:', !!this.chatMessageHandler);
+          // console.log('TilemapSpaceEngine: Processing chat message. Payload:', message.payload);
+          // console.log('TilemapSpaceEngine: Chat handler available:', !!this.chatMessageHandler);
           if (message.payload.userId && message.payload.username && message.payload.message) {
             const chatMessage: ChatMessage = {
               userId: message.payload.userId,
@@ -677,9 +675,9 @@ export class TilemapSpaceEngine {
               message: message.payload.message,
               timestamp: new Date()
             };
-            console.log('TilemapSpaceEngine: Created chat message object:', chatMessage);
+            // console.log('TilemapSpaceEngine: Created chat message object:', chatMessage);
             if (this.chatMessageHandler) {
-              console.log('TilemapSpaceEngine: Calling chat message handler');
+              // console.log('TilemapSpaceEngine: Calling chat message handler');
               this.chatMessageHandler(chatMessage);
             } else {
               console.error('TilemapSpaceEngine: No chat message handler available!');
@@ -741,23 +739,23 @@ export class TilemapSpaceEngine {
         );
 
         // Log positions for debugging
-        console.log('Resize:', {
-          parentWidth,
-          parentHeight,
-          mapWidth,
-          mapHeight,
-          scale,
-          containerPos: {
-            x: this.container.position.x,
-            y: this.container.position.y
-          },
-          containerScale: {
-            x: this.container.scale.x,
-            y: this.container.scale.y
-          },
-          containerVisible: this.container.visible,
-          containerParent: this.container.parent ? 'exists' : 'none'
-        });
+        // console.log('Resize:', {
+        //   parentWidth,
+        //   parentHeight,
+        //   mapWidth,
+        //   mapHeight,
+        //   scale,
+        //   containerPos: {
+        //     x: this.container.position.x,
+        //     y: this.container.position.y
+        //   },
+        //   containerScale: {
+        //     x: this.container.scale.x,
+        //     y: this.container.scale.y
+        //   },
+        //   containerVisible: this.container.visible,
+        //   containerParent: this.container.parent ? 'exists' : 'none'
+        // });
       }
     };
     
@@ -789,7 +787,7 @@ export class TilemapSpaceEngine {
         
         // Load player sprite - we'll need to fetch user's avatar from the server
         // For now, use the default hero sprite
-        console.log('[DEBUG] Creating local player sprite with default hero.png');
+        // console.log('[DEBUG] Creating local player sprite with default hero.png');
         const heroTexture = await PIXI.Assets.load('/sprite/hero.png');
         this.playerSprite = new PIXI.Sprite(heroTexture);
         this.playerSprite.anchor.set(0.5, 0.5);
@@ -797,27 +795,27 @@ export class TilemapSpaceEngine {
         this.playerSprite.height = tileHeight;
         this.container.addChild(this.playerSprite);
         this.updatePlayerSpritePosition();
-        console.log('[DEBUG] Local player sprite created with hero.png (will be updated when avatar info is received)');
+        // console.log('[DEBUG] Local player sprite created with hero.png (will be updated when avatar info is received)');
         
         // Log state after loading
-        console.log('Map loaded:', {
-          mapDimensions: {
-            width: mapData.width * tileWidth,
-            height: mapData.height * tileHeight
-          },
-          containerVisible: this.container.visible,
-          containerChildren: this.container.children.length,
-          containerPosition: {
-            x: this.container.position.x,
-            y: this.container.position.y
-          },
-          containerScale: {
-            x: this.container.scale.x,
-            y: this.container.scale.y
-          },
-          containerParent: this.container.parent ? 'exists' : 'none',
-          stageChildren: this.app.stage.children.length
-        });
+        // console.log('Map loaded:', {
+        //   mapDimensions: {
+        //     width: mapData.width * tileWidth,
+        //     height: mapData.height * tileHeight
+        //   },
+        //   containerVisible: this.container.visible,
+        //   containerChildren: this.container.children.length,
+        //   containerPosition: {
+        //     x: this.container.position.x,
+        //     y: this.container.position.y
+        //   },
+        //   containerScale: {
+        //     x: this.container.scale.x,
+        //     y: this.container.scale.y
+        //   },
+        //   containerParent: this.container.parent ? 'exists' : 'none',
+        //   stageChildren: this.app.stage.children.length
+        // });
       }
     } catch (error) {
       console.error('Failed to load tilemap:', error);
@@ -830,10 +828,10 @@ export class TilemapSpaceEngine {
   }
 
   public sendChatMessage(message: string): void {
-    console.log('TilemapSpaceEngine: sendChatMessage called with:', message);
-    console.log('TilemapSpaceEngine: userId:', this.userId);
-    console.log('TilemapSpaceEngine: username:', this.username);
-    console.log('TilemapSpaceEngine: WebSocket state:', this.ws?.readyState);
+    // console.log('TilemapSpaceEngine: sendChatMessage called with:', message);
+    // console.log('TilemapSpaceEngine: userId:', this.userId);
+    // console.log('TilemapSpaceEngine: username:', this.username);
+    // console.log('TilemapSpaceEngine: WebSocket state:', this.ws?.readyState);
     
     // Add chat message to batch instead of sending immediately
     this.addToBatch({
@@ -850,9 +848,9 @@ export class TilemapSpaceEngine {
   private chatMessageHandler?: (message: ChatMessage) => void;
 
   public setupChatHandler(handler: (message: ChatMessage) => void): void {
-    console.log('TilemapSpaceEngine: Setting up chat handler');
+    // console.log('TilemapSpaceEngine: Setting up chat handler');
     this.chatMessageHandler = handler;
-    console.log('TilemapSpaceEngine: Chat handler set successfully');
+    // console.log('TilemapSpaceEngine: Chat handler set successfully');
   }
 
   public zoomIn(): void {

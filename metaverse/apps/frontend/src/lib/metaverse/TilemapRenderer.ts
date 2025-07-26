@@ -79,8 +79,15 @@ export class TilemapRenderer {
   private useBatchedRendering = false; // Temporarily disable batching to ensure stability
 
   constructor(app: PIXI.Application, container: PIXI.Container) {
+    // Initialize the renderer
     this.app = app;
     this.container = container;
+    
+    // console.log('TilemapRenderer initialized:', {
+    //   app: !!this.app,
+    //   container: !!this.container,
+    //   stage: !!this.app.stage
+    // });
     
     // Validate inputs
     if (!container) {
@@ -121,26 +128,26 @@ export class TilemapRenderer {
     this.container.sortableChildren = true;
     this.container.zIndex = 0;
     
-    console.log('TilemapRenderer initialized:', {
-      containerPosition: { x: this.container.position.x, y: this.container.position.y },
-      tilemapPosition: { x: this.tilemap.position.x, y: this.tilemap.position.y },
-      tilemapZIndex: this.tilemap.zIndex,
-      containerVisible: this.container.visible,
-      tilemapVisible: this.tilemap.visible,
-      containerParent: this.container.parent ? 'exists' : 'none',
-      tilemapParent: this.tilemap.parent ? 'exists' : 'none',
-      containerInStage: this.app.stage.children.includes(this.container),
-      stageChildren: this.app.stage.children.length
-    });
+    // console.log('TilemapRenderer initialized:', {
+    //   containerPosition: { x: this.container.position.x, y: this.container.position.y },
+    //   tilemapPosition: { x: this.tilemap.position.x, y: this.tilemap.position.y },
+    //   tilemapZIndex: this.tilemap.zIndex,
+    //   containerVisible: this.container.visible,
+    //   tilemapVisible: this.tilemap.visible,
+    //   containerParent: this.container.parent ? 'exists' : 'none',
+    //   tilemapParent: this.tilemap.parent ? 'exists' : 'none',
+    //   containerInStage: this.app.stage.children.includes(this.container),
+    //   stageChildren: this.app.stage.children.length
+    // });
   }
 
   async loadMap(mapUrl: string): Promise<void> {
     try {
-      console.log('=== TilemapRenderer.loadMap START ===');
-      console.log('Loading map from:', mapUrl);
+      // console.log('=== TilemapRenderer.loadMap START ===');
+      // console.log('Loading map from:', mapUrl);
       // Track the base directory of the map file
       this.mapBaseDir = mapUrl.substring(0, mapUrl.lastIndexOf('/') + 1);
-      console.log('Map base directory:', this.mapBaseDir);
+      // console.log('Map base directory:', this.mapBaseDir);
       
       // Load the map JSON file
       const response = await fetch(mapUrl);
@@ -148,63 +155,63 @@ export class TilemapRenderer {
         throw new Error(`Failed to load map: ${response.statusText} (${response.status})`);
       }
       this.mapData = await response.json();
-      console.log('Map data loaded successfully:', this.mapData);
+      // console.log('Map data loaded successfully:', this.mapData);
       
       // Load all tilesets
-      console.log('Starting to load tilesets...');
+      // console.log('Starting to load tilesets...');
       await this.loadTilesets();
-      console.log('Tilesets loaded successfully');
+      // console.log('Tilesets loaded successfully');
       
       // Render the map
-      console.log('Starting to render map...');
+      // console.log('Starting to render map...');
       await this.renderMap();
-      console.log('Map rendered successfully');
+      // console.log('Map rendered successfully');
       
       // Extract collision data
-      console.log('Extracting collision data...');
+      // console.log('Extracting collision data...');
       this.extractCollisionData();
-      console.log('Collision data extracted');
+      // console.log('Collision data extracted');
       
-      console.log('=== TilemapRenderer.loadMap SUCCESS ===');
-      console.log('Tilemap loaded successfully!');
+      // console.log('=== TilemapRenderer.loadMap SUCCESS ===');
+      // console.log('Tilemap loaded successfully!');
     } catch (error) {
-      console.error('=== TilemapRenderer.loadMap ERROR ===');
-      console.error('Error loading map:', error);
+      // console.error('=== TilemapRenderer.loadMap ERROR ===');
+      // console.error('Error loading map:', error);
       throw error;
     }
   }
 
   private async loadTilesets(): Promise<void> {
     if (!this.mapData) return;
-    console.log(`Loading ${this.mapData.tilesets.length} tilesets...`);
+    // console.log(`Loading ${this.mapData.tilesets.length} tilesets...`);
     for (const tileset of this.mapData.tilesets) {
       try {
-        console.log(`Loading tileset: ${tileset.source}`);
+        // console.log(`Loading tileset: ${tileset.source}`);
         // Load the tileset TSX file, resolve relative to map base dir
         const tsxUrl = this.getTilesetUrl(tileset.source, this.mapBaseDir);
-        console.log(`TSX URL: ${tsxUrl}`);
+        // console.log(`TSX URL: ${tsxUrl}`);
         const tsxResponse = await fetch(tsxUrl);
         if (!tsxResponse.ok) {
-          console.warn(`Failed to load tileset ${tileset.source}: ${tsxResponse.statusText} (${tsxResponse.status})`);
+          // console.warn(`Failed to load tileset ${tileset.source}: ${tsxResponse.statusText} (${tsxResponse.status})`);
           continue;
         }
         const tsxText = await tsxResponse.text();
-        console.log(`TSX content length: ${tsxText.length}`);
+        // console.log(`TSX content length: ${tsxText.length}`);
         // Track the base directory of the TSX file
         const tsxBaseDir = tsxUrl.substring(0, tsxUrl.lastIndexOf('/') + 1);
         const tilesetData = this.parseTSX(tsxText);
         tileset.tileset = tilesetData;
         // Load the tileset image, resolve relative to TSX base dir
         const imageUrl = this.getImageUrl(tilesetData.image.source, tsxBaseDir);
-        console.log(`Image URL: ${imageUrl}`);
+        // console.log(`Image URL: ${imageUrl}`);
         const texture = await PIXI.Assets.load(imageUrl);
         this.tilesets.set(tileset.firstgid, texture);
-        console.log(`Loaded tileset: ${tileset.source} (firstgid: ${tileset.firstgid})`);
+        // console.log(`Loaded tileset: ${tileset.source} (firstgid: ${tileset.firstgid})`);
       } catch (error) {
-        console.error(`Error loading tileset ${tileset.source}:`, error);
+        // console.error(`Error loading tileset ${tileset.source}:`, error);
       }
     }
-    console.log(`Successfully loaded ${this.tilesets.size} tilesets`);
+    // console.log(`Successfully loaded ${this.tilesets.size} tilesets`);
   }
 
   private parseTSX(tsxText: string): TiledTilesetData {
@@ -293,15 +300,15 @@ export class TilemapRenderer {
 
   private async renderMap(): Promise<void> {
     if (!this.mapData) {
-      console.error('No map data loaded');
+      // console.error('No map data loaded');
       return;
     }
 
-    console.log('=== renderMap START (Optimized) ===');
-    console.log('Map dimensions:', {
-      width: this.mapData.width * this.mapData.tilewidth,
-      height: this.mapData.height * this.mapData.tileheight
-    });
+    // console.log('=== renderMap START (Optimized) ===');
+    // console.log('Map dimensions:', {
+    //   width: this.mapData.width * this.mapData.tilewidth,
+    //   height: this.mapData.height * this.mapData.tileheight
+    // });
 
     // Clear existing children (except debug graphics)
     const debugGraphics = this.tilemap.getChildAt(0) as PIXI.Graphics;
@@ -321,30 +328,30 @@ export class TilemapRenderer {
     let totalTilesRendered = 0;
     for (const layer of this.mapData.layers) {
       if (layer.type === 'tilelayer' && layer.visible) {
-        console.log(`🚀 Rendering layer: ${layer.name}`);
+        // console.log(`🚀 Rendering layer: ${layer.name}`);
         if (this.useBatchedRendering) {
           const layerTiles = this.renderLayerBatched(layer);
           totalTilesRendered += layerTiles;
-          console.log(`✅ Layer ${layer.name} rendered ${layerTiles} tiles (batched)`);
+          // console.log(`✅ Layer ${layer.name} rendered ${layerTiles} tiles (batched)`);
         } else {
           const layerTiles = this.renderLayer(layer);
           totalTilesRendered += layerTiles;
-          console.log(`Layer ${layer.name} rendered ${layerTiles} tiles (standard)`);
+          // console.log(`Layer ${layer.name} rendered ${layerTiles} tiles (standard)`);
         }
       }
     }
     
-    console.log(`=== renderMap SUCCESS: ${totalTilesRendered} total tiles rendered ===`);
+    // console.log(`=== renderMap SUCCESS: ${totalTilesRendered} total tiles rendered ===`);
     
     // Log final positions
-    console.log('Final positions:', {
-      containerPosition: { x: this.container.position.x, y: this.container.position.y },
-      tilemapPosition: { x: this.tilemap.position.x, y: this.tilemap.position.y },
-      mapDimensions: {
-        width: this.mapData.width * this.mapData.tilewidth,
-        height: this.mapData.height * this.mapData.tileheight
-      }
-    });
+    // console.log('Final positions:', {
+    //   containerPosition: { x: this.container.position.x, y: this.container.position.y },
+    //   tilemapPosition: { x: this.tilemap.position.x, y: this.tilemap.position.y },
+    //   mapDimensions: {
+    //     width: this.mapData.width * this.mapData.tilewidth,
+    //     height: this.mapData.height * this.mapData.tileheight
+    //   }
+    // });
   }
 
   private renderLayer(layer: TiledLayer): number {
@@ -373,7 +380,7 @@ export class TilemapRenderer {
       startY = Math.max(0, Math.floor(this.renderBounds.y / tileHeight) - padding);
       endY = Math.min(layerHeight, Math.ceil((this.renderBounds.y + this.renderBounds.height) / tileHeight) + padding);
       
-      console.log(`Viewport culling: rendering tiles from (${startX},${startY}) to (${endX},${endY}) of (${layerWidth},${layerHeight})`);
+      // console.log(`Viewport culling: rendering tiles from (${startX},${startY}) to (${endX},${endY}) of (${layerWidth},${layerHeight})`);
     }
 
     // Handle Tiled flipping/rotation bits
@@ -403,19 +410,19 @@ export class TilemapRenderer {
         }
 
         if (!tileset) {
-          console.warn(`No tileset found for tile ID ${gid}`);
+          // console.warn(`No tileset found for tile ID ${gid}`);
           continue;
         }
 
         const texture = this.tilesets.get(tileset.firstgid);
         if (!texture) {
-          console.warn(`No texture found for tileset ${tileset.source}`);
+          // console.warn(`No texture found for tileset ${tileset.source}`);
           continue;
         }
 
         // Debug first few tiles
         if (x < 3 && y < 3) {
-          console.log(`Tile at (${x},${y}): GID=${tileId}, gid(no flip)=${gid}, tileset=${tileset.source}, firstgid=${tileset.firstgid}, localTileId=${localTileId}, flipH=${flippedHorizontally}, flipV=${flippedVertically}, flipD=${flippedDiagonally}`);
+          // console.log(`Tile at (${x},${y}): GID=${tileId}, gid(no flip)=${gid}, tileset=${tileset.source}, firstgid=${tileset.firstgid}, localTileId=${localTileId}, flipH=${flippedHorizontally}, flipV=${flippedVertically}, flipD=${flippedDiagonally}`);
         }
 
         // Extract the correct tile from the tileset texture
@@ -460,13 +467,13 @@ export class TilemapRenderer {
       }
     }
     
-    console.log(`Layer ${layer.name} rendered ${tilesRendered} tiles with container:`, {
-      visible: layerContainer.visible,
-      alpha: layerContainer.alpha,
-      children: layerContainer.children.length,
-      position: { x: layerContainer.position.x, y: layerContainer.position.y },
-      parent: layerContainer.parent ? 'exists' : 'none'
-    });
+    // console.log(`Layer ${layer.name} rendered ${tilesRendered} tiles with container:`, {
+    //   visible: layerContainer.visible,
+    //   alpha: layerContainer.alpha,
+    //   children: layerContainer.children.length,
+    //   position: { x: layerContainer.position.x, y: layerContainer.position.y },
+    //   parent: layerContainer.parent ? 'exists' : 'none'
+    // });
     
     return tilesRendered;
   }
@@ -600,12 +607,12 @@ export class TilemapRenderer {
 
   async render(): Promise<void> {
     if (!this.mapData) {
-      console.error('No map data loaded');
+      // console.error('No map data loaded');
       return;
     }
 
-    console.log('Rendering map with tilesets:', this.mapData.tilesets.length);
-    console.log('Rendering map with layers:', this.mapData.layers.length);
+    // console.log('Rendering map with tilesets:', this.mapData.tilesets.length);
+    // console.log('Rendering map with layers:', this.mapData.layers.length);
 
     // Load all tilesets first
     const tilesetTextures: Map<number, PIXI.Texture> = new Map();
@@ -618,16 +625,16 @@ export class TilemapRenderer {
           const tsxBaseDir = tsxUrl.substring(0, tsxUrl.lastIndexOf('/') + 1);
           const texture = await PIXI.Assets.load(this.getImageUrl(tilesetData.image.source, tsxBaseDir));
           tilesetTextures.set(tileset.firstgid, texture);
-          console.log(`Loaded tileset ${tileset.source} with firstgid ${tileset.firstgid}`);
+          // console.log(`Loaded tileset ${tileset.source} with firstgid ${tileset.firstgid}`);
         }
       } catch (error) {
-        console.error(`Failed to load tileset ${tileset.source}:`, error);
+        // console.error(`Failed to load tileset ${tileset.source}:`, error);
       }
     }
     // Render all layers
     for (const layer of this.mapData.layers) {
       if (layer.type === 'tilelayer' && layer.visible) {
-        console.log(`Rendering layer: ${layer.name} with ${layer.data?.length || 0} tiles`);
+        // console.log(`Rendering layer: ${layer.name} with ${layer.data?.length || 0} tiles`);
         await this.renderLayerMulti(layer, tilesetTextures);
       }
     }
@@ -724,13 +731,13 @@ export class TilemapRenderer {
       const tsxUrl = this.getTilesetUrl(source, this.mapBaseDir);
       const tsxResponse = await fetch(tsxUrl);
       if (!tsxResponse.ok) {
-        console.warn(`Failed to load tileset ${source}: ${tsxResponse.statusText}`);
+        // console.warn(`Failed to load tileset ${source}: ${tsxResponse.statusText}`);
         return null;
       }
       const tsxText = await tsxResponse.text();
       return this.parseTSX(tsxText);
     } catch (error) {
-      console.error(`Error loading tileset ${source}:`, error);
+      // console.error(`Error loading tileset ${source}:`, error);
       return null;
     }
   }
@@ -740,7 +747,7 @@ export class TilemapRenderer {
   private renderLayerBatched(layer: TiledLayer): number {
     if (!layer.data) return 0;
 
-    console.log(`📦 Using batched rendering for layer: ${layer.name}`);
+    // console.log(`📦 Using batched rendering for layer: ${layer.name}`);
 
     // Create a container for this layer
     const layerContainer = new PIXI.Container();
@@ -765,8 +772,8 @@ export class TilemapRenderer {
       startY = Math.max(0, Math.floor(this.renderBounds.y / tileHeight) - padding);
       endY = Math.min(layerHeight, Math.ceil((this.renderBounds.y + this.renderBounds.height) / tileHeight) + padding);
       
-      console.log(`🔍 Viewport culling: rendering tiles from (${startX},${startY}) to (${endX},${endY}) of (${layerWidth},${layerHeight})`);
-      console.log(`⚡ Rendering ${(endX-startX)*(endY-startY)} tiles instead of ${layerWidth*layerHeight} (${(((endX-startX)*(endY-startY))/(layerWidth*layerHeight)*100).toFixed(1)}%)`);
+      // console.log(`🔍 Viewport culling: rendering tiles from (${startX},${startY}) to (${endX},${endY}) of (${layerWidth},${layerHeight})`);
+      // console.log(`⚡ Rendering ${(endX-startX)*(endY-startY)} tiles instead of ${layerWidth*layerHeight} (${(((endX-startX)*(endY-startY))/(layerWidth*layerHeight)*100).toFixed(1)}%)`);
     }
 
     // Handle Tiled flipping/rotation bits
@@ -866,18 +873,18 @@ export class TilemapRenderer {
     // Add all batched sprites to layer container
     let totalSprites = 0;
     for (const [tilesetId, sprites] of tilesetBatches) {
-      console.log(`📦 Adding ${sprites.length} sprites from tileset ${tilesetId}`);
+      // console.log(`📦 Adding ${sprites.length} sprites from tileset ${tilesetId}`);
       sprites.forEach(sprite => layerContainer.addChild(sprite));
       totalSprites += sprites.length;
     }
     
-    console.log(`📊 Batched rendering stats:`, {
-      tilesetsUsed: tilesetBatches.size,
-      totalSprites: totalSprites,
-      layerVisible: layerContainer.visible,
-      layerAlpha: layerContainer.alpha,
-      layerChildren: layerContainer.children.length
-    });
+    // console.log(`📊 Batched rendering stats:`, {
+    //   tilesetsUsed: tilesetBatches.size,
+    //   totalSprites: totalSprites,
+    //   layerVisible: layerContainer.visible,
+    //   layerAlpha: layerContainer.alpha,
+    //   layerChildren: layerContainer.children.length
+    // });
     
     return tilesRendered;
   }
@@ -906,6 +913,6 @@ export class TilemapRenderer {
 
   public enableOptimizations(enabled: boolean): void {
     this.useBatchedRendering = enabled;
-    console.log(`🎛️ Batched rendering ${enabled ? 'enabled' : 'disabled'}`);
+    // console.log(`🎛️ Batched rendering ${enabled ? 'enabled' : 'disabled'}`);
   }
 } 
