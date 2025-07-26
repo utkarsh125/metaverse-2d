@@ -131,7 +131,7 @@ const HowItWorksSection = () => {
             <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl mb-8 border border-purple-200">
               <iframe
                 className="absolute inset-0 w-full h-full"
-                src="https://www.youtube.com/embed/dQw4w9WgXcQ"
+                src="https://www.youtube.com/watch?v=TcOrLBC02gM"
                 title="Demo Video"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
