@@ -207,7 +207,7 @@ export class TilemapRenderer {
         const texture = await PIXI.Assets.load(imageUrl);
         this.tilesets.set(tileset.firstgid, texture);
         // console.log(`Loaded tileset: ${tileset.source} (firstgid: ${tileset.firstgid})`);
-      } catch (error) {
+      } catch {
         // console.error(`Error loading tileset ${tileset.source}:`, error);
       }
     }
@@ -325,18 +325,15 @@ export class TilemapRenderer {
     );
 
     // Use optimized rendering if enabled, otherwise fall back to original
-    let totalTilesRendered = 0;
     for (const layer of this.mapData.layers) {
       if (layer.type === 'tilelayer' && layer.visible) {
         // console.log(`🚀 Rendering layer: ${layer.name}`);
         if (this.useBatchedRendering) {
-          const layerTiles = this.renderLayerBatched(layer);
-          totalTilesRendered += layerTiles;
-          // console.log(`✅ Layer ${layer.name} rendered ${layerTiles} tiles (batched)`);
+          this.renderLayerBatched(layer);
+          // console.log(`✅ Layer ${layer.name} rendered tiles (batched)`);
         } else {
-          const layerTiles = this.renderLayer(layer);
-          totalTilesRendered += layerTiles;
-          // console.log(`Layer ${layer.name} rendered ${layerTiles} tiles (standard)`);
+          this.renderLayer(layer);
+          // console.log(`Layer ${layer.name} rendered tiles (standard)`);
         }
       }
     }
@@ -627,7 +624,7 @@ export class TilemapRenderer {
           tilesetTextures.set(tileset.firstgid, texture);
           // console.log(`Loaded tileset ${tileset.source} with firstgid ${tileset.firstgid}`);
         }
-      } catch (error) {
+      } catch {
         // console.error(`Failed to load tileset ${tileset.source}:`, error);
       }
     }
@@ -736,7 +733,7 @@ export class TilemapRenderer {
       }
       const tsxText = await tsxResponse.text();
       return this.parseTSX(tsxText);
-    } catch (error) {
+    } catch {
       // console.error(`Error loading tileset ${source}:`, error);
       return null;
     }
@@ -871,11 +868,9 @@ export class TilemapRenderer {
     }
 
     // Add all batched sprites to layer container
-    let totalSprites = 0;
-    for (const [tilesetId, sprites] of tilesetBatches) {
-      // console.log(`📦 Adding ${sprites.length} sprites from tileset ${tilesetId}`);
+    for (const [, sprites] of tilesetBatches) {
+      // console.log(`📦 Adding ${sprites.length} sprites from tileset`);
       sprites.forEach(sprite => layerContainer.addChild(sprite));
-      totalSprites += sprites.length;
     }
     
     // console.log(`📊 Batched rendering stats:`, {
