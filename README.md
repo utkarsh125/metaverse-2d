@@ -10,8 +10,6 @@ This is a simple attempt to recreate Gather - a platform where you can connect w
 
 Feel free to take a look at the code and contribute in any way you can. I would love to merge your PRs in this project.
 
-**Note: I still have to host this project on EC2**
-
 #### What is working as of yet.
 - Creation of user and the ability to select avatar and map of choice
 - Creation of multiple spaces
